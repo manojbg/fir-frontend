@@ -117,11 +117,10 @@ const AdminDashboard = () => {
               <summary className="task-summary">
                 <div className="task-row">
                   <span><strong>No:</strong> {task.FirNumber}</span>
-                  <span><strong></strong> {task.FileName || 'Unnamed Document'}</span>
                   <span><strong></strong> {task.AssigneeUserId || 'Unassigned'}</span>
                   <span>
-                    <button onClick={() => handleViewDocument(task.documentUrl)}>View File</button>
-                    <button onClick={() => handleDeleteTask(task.FirNumber)}>Delete FIR</button>
+                    <button onClick={() => handleViewDocument(task.documentUrl)}>View</button>
+                    <button onClick={() => handleDeleteTask(task.FirNumber)}>Delete</button>
                   </span>
                 </div>
               </summary>
@@ -137,7 +136,7 @@ const AdminDashboard = () => {
                     <tr>
                       <td>{task.FileName || 'Unnamed Document'}</td>
                       <td>
-                        <button onClick={() => handleViewDocument(task.documentUrl)}>View Document</button>
+                        <button onClick={() => handleViewDocument(task.documentUrl)}>View</button>
                         <button onClick={() => apiService.editTask(task.FirNumber)}>Edit</button>
                         <button onClick={() => handleDeleteTask(task.FirNumber)}>Delete</button>
                         <button onClick={() => apiService.printTask(task.FirNumber)}>Print</button>
@@ -188,8 +187,8 @@ const AdminDashboard = () => {
             >
               <option value="">Select Assignee</option>
               {assignees.map((assignee) => (
-                <option key={assignee.id} value={assignee.id}>
-                  {assignee.name}
+                <option key={assignee.UserId} value={assignee.UserId}>
+                  {assignee.UserName}
                 </option>
               ))}
             </select>
