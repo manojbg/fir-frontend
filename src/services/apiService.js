@@ -66,8 +66,33 @@ const getAllTasks = async (pageNumber = 0, size = 10) => {
   }
 };
 
-const assignTask = async (taskId, userId) => {
-  return "";
+const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId }) => {
+  try {
+    const payload = {
+      FirNumber,
+      FileName,
+      AttachmentFileBytes,
+      AssigneeUserId,
+    };
+
+    const response = await fetch(`${API_URL}/user/assignOrDeAssignUserToFIR`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response;
+  } catch (error) {
+    console.error('Error creating task:', error);
+    throw error;
+  }
 };
 
 const createTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId }) => {
@@ -119,10 +144,44 @@ const getAssignees = async () => {
   }
 };
 
+const deleteTask = async (firNumber) =>{
+  try {
+    const payload = [
+      {
+        AssigneeUserId: '',
+        AttachmentFileBytes: '',
+        CreatedDateTime: '',
+        FileName: '',
+        FirNumber: firNumber,
+      },
+    ];
+
+    const response = await fetch(`${API_URL}/fileOps/deleteFIRs`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    alert('FIR deleted successfully');
+  } catch (error) {
+    alert('Error deleting FIR. Please try again.');
+    console.error('Delete Task Error:', error);
+  }
+
+};
+
 export default {
   login,
   getAllTasks,
   assignTask,
   createTask,
   getAssignees,
+  deleteTask,
 };

@@ -14,7 +14,11 @@ const AdminDashboard = () => {
   const [assignPopup, setAssignPopup] = useState({ visible: false, FirNumber: '', AssigneeUserId: '' });
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    fetchTasks();
+    fetchAssignees();
+  }, [currentPage]);
+
+  const fetchTasks = async () => {
       try {
         const response = await apiService.getAllTasks(currentPage - 1, pageSize);
         const processedTasks = (response.content || []).map((task) => {
@@ -35,20 +39,16 @@ const AdminDashboard = () => {
         console.error('Error fetching tasks:', error);
         setTasks([]);
       }
-    };
+  };
 
-    const fetchAssignees = async () => {
+  const fetchAssignees = async () => {
       try {
         const assigneeList = await apiService.getAssignees();
         setAssignees(assigneeList);
       } catch (error) {
         console.error('Error fetching assignees:', error);
       }
-    };
-
-    fetchTasks();
-    fetchAssignees();
-  }, [currentPage]);
+  };
 
   const handleViewDocument = (documentUrl) => {
     if (documentUrl) {
@@ -59,13 +59,11 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteTask = async (firNumber) => {
-    try {
-      await apiService.deleteTask(firNumber);
-      alert('FIR deleted successfully');
-      setTasks(tasks.filter((task) => task.FirNumber !== firNumber));
-    } catch (error) {
-      alert('Error deleting FIR. Please try again.');
-    }
+    const confirmDelete = window.confirm(`Are you sure you want to delete FIR Number: ${firNumber}?`);
+    if (!confirmDelete) return;
+
+    await apiService.deleteTask(firNumber);
+    fetchTasks(); // Refresh the task list
   };
 
   const handleCreateTask = async () => {
@@ -84,6 +82,7 @@ const AdminDashboard = () => {
         setShowPopup(false);
         setNewTask({ FirNumber: '', file: null, AssigneeUserId: '' });
         setCurrentPage(1); // Reset to first page to see the new task
+        fetchTasks();
       };
       fileReader.readAsDataURL(newTask.file);
     } catch (error) {
@@ -104,6 +103,7 @@ const AdminDashboard = () => {
       await apiService.assignTask(payload);
       alert('Assignee updated successfully');
       setAssignPopup({ visible: false, FirNumber: '', AssigneeUserId: '' });
+      fetchTasks();
     } catch (error) {
       alert('Error assigning FIR. Please try again.');
     }
@@ -121,8 +121,8 @@ const AdminDashboard = () => {
     setNewTask({ ...newTask, file: e.target.files[0] });
   };
 
-  const handleAssignPopup = (firNumber) => {
-    setAssignPopup({ visible: true, FirNumber: firNumber, AssigneeUserId: '' });
+  const handleAssignPopup = (FirNumber, AssigneeUserId) => {
+    setAssignPopup({ visible: true, FirNumber: FirNumber, AssigneeUserId: AssigneeUserId });
   };
 
   return (
@@ -142,7 +142,7 @@ const AdminDashboard = () => {
                   <span><strong>No:</strong> {task.FirNumber}</span>
                   <span><strong></strong> {task.AssigneeUserId || 'Unassigned'}</span>
                   <span>
-                    <button onClick={() => handleAssignPopup(task.documentUrl)}>Assign</button>
+                    <button onClick={() => handleAssignPopup(task.FirNumber, task.AssigneeUserId || '')}>Assign</button>
                     <button onClick={() => handleViewDocument(task.documentUrl)}>View</button>
                     <button onClick={() => handleDeleteTask(task.FirNumber)}>Delete</button>
                   </span>
