@@ -7,6 +7,16 @@ body {
     justify-content: center;
     align-items: center;
   }
+
+  .login-container-body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #fa84d1, #fa849c);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
   
   .login-container,
   .welcome-container {

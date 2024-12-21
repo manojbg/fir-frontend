@@ -1,9 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/apiService';
 import '../styles/Login.css';
 
 const Login = () => {
+
+  useEffect(() => {
+    // Add class to the body tag for this page
+    document.body.classList.add('login-container-body');
+  
+    // Cleanup by removing the class when the component unmounts
+    return () => {
+      document.body.classList.remove('login-container-body');
+    };
+  }, []);
+
   const [credentials, setCredentials] = useState({
     userId: '',
     password: '',
