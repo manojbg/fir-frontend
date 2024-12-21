@@ -1,5 +1,27 @@
 .admin-dashboard {
     padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .create-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  .create-button:hover {
+    background-color: #45a049;
   }
   
   .task-list {
@@ -15,30 +37,48 @@
   }
   
   .task-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-weight: bold;
     cursor: pointer;
+  }
+  
+  .task-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
   }
   
   .task-details {
     margin-top: 10px;
   }
   
-  .task-actions button {
-    margin-right: 10px;
-    padding: 5px 10px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
+  .task-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
   }
   
-  .task-actions button:hover {
-    background-color: #45a049;
+  .task-table th, .task-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
   }
   
-  .create-button {
+  .task-table th {
+    background-color: #f4f4f4;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  .pagination-button {
     background-color: #4CAF50;
     color: white;
     border: none;
@@ -46,65 +86,74 @@
     border-radius: 5px;
     font-size: 16px;
     cursor: pointer;
-    margin-bottom: 20px;
+    margin: 0 10px;
   }
   
-  .create-button:hover {
-    background-color: #45a049;
+  .pagination-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
   }
+  
+  .pagination span {
+    font-size: 16px;
+  }
+
   
   .popup {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
   }
   
   .popup-content {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 400px;
-    text-align: center;
-  }
-  
-  .popup-content label {
-    display: block;
-    margin: 10px 0 5px;
-    font-size: 14px;
-  }
-  
-  .popup-content input, .popup-content select {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
   
   .popup-buttons {
     display: flex;
     justify-content: space-between;
-    margin-top: 10px;
   }
   
   .popup-buttons button {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
     padding: 10px 15px;
+    border: none;
     border-radius: 5px;
-    font-size: 14px;
     cursor: pointer;
   }
   
-  .popup-buttons button:hover {
+  .popup-buttons button:first-child {
+    background-color: #4CAF50;
+    color: white;
+  }
+  
+  .popup-buttons button:first-child:hover {
     background-color: #45a049;
+  }
+  
+  .popup-buttons button:last-child {
+    background-color: #f44336;
+    color: white;
+  }
+  
+  .popup-buttons button:last-child:hover {
+    background-color: #e53935;
+  }
+
+  .popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
   }
   

@@ -40,54 +40,43 @@ const getAllTasks = async (pageNumber = 0, size = 10) => {
     }
     const data = await response.json();
 
-    // Convert byte array to document URL
+    // Process tasks and create document URLs
     const tasks = (data.content || []).map((task) => {
-      const documents = (task.attachmentFileBytes || []).map((doc) => {
-        if (!doc.attachmentFileBytes || !Array.isArray(doc.attachmentFileBytes)) {
-          console.warn('Invalid or missing attachmentFileBytes:', doc);
-          return { ...doc, documentUrl: null };
-        }
+      const documentUrl = task.AttachmentFileBytes
+        ? (() => {
+            const byteArray = Uint8Array.from(atob(task.AttachmentFileBytes), (c) => c.charCodeAt(0));
+            const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming PDFs
+            return URL.createObjectURL(blob);
+          })()
+        : null;
 
-        const byteArray = new Uint8Array(doc.attachmentFileBytes);
-        const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming documents are PDFs
-        const url = URL.createObjectURL(blob);
-        return { ...doc, documentUrl: url };
-      });
-      return { ...task, documents };
+      return {
+        ...task,
+        documentUrl,
+      };
     });
 
-    return { ...data, content: tasks };
+    return {
+      ...data,
+      content: tasks,
+    };
   } catch (error) {
     console.error('Error fetching all tasks:', error);
     throw error;
   }
 };
 
-
-
 const assignTask = async (taskId, userId) => {
   return "";
 };
 
-const createTask = async ({ firNumber, file, assigneeUserId }) => {
+const createTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId }) => {
   try {
-    // Convert file to byte array
-    const fileReader = new FileReader();
-    const fileBytes = await new Promise((resolve, reject) => {
-      fileReader.onloadend = () => {
-        const arrayBuffer = fileReader.result;
-        const byteArray = new Uint8Array(arrayBuffer);
-        resolve(Array.from(byteArray));
-      };
-      fileReader.onerror = reject;
-      fileReader.readAsArrayBuffer(file);
-    });
-
     const payload = {
-      AssigneeUserId: assigneeUserId,
-      AttachmentFileBytes: fileBytes,
-      CreatedDateTime: '',
-      FirNumber: firNumber,
+      FirNumber,
+      FileName,
+      AttachmentFileBytes,
+      AssigneeUserId,
     };
 
     const response = await fetch(`${API_URL}/fileOps/saveFIRDocument`, {
@@ -103,7 +92,7 @@ const createTask = async ({ firNumber, file, assigneeUserId }) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    return await response;
   } catch (error) {
     console.error('Error creating task:', error);
     throw error;
