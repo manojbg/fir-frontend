@@ -11,6 +11,7 @@ const AdminDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [showPopup, setShowPopup] = useState(false);
   const [newTask, setNewTask] = useState({ FirNumber: '', file: null, AssigneeUserId: '' });
+  const [assignPopup, setAssignPopup] = useState({ visible: false, FirNumber: '', AssigneeUserId: '' });
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -90,6 +91,24 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleSaveAssignee = async () => {
+    try {
+      const payload = {
+        AssigneeUserId: assignPopup.AssigneeUserId,
+        FirNumber: assignPopup.FirNumber,
+        AttachmentFileBytes: '',
+        CreatedDateTime: '',
+        FileName: '',
+      };
+
+      await apiService.assignTask(payload);
+      alert('Assignee updated successfully');
+      setAssignPopup({ visible: false, FirNumber: '', AssigneeUserId: '' });
+    } catch (error) {
+      alert('Error assigning FIR. Please try again.');
+    }
+  };
+
   const handlePreviousPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
@@ -100,6 +119,10 @@ const AdminDashboard = () => {
 
   const handleFileUpload = (e) => {
     setNewTask({ ...newTask, file: e.target.files[0] });
+  };
+
+  const handleAssignPopup = (firNumber) => {
+    setAssignPopup({ visible: true, FirNumber: firNumber, AssigneeUserId: '' });
   };
 
   return (
@@ -119,6 +142,7 @@ const AdminDashboard = () => {
                   <span><strong>No:</strong> {task.FirNumber}</span>
                   <span><strong></strong> {task.AssigneeUserId || 'Unassigned'}</span>
                   <span>
+                    <button onClick={() => handleAssignPopup(task.documentUrl)}>Assign</button>
                     <button onClick={() => handleViewDocument(task.documentUrl)}>View</button>
                     <button onClick={() => handleDeleteTask(task.FirNumber)}>Delete</button>
                   </span>
@@ -195,6 +219,30 @@ const AdminDashboard = () => {
             <div className="popup-buttons">
               <button onClick={handleCreateTask}>Save</button>
               <button onClick={() => setShowPopup(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {assignPopup.visible && (
+        <div className="popup">
+          <div className="popup-content">
+            <h2>Assign Assignee</h2>
+            <p>FIR Number: {assignPopup.FirNumber}</p>
+            <label>Assignee:</label>
+            <select
+              value={assignPopup.AssigneeUserId}
+              onChange={(e) => setAssignPopup({ ...assignPopup, AssigneeUserId: e.target.value })}
+            >
+              <option value="">Select Assignee</option>
+              {assignees.map((assignee) => (
+                <option key={assignee.UserId} value={assignee.UserId}>
+                  {assignee.UserName}
+                </option>
+              ))}
+            </select>
+            <div className="popup-buttons">
+              <button onClick={handleSaveAssignee}>Save</button>
+              <button onClick={() => setAssignPopup({ visible: false, FirNumber: '', AssigneeUserId: '' })}>Cancel</button>
             </div>
           </div>
         </div>
