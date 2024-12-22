@@ -38,7 +38,6 @@ const Login = () => {
       const response = await apiService.login(userDetails);
 
       if (response && response.Role) {
-        alert(`Welcome ${response.UserName || 'User'}, Role: ${response.Role}`);
         navigate('/admin');
       } else {
         alert('Login failed. Invalid credentials.');
