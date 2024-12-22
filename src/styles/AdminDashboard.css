@@ -21,13 +21,19 @@
   
   .create-button {
     border: solid;
-    padding: 2%;
-    border-radius: 5px;
+    border-radius: 10px;
     font-size: 16px;
     cursor: pointer;
+<<<<<<< HEAD
     width: 98%;
     margin: 1%;
     border-color: #90ee90;
+=======
+    width: 25%;
+    margin: 1%;
+    border-color: #90ee90;
+    float : right
+>>>>>>> 63fd83e7d7a0cf4afeeecd47216a9deca71f7e9d
   }
   
   .create-button:hover {
@@ -36,6 +42,7 @@
   
   .task-list {
     margin-top: 20px;
+    background-color: white
   }
   
   .task-item {
@@ -45,7 +52,16 @@
     padding: 10px;
     background-color: #f9f9f9;
   }
-  
+
+  .task-header {
+    display: flex;
+    width: 98%;
+    justify-content: space-between;
+    background-color: lightgray;
+    font-weight: 700;
+    padding: 1%;
+  }
+
   .task-summary {
     display: flex;
     justify-content: space-between;
@@ -197,12 +213,21 @@
   }
 
   .create-button-image {
-    padding : 10% 10% 0% 10%;
     background : url("./assets/images/add.png");
     background-size: contain;
     background-repeat: no-repeat;
+<<<<<<< HEAD
     padding: 2%;
     margin-right: 2%;
+=======
+    height: 50px;
+    width: 50px;
+  }
+
+  .create-button-span {
+    position: relative;
+    top: -15px;
+>>>>>>> 63fd83e7d7a0cf4afeeecd47216a9deca71f7e9d
   }
 
   .rounded {
@@ -292,4 +317,27 @@
     vertical-align: super;
   }
 
+<<<<<<< HEAD
+=======
+  .pulse-button {
+    /* Button default styles, customize them to match your button */
+    display: inline-block;
+    /* Apply the pulse animation */
+    animation: pulse 1s infinite;
+  }
+
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+>>>>>>> 63fd83e7d7a0cf4afeeecd47216a9deca71f7e9d
   

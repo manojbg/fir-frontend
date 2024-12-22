@@ -141,12 +141,25 @@ const AdminDashboard = () => {
         <button className="logout-button" onClick={() => setShowPopup(true)}>
         </button>
       </header>
+<<<<<<< HEAD
       <button className="create-button" onClick={() => setShowPopup(true)}>
       <i className = "create-button-image"></i>Create New FIR</button>
       <hr className="rounded"></hr>
       <h2 className="section-title">LIST OF FIRs</h2>
+=======
+>>>>>>> 63fd83e7d7a0cf4afeeecd47216a9deca71f7e9d
       <div className="admin-dashboard">
+      <button className="create-button pulse-button" onClick={() => setShowPopup(true)}>
+      <img className = "create-button-image"></img><span className="create-button-span">Create New FIR</span></button>
+      <hr className="rounded"></hr>
+      <h2 className="section-title">LIST OF FIRs</h2>
+
       <div className="task-list">
+      <div className="task-header">
+      <span>FIR</span>
+      <span>ASSIGNEE</span>
+      <span>ACTIONS</span></div>
+
         {tasks.length > 0 ? (
           tasks.map((task) => (
             <details key={task.FirNumber} className="task-item">
