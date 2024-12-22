@@ -1,7 +1,6 @@
 body {
     margin: 0;
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #84fab0, #8fd3f4);
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -11,11 +10,13 @@ body {
   .login-container-body {
     margin: 0;
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #fa84d1, #fa849c);
+    background-image : url("./assets/images/ksplogo2.png");
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
+    background-repeat : round;
+    background-position-x : -90%;
   }
   
   .login-container,
@@ -25,10 +26,10 @@ body {
     align-items: center;
     height: 100vh;
     width: 100%;
+    margin-left : 50%;
   }
   
   .login-card {
-    background: white;
     padding: 40px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -43,7 +44,7 @@ body {
   }
   
   .login-input {
-    width: 100%;
+    width: 94%;
     padding: 12px;
     margin: 10px 0;
     border: 1px solid #ccc;
