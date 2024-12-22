@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import apiService from '../services/apiService';
 import '../styles/AdminDashboard.css';
+import logo from '../styles/assets/images/ksplogo1.jpg';
 
 const AdminDashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -16,6 +17,12 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchTasks();
     fetchAssignees();
+    document.querySelector("#root").classList.add('admin-dashboard-root');
+
+        // Cleanup by removing the class when the component unmounts
+        return () => {
+          document.querySelector("#root").classList.remove('admin-dashboard-root');
+        };
   }, [currentPage]);
 
   const fetchTasks = async () => {
@@ -126,26 +133,32 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="admin-dashboard">
+    <div>
       <header className="dashboard-header">
-        <h1>Admin Dashboard</h1>
-        <button className="create-button" onClick={() => setShowPopup(true)}>
-          Create New FIR
+      <img className="navbar-brand" src={logo}></img>
+      				<a class="navbar-brand-text">KSP</a>
+        <h1 className="page-title">Dashboard</h1>
+        <button className="logout-button" onClick={() => setShowPopup(true)}>
         </button>
       </header>
+      <button className="create-button" onClick={() => setShowPopup(true)}>
+      <i className = "create-button-image"></i>Create New FIR</button>
+      <hr className="rounded"></hr>
+      <h2 className="section-title">LIST OF FIRs</h2>
+      <div className="admin-dashboard">
       <div className="task-list">
         {tasks.length > 0 ? (
           tasks.map((task) => (
             <details key={task.FirNumber} className="task-item">
               <summary className="task-summary">
                 <div className="task-row">
-                  <span><strong>No:</strong> {task.FirNumber}</span>
-                  <span><strong></strong> {task.AssigneeUserId || 'Unassigned'}</span>
-                  <span>
-                    <button onClick={() => handleAssignPopup(task.FirNumber, task.AssigneeUserId || '')}>Assign</button>
-                    <button onClick={() => handleViewDocument(task.documentUrl)}>View</button>
-                    <button onClick={() => handleDeleteTask(task.FirNumber)}>Delete</button>
-                  </span>
+                  <div><img className="arrow"></img><span className="task-table-span"><strong>No:</strong> {task.FirNumber}</span></div>
+                  <div><strong></strong> {task.AssigneeUserId || 'Unassigned'}</div>
+                  <div className="actions-span">
+                    <button className="action-buttons-mainlist assign-button" onClick={() => handleAssignPopup(task.FirNumber, task.AssigneeUserId || '')}></button>
+                    <button className="action-buttons-mainlist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
+                    <button className="action-buttons-mainlist delete-button" onClick={() => handleDeleteTask(task.FirNumber)}></button>
+                  </div>
                 </div>
               </summary>
               <div className="task-details">
@@ -159,11 +172,11 @@ const AdminDashboard = () => {
                   <tbody>
                     <tr>
                       <td>{task.FileName || 'Unnamed Document'}</td>
-                      <td>
-                        <button onClick={() => handleViewDocument(task.documentUrl)}>View</button>
-                        <button onClick={() => apiService.editTask(task.FirNumber)}>Edit</button>
-                        <button onClick={() => handleDeleteTask(task.FirNumber)}>Delete</button>
-                        <button onClick={() => apiService.printTask(task.FirNumber)}>Print</button>
+                      <td className="task-table-column">
+                        <button className="action-buttons-sublist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
+                        <button className="action-buttons-sublist edit-button" onClick={() => apiService.editTask(task.FirNumber)}></button>
+                        <button className="action-buttons-sublist delete-button" onClick={() => handleDeleteTask(task.FirNumber)}></button>
+                        <button className="action-buttons-sublist print-button" onClick={() => apiService.printTask(task.FirNumber)}></button>
                       </td>
                     </tr>
                   </tbody>
@@ -195,7 +208,7 @@ const AdminDashboard = () => {
       {showPopup && (
         <div className="popup">
           <div className="popup-content">
-            <h2>Create FIR</h2>
+            <h2 className="popup-header"><u>Create FIR</u></h2>
             <label>FIR Number:</label>
             <input
               type="text"
@@ -226,10 +239,11 @@ const AdminDashboard = () => {
       {assignPopup.visible && (
         <div className="popup">
           <div className="popup-content">
-            <h2>Assign Assignee</h2>
-            <p>FIR Number: {assignPopup.FirNumber}</p>
-            <label>Assignee:</label>
-            <select
+            <h2 className="popup-header"><u>Assign Assignee</u></h2>
+            <p>FIR Number : {assignPopup.FirNumber}</p>
+            <div>
+            <label>Assignee : </label>
+            <select className="assignee-select"
               value={assignPopup.AssigneeUserId}
               onChange={(e) => setAssignPopup({ ...assignPopup, AssigneeUserId: e.target.value })}
             >
@@ -240,6 +254,7 @@ const AdminDashboard = () => {
                 </option>
               ))}
             </select>
+            </div>
             <div className="popup-buttons">
               <button onClick={handleSaveAssignee}>Save</button>
               <button onClick={() => setAssignPopup({ visible: false, FirNumber: '', AssigneeUserId: '' })}>Cancel</button>
@@ -247,6 +262,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };
