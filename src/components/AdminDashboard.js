@@ -1,8 +1,9 @@
 // Updated AdminDashboard.js
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import apiService from '../services/apiService';
 import '../styles/AdminDashboard.css';
 import logo from '../styles/assets/images/ksplogo1.jpg';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -14,7 +15,8 @@ const AdminDashboard = () => {
   const [newTask, setNewTask] = useState({ FirNumber: '', file: null, AssigneeUserId: '' });
   const [assignPopup, setAssignPopup] = useState({ visible: false, FirNumber: '', AssigneeUserId: '' });
   const [createFormPopup, setCreateFormPopup] = useState({ visible: false, FirNumber: '', FileName: '' });
-const searchBox = React.createRef(null);
+  const searchBox = React.createRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchTasks();
@@ -30,19 +32,7 @@ const searchBox = React.createRef(null);
   const fetchTasks = async () => {
       try {
         const response = await apiService.getAllTasks(currentPage - 1, pageSize);
-        const processedTasks = (response.content || []).map((task) => {
-          const documentUrl = task.AttachmentFileBytes
-            ? (() => {
-                const byteArray = Uint8Array.from(atob(task.AttachmentFileBytes), (c) => c.charCodeAt(0));
-                const blob = new Blob([byteArray], { type: 'application/pdf' });
-                return URL.createObjectURL(blob);
-              })()
-            : null;
-
-          return { ...task, documentUrl };
-        });
-
-        setTasks(processedTasks);
+        setTasks(response.content);
         setTotalPages(response.totalPages || 1);
       } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -75,13 +65,17 @@ const searchBox = React.createRef(null);
     fetchTasks(); // Refresh the task list
   };
 
-  const HandleSearchByIdTask = () => {
-    //alert(`function`)
-  //const searchBox = useRef(null)
-  const div = searchBox.current
-  alert(`${div.value}`)
-    //await apiService.searchByIdTask(firNumber);
-   // fetchTasks(); // Refresh the task list
+  const HandleSearchByIdTask = async () => {
+    const div = searchBox.current;
+    const firNumber = div.value;
+    try{
+     const response = await apiService.searchByIdTask(firNumber);
+     setTasks(response.content);
+    }
+    catch (error) {
+     console.error('Error fetching tasks:', error);
+     setTasks([]);
+    }
   };
 
   const handleSearchByDateTask = async (date) => {
@@ -172,7 +166,11 @@ const searchBox = React.createRef(null);
 
   const handleFormCreationPopup = (FirNumber, FileName) => {
       setCreateFormPopup({ visible: true, FirNumber: FirNumber, FileName : FileName });
-    };
+  };
+
+  const handleLogout = () => {
+     navigate("/");
+  };
 
   return (
     <div>
@@ -180,7 +178,7 @@ const searchBox = React.createRef(null);
       <img className="navbar-brand" src={logo}></img>
       				<a className="navbar-brand-text">KSP</a>
         <h1 className="page-title">Dashboard</h1>
-        <button className="logout-button" onClick={() => setShowPopup(true)}>
+        <button className="logout-button" onClick={() => handleLogout()}>
         </button>
       </header>
       <button className="create-button" onClick={() => setShowPopup(true)}>
@@ -191,8 +189,8 @@ const searchBox = React.createRef(null);
       <div className="search-section">
       <h2 className="section-title">SEARCH</h2>
       <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => HandleSearchByIdTask()}></button>
-      <label>Enter Date : </label><input type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask}></button>
-
+      <label> || &nbsp;&nbsp;&nbsp;&nbsp;Enter Date : </label><input type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
+<label> || &nbsp;&nbsp;&nbsp;&nbsp;Un-Assigned  </label><label class="switch"><input type="checkbox"></input><span class="slider round"></span></label><label>  Assigned</label><button className="search-buttons" onClick={() => handleSearchByAssignedOrUnAssignedTask()}></button>
       </div>
       <button className="create-button pulse-button" onClick={() => setShowPopup(true)}>
       <img className = "create-button-image"></img><span className="create-button-span">Upload New FIR</span></button>
@@ -211,13 +209,13 @@ const searchBox = React.createRef(null);
             <details key={task.FirNumber} className="task-item">
               <summary className="task-summary">
                 <div className="task-row">
-                  <div><img className="arrow"></img><span className="task-table-span"><strong>No:</strong> {task.FirNumber}</span></div>
-                  <div><strong></strong> {task.AssigneeUserId || 'Unassigned'}</div>
+                  <div><img className="arrow"></img><span className="task-table-span"><strong>No:</strong> {task.Fir.FirNumber}</span></div>
+                  <div><strong></strong> {task.Fir.AssigneeUserId || 'Unassigned'}</div>
                   <div className="actions-span">
-                    <button className="action-buttons-mainlist assign-button" onClick={() => handleAssignPopup(task.FirNumber, task.AssigneeUserId || '')}></button>
-                    <button className="action-buttons-mainlist add-button" onClick={() => handleFormCreationPopup(task.FirNumber, '')}></button>
+                    <button className="action-buttons-mainlist assign-button" onClick={() => handleAssignPopup(task.Fir.FirNumber, task.AssigneeUserId || '')}></button>
+                    <button className="action-buttons-mainlist add-button" onClick={() => handleFormCreationPopup(task.Fir.FirNumber, '')}></button>
                     <button className="action-buttons-mainlist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
-                    <button className="action-buttons-mainlist delete-button" onClick={() => handleDeleteTask(task.FirNumber)}></button>
+                    <button className="action-buttons-mainlist delete-button" onClick={() => handleDeleteTask(task.Fir.FirNumber)}></button>
                   </div>
                 </div>
               </summary>
@@ -230,6 +228,7 @@ const searchBox = React.createRef(null);
                     </tr>
                   </thead>
                   <tbody>
+                //  task.FirSupportingDocumentList.map((firSupportingDocumentList) => (
                     <tr>
                       <td>{task.FileName || 'Unnamed Document'}</td>
                       <td className="task-table-column">
@@ -239,6 +238,7 @@ const searchBox = React.createRef(null);
                         <button className="action-buttons-sublist print-button" onClick={() => apiService.printTask(task.FirNumber)}></button>
                       </td>
                     </tr>
+                   // ))
                   </tbody>
                 </table>
               </div>

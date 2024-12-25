@@ -1,4 +1,4 @@
-.admin-dashboard-root {
+  .admin-dashboard-root {
     width : 100%;
     height : 100%;
  }
@@ -24,10 +24,7 @@
     border-radius: 10px;
     font-size: 16px;
     cursor: pointer;
-    width: 98%;
-    margin: 1%;
-    border-color: #90ee90;
-    width: 25%;
+    width: 20%;
     margin: 1%;
     border-color: #90ee90;
     float : right
@@ -210,11 +207,15 @@
     margin: 1%;
   }
 
+  .logout-button:hover{
+    transform: scale(1.5);
+  }
+
   .create-button-image {
     background : url("./assets/images/add.png");
     background-size: contain;
     background-repeat: no-repeat;
-        padding: 2%;
+    padding: 2%;
     margin-right: 2%;
     height: 50px;
     width: 50px;
@@ -243,11 +244,19 @@
     margin-right: 10%;
   }
 
+  .action-buttons-mainlist:hover{
+    transform: scale(1.5);
+  }
+
   .action-buttons-sublist {
     cursor: pointer;
     padding: 5%;
     border: none;
     margin: 5%;
+  }
+
+  .action-buttons-sublist:hover{
+    transform: scale(1.5);
   }
 
    .view-button {
@@ -347,6 +356,11 @@
     margin: 1%;
     position: relative;
     top: -5px;
+    border-bottom : 1px solid black;
+  }
+
+  .search-buttons:hover{
+    transform: scale(1.5);
   }
 
   .switch {
@@ -366,10 +380,10 @@
   .slider {
     position: absolute;
     cursor: pointer;
-    top: 0;
+    top: -10px;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: 10px;
     background-color: #ccc;
     -webkit-transition: .4s;
     transition: .4s;
@@ -410,7 +424,8 @@
     border-radius: 50%;
   }
 
-  .search-box{
-
+  .search-section{
+    width: 75%;
+    display: inline-block;
   }
   
