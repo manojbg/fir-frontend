@@ -65,7 +65,7 @@ const AdminDashboard = () => {
     fetchTasks(); // Refresh the task list
   };
 
-  const HandleSearchByIdTask = async () => {
+  const handleSearchByIdTask = async () => {
     const div = searchBox.current;
     const firNumber = div.value;
     try{
@@ -84,8 +84,13 @@ const AdminDashboard = () => {
   };
 
   const handleSearchByAssignedOrUnAssignedTask = async (assigned) => {
-    await apiService.getAllTasksByAssignedOrUnAssigned(assigned,currentPage - 1, pageSize);
-    fetchTasks(); // Refresh the task list
+    try{
+      const response =await apiService.getAllTasksByAssignedOrUnAssigned(true,currentPage - 1, pageSize);
+      setTasks(response.content);
+    }catch (error) {
+      console.error('Error fetching tasks:', error);
+      setTasks([]);
+     }
   };
 
   const handleCreateTask = async () => {
@@ -181,21 +186,16 @@ const AdminDashboard = () => {
         <button className="logout-button" onClick={() => handleLogout()}>
         </button>
       </header>
-      <button className="create-button" onClick={() => setShowPopup(true)}>
-      <i className = "create-button-image"></i>Create New FIR</button>
-      <hr className="rounded"></hr>
-      <h2 className="section-title">LIST OF FIRs</h2>
       <div className="admin-dashboard">
       <div className="search-section">
       <h2 className="section-title">SEARCH</h2>
-      <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => HandleSearchByIdTask()}></button>
+      <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
       <label> || &nbsp;&nbsp;&nbsp;&nbsp;Enter Date : </label><input type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
 <label> || &nbsp;&nbsp;&nbsp;&nbsp;Un-Assigned  </label><label class="switch"><input type="checkbox"></input><span class="slider round"></span></label><label>  Assigned</label><button className="search-buttons" onClick={() => handleSearchByAssignedOrUnAssignedTask()}></button>
       </div>
       <button className="create-button pulse-button" onClick={() => setShowPopup(true)}>
       <img className = "create-button-image"></img><span className="create-button-span">Upload New FIR</span></button>
 
-      <hr className="rounded"></hr>
       <h2 className="section-title">LIST OF FIRs</h2>
 
       <div className="task-list">
@@ -228,17 +228,15 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                //  task.FirSupportingDocumentList.map((firSupportingDocumentList) => (
-                    <tr>
-                      <td>{task.FileName || 'Unnamed Document'}</td>
-                      <td className="task-table-column">
-                        <button className="action-buttons-sublist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
+                    {task.FirSupportingDocumentList != null ? (
+                      <tr>
+                      <td>{task.FirSupportingDocumentList.FileName || 'Unnamed Document'}</td>
+                      <td className="task-table-column">                        
                         <button className="action-buttons-sublist edit-button" onClick={() => apiService.editTask(task.FirNumber)}></button>
+                        <button className="action-buttons-sublist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
                         <button className="action-buttons-sublist delete-button" onClick={() => handleDeleteTask(task.FirNumber)}></button>
-                        <button className="action-buttons-sublist print-button" onClick={() => apiService.printTask(task.FirNumber)}></button>
                       </td>
-                    </tr>
-                   // ))
+                    </tr>) :(<p>No Document</p>)}
                   </tbody>
                 </table>
               </div>

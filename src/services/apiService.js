@@ -53,7 +53,7 @@ const getAllTasks = async (pageNumber = 0, size = 10) => {
 const processResponseData = async (data) => {
 // Process tasks and create document URLs
     const tasks = (data.content || []).map((task) => {
-      const documentUrl = task.AttachmentFileBytes
+      const documentUrl = task.Fir.AttachmentFileBytes
         ? (() => {
             const byteArray = Uint8Array.from(atob(task.Fir.AttachmentFileBytes), (c) => c.charCodeAt(0));
             const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming PDFs
@@ -61,13 +61,13 @@ const processResponseData = async (data) => {
           })()
         : null;
 
-      return {
+      return{
         ...task,
         documentUrl,
       };
       });
 
-      return tasks;
+      return await tasks;
 };
 
 const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId }) => {
@@ -278,9 +278,9 @@ const getAllTasksByAssignedOrUnAssigned = async (assigned, pageNumber = 0, size 
 
     // Process tasks and create document URLs
     const tasks = (data.content || []).map((task) => {
-      const documentUrl = task.AttachmentFileBytes
+      const documentUrl = task.Fir.AttachmentFileBytes
         ? (() => {
-            const byteArray = Uint8Array.from(atob(task.AttachmentFileBytes), (c) => c.charCodeAt(0));
+            const byteArray = Uint8Array.from(atob(task.Fir.AttachmentFileBytes), (c) => c.charCodeAt(0));
             const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming PDFs
             return URL.createObjectURL(blob);
           })()
