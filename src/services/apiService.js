@@ -34,17 +34,28 @@ const login = async (userDetails) => {
 
 const getAllTasks = async (pageNumber = 0, size = 10) => {
   try {
-    const response = await fetch(`${API_URL}/dashboard/listAllFIRs?pageNumber=${pageNumber}&size=${size}`);
+    const response = await fetch(`${API_URL}/dashboard/listAllFIRsWithDocumentDataByUserId?userId=&pageNumber=${pageNumber}&size=${size}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
+    const tasks = await processResponseData(data);
+    return {
+      ...data,
+      content: tasks,
+    };
+  } catch (error) {
+    console.error('Error fetching all tasks:', error);
+    throw error;
+  }
+};
 
-    // Process tasks and create document URLs
+const processResponseData = async (data) => {
+// Process tasks and create document URLs
     const tasks = (data.content || []).map((task) => {
       const documentUrl = task.AttachmentFileBytes
         ? (() => {
-            const byteArray = Uint8Array.from(atob(task.AttachmentFileBytes), (c) => c.charCodeAt(0));
+            const byteArray = Uint8Array.from(atob(task.Fir.AttachmentFileBytes), (c) => c.charCodeAt(0));
             const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming PDFs
             return URL.createObjectURL(blob);
           })()
@@ -54,16 +65,9 @@ const getAllTasks = async (pageNumber = 0, size = 10) => {
         ...task,
         documentUrl,
       };
-    });
+      });
 
-    return {
-      ...data,
-      content: tasks,
-    };
-  } catch (error) {
-    console.error('Error fetching all tasks:', error);
-    throw error;
-  }
+      return tasks;
 };
 
 const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId }) => {
@@ -169,29 +173,30 @@ const deleteTask = async (firNumber) =>{
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    alert('FIR deleted successfully');
   } catch (error) {
     alert('Error deleting FIR. Please try again.');
     console.error('Delete Task Error:', error);
   }
 };
 
-const searchByIdTask = async (firNumber) =>{
+const searchByIdTask = async (firNumber) => {
+var data = null;
   try {
-    const response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: '*/*'
-      }
-    });
-
+    const response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+        data = await response.json();
+       const tasks = await processResponseData(data);
+        return {...data, tasks };
+
   } catch (error) {
-    alert('FIR Not Found');
+    alert('FIR not found due to an error');
         console.error('FIR Not Found:', error);
+        return {
+                  ...data,
+                  content: [],
+                };
   }
 };
 
