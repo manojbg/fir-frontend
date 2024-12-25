@@ -6,10 +6,14 @@
   .admin-dashboard {
     padding: 10px;
     font-family: Arial, sans-serif;
-    background : url("./assets/images/background1.jpg");
+    background : url("./assets/images/background2.jpg");
     overflow : auto;
     background-size: cover;
-    height : calc(100vh - 100px);
+    /* height: calc(70vh - 100px); */
+    background-repeat: no-repeat;
+    background-position: center;
+    border-bottom-left-radius: 20%;
+    border-bottom-right-radius: 20%;
   }
   
   .dashboard-header {
@@ -41,8 +45,8 @@
   .task-item {
     border: 1px solid #ccc;
     border-radius: 5px;
-    margin-bottom: 10px;
-    padding: 10px;
+    margin-bottom: 5px;
+    padding: 5px;
     background-color: #f9f9f9;
     border: 1px solid black;
   }
@@ -51,7 +55,7 @@
     display: flex;
     width: 98%;
     justify-content: space-between;
-    background-color: rgba(211, 211, 211, 0.8);
+    background-color: rgba(211, 211, 211, 1.0);
     font-weight: 700;
     padding: 1%;
   }
@@ -183,18 +187,14 @@
   .navbar-brand{
     height : 45px;
     margin: 1%;
+    animation: flip-with-rotate 1s infinite;
   }
 
   .navbar-brand-text
   {
-    font-size: xxx-large;
+    font-size: xx-large;
     font-weight: 700;
-  }
-
-  .page-title {
-    margin-left: auto;
-    margin-right: auto;
-    color: white;
+    color: maroon;
   }
 
   .logout-button {
@@ -204,7 +204,7 @@
     background-repeat: no-repeat;
     padding: 1%;
     border: none;
-    margin: 1%;
+    margin-left: 58%;
   }
 
   .logout-button:hover{
@@ -232,13 +232,13 @@
   }
 
   .actions-span {
-      width : 15%;
+      width : 10%;
       display: flex;
    }
 
   .action-buttons-mainlist {
     cursor: pointer;
-    padding: 8%;
+    padding: 9%;
     border: none;
     margin-bottom: 5%;
     margin-right: 10%;
@@ -250,9 +250,10 @@
 
   .action-buttons-sublist {
     cursor: pointer;
-    padding: 5%;
+    padding: 4%;
     border: none;
-    margin: 5%;
+    margin: 4%;
+    float : right;
   }
 
   .action-buttons-sublist:hover{
@@ -297,7 +298,7 @@
 
   .section-title {
     border-bottom: 4px solid black;
-    color: blue;
+    color: maroon;
   }
 
   .task-table-column {
@@ -320,7 +321,7 @@
     background-repeat : no-repeat;
     width: 22px;
     height: 22px;
-    transform: rotate(90deg);
+    transform: rotate(00deg);
   }
 
   .task-table-span {
@@ -351,9 +352,9 @@
     background-size : contain;
     background-repeat : no-repeat;
     cursor: pointer;
-    padding: 1%;
+    padding: 10px;
     border: none;
-    margin: 1%;
+    margin-left: 10px;
     position: relative;
     top: -5px;
     border-bottom : 1px solid black;
@@ -363,11 +364,20 @@
     transform: scale(1.5);
   }
 
+   .search-table{
+     width : 100%;
+     background-color: darkslategrey;
+     border: 1px solid;
+     border-radius: 25px;
+     margin-top: 2%;
+     color : white;
+   }
+
   .switch {
     position: relative;
     display: inline-block;
     width: 60px;
-    height: 34px;
+    height: 20px;
   }
 
   /* Hide default HTML checkbox */
@@ -380,10 +390,10 @@
   .slider {
     position: absolute;
     cursor: pointer;
-    top: -10px;
+    top: -5px;
     left: 0;
     right: 0;
-    bottom: 10px;
+    bottom: 0px;
     background-color: #ccc;
     -webkit-transition: .4s;
     transition: .4s;
@@ -392,10 +402,10 @@
   .slider:before {
     position: absolute;
     content: "";
-    height: 26px;
-    width: 26px;
+    height: 25px;
+    width: 25px;
     left: 4px;
-    bottom: 4px;
+    bottom: 0px;
     background-color: white;
     -webkit-transition: .4s;
     transition: .4s;
@@ -426,6 +436,76 @@
 
   .search-section{
     width: 75%;
-    display: inline-block;
+    margin-left: auto;
+    margin-right: auto;
   }
+
+  .create-table{
+    width : 100%;
+  }
+
+  .create-section{
+    width: 65%;
+    background-color: rgba(255,255,255,0.7);
+    margin-left: auto;
+    margin-right: auto;
+    border : 1px solid black;
+    border-radius : 25px;
+  }
+
+  .create-header{
+    padding: 1%;
+    text-align : center;
+    border-bottom : 1px solid black;
+    font-weight: 700;
+    font-size: x-large;
+  }
+
+  .create-table td{
+    padding : 2%;
+    font-weight : 600;
+  }
+
+  .create-table td:nth-child(even) {
+    width: 60%;
+    float: right;
+    padding-top: 4%
+  }
+
+  .fileInput {
+    width: 60%;
+  }
+
+  .search-table td{
+    padding : 2%;
+  }
+
+  .create-buttons{
+    justify-content: normal;
+  }
+
+  .create-buttons button{
+    margin-left: 29%;
+    margin-bottom: 1%;
+  }
+
+  .list-section{
+    padding : 2%;
+    padding-top: 0;
+  }
+
+  .required-field::after {
+      content: " * ";
+      color: red;
+  }
+
+  @keyframes flip-with-rotate {
+    0% {
+        transform: perspective(400px) rotateY(0);
+    }
+
+    100% {
+        transform: perspective(400px) rotateY(180deg);
+    }
+}
   
