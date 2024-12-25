@@ -42,10 +42,15 @@
         }
 
         span[placeholder]:empty:before {
-    content: attr(placeholder);
-    color: #555;
-}
-span{cursor:pointer;}
+        content: attr(placeholder);
+        color: #555;
+        }
+
+        span { cursor:pointer; }
+
+        .background-edit {
+        background-color : yellow;
+        }
 
     </style>
     <script>
@@ -53,32 +58,32 @@ span{cursor:pointer;}
         $("#addRowBtnAfter").click(function () {
             var newRow =
             "<tr>" +
-            "<td><div contenteditable>New Name</td>" +
-            "<td><div contenteditable>New Email</td>" +
-            "<td><div contenteditable>New Email</td>" +
+            "<td><div class="background-edit" contenteditable>New Name</td>" +
+            "<td><div class="background-edit" contenteditable>New Email</td>" +
+            "<td><div class="background-edit" contenteditable>New Email</td>" +
             '<td><button class="removeBtn">Delete</button></td>' +
             "</tr>";
 
             $("#table1 tbody tr:last").after(newRow);
          });
 
-        $(document).on("click", "#removeBtn", function () {
+        $(document).on("click", ".removeBtn", function () {
             $(this).closest("tr").remove();
          });
         });
 
         function save() {
-var obj = new Object();
-obj.caseIdentifier = $("#caseIdentifier").text();
-obj.reportingDate = $("#reportingDate").text();
-obj.reportingTime =  $("#reportingTime").text();
-obj.tableData = document.getElementById('table1').innerHTML;
-obj.toAddress = $("#toAddress").val();
-var string = JSON.stringify(obj);
-console.log(JSON.parse(string));
+          var obj = new Object();
+          obj.caseIdentifier = $("#caseIdentifier").text();
+          obj.reportingDate = $("#reportingDate").text();
+          obj.reportingTime =  $("#reportingTime").text();
+          obj.tableData = document.getElementById('table1').innerHTML;
+          obj.toAddress = $("#toAddress").val();
+          var string = JSON.stringify(obj);
+          console.log(JSON.parse(string));
 
-var obj2 = JSON.parse(string);
-console.log(obj.reportingDate);
+          var obj2 = JSON.parse(string);
+          console.log(obj.reportingDate);
         }
 
         function hideElementsForView()
@@ -86,7 +91,6 @@ console.log(obj.reportingDate);
         $('#myTable tr > *:nth-child(2)').hide();
         $('#addRowBtnAfter').hide()
         $('#saveForm').hide()
-        $('#printForm').hide()
         }
 
 
@@ -119,7 +123,7 @@ console.log(obj.reportingDate);
     </p>
     <br>
     <p style='text-align:right;'>
-        <strong><span>Date: <input type="text" id="datePicker"></span></strong>
+        <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
     </p>
     <br>
     <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
@@ -127,72 +131,71 @@ console.log(obj.reportingDate);
             In Exercise of the powers conferred U/s 94 of BNSS, I hereby inform you that during the investigation of FIR
             No
         </div>
-        <div id="caseIdentifier" style="display:inline" contenteditable>ENTER FIR NUMBER</div>
+        <div id="caseIdentifier" style="display:inline" class="background-edit" contenteditable>ENTER FIR NUMBER</div>
         <div style="display:inline"> registered in CEN Police Station, North Division Bengaluru. During the course of
             investigation, it is revealed that there are reasonable grounds to question you to ascertain/ circumstances
             the facts and circumstance from you.&nbsp;
         </div>
         <div>
             Hence you are directed to appear before me on
-            <div id="reportingDate" style="display:inline" contenteditable>--.--.----</div>
+            <div id="reportingDate" style="display:inline" class="background-edit" contenteditable>--.--.----</div>
             at
-            <div id="reportingTime" style="display:inline" contenteditable>00:00 AM</div>
+            <div id="reportingTime" style="display:inline" class="background-edit" contenteditable>00:00 AM</div>
             in CEN Police Station, North division, Bengaluru city for enquiry along with relevant documents.
         </div>
     </div>
-            <br>
-            <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center">
-                <tbody>
-                <tr>
-                    <td>
-                        <p><strong>BANK</strong></p>
-                    </td>
-                    <td>
-                        <p><strong>ACCOUNT NO</strong></p>
-                    </td>
-                    <td>
-                        <p><strong>IFSC CODE</strong></p>
-                    </td>
-                    <td id="actions">
-                        <p><strong>ACTIONS</strong></p>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div contenteditable>RBL Bank</div>
-                    </td>
-                    <td>
-                        <div contenteditable>409000546479</div>
-                    </td>
-                    <td>
-                        <div contenteditable>RATN0000104</div>
-                    </td>
-                    <td>
-                        <button id="delete">Delete</button>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-            <button style="float:right" id="addRowBtnAfter">Add Row</button>
-            <br>
-            <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
-            </p>
-            <br><br>
-            <div style="display: inline-block;width: 100%;">
-                <div style="float : right; text-align:center; width : 35%">
-                    <p>Assistant commissioner of police,</p>
-                    <p><strong>CEN police station,</strong></p>
-                    <p><strong>North division, Bengaluru city</strong></p>
-                </div>
-            </div>
-            <br>
-            <div style="display: inline-block;width: 30%;">
-                <p><strong>To,</strong></p>
-                <textarea id="toAddress" name="toAddress" rows="5" cols="30" style="border : none;"></textarea>
-            </div>
+    <br>
+    <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center">
+        <tbody>
+        <tr>
+            <td>
+                <p><strong>BANK</strong></p>
+            </td>
+            <td>
+                <p><strong>ACCOUNT NO</strong></p>
+            </td>
+            <td>
+                <p><strong>IFSC CODE</strong></p>
+            </td>
+            <td id="actions">
+                <p><strong>ACTIONS</strong></p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="background-edit" contenteditable>RBL Bank</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>409000546479</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>RATN0000104</div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <button style="float:right" id="addRowBtnAfter">Add Row</button>
+    <br>
+    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
+    </p>
+    <br><br>
+    <div style="display: inline-block;width: 100%;">
+        <div style="float : right; text-align:center; width : 35%">
+            <p>Assistant commissioner of police,</p>
+            <p><strong>CEN police station,</strong></p>
+            <p><strong>North division, Bengaluru city</strong></p>
+        </div>
+    </div>
+    <br>
+    <div style="display: inline-block;width: 30%;">
+        <p><strong>To,</strong></p>
+        <textarea id="toAddress" name="toAddress" rows="5" cols="30" style="border : none;"></textarea>
+    </div>
 </div>
-    <button style="display:inline; float:right" id="saveForm" onclick="save()">Save</button>
-    <button style="display:inline; float:right; margin-right:2%" id="printForm">Print</button>
+<button style="display:inline; float:right" id="saveForm" onclick="save()">Save</button>
 
 </body>
 </html>

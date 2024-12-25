@@ -16,6 +16,11 @@ const AdminDashboard = () => {
   const [assignPopup, setAssignPopup] = useState({ visible: false, FirNumber: '', AssigneeUserId: '' });
   const [createFormPopup, setCreateFormPopup] = useState({ visible: false, FirNumber: '', FileName: '' });
   const searchBox = React.createRef(null);
+  const searchDate = React.createRef(null);
+  const searchToggle = React.createRef(null);
+  const firNumber = React.createRef(null);
+  const firFile = React.createRef(null);
+  const firDate = React.createRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -65,9 +70,9 @@ const AdminDashboard = () => {
     fetchTasks(); // Refresh the task list
   };
 
-  const HandleSearchByIdTask = async () => {
-    const div = searchBox.current;
-    const firNumber = div.value;
+  const handleSearchByIdTask = async () => {
+    const input = searchBox.current;
+    const firNumber = input.value;
     try{
      const response = await apiService.searchByIdTask(firNumber);
      setTasks(response.content);
@@ -78,39 +83,71 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleSearchByDateTask = async (date) => {
-    await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
-    fetchTasks(); // Refresh the task list
+  const handleSearchByDateTask = async () => {
+    const input = searchDate.current;
+    const date = input.value;
+
+    try{
+      const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
+      setTasks(response.content);
+    }
+    catch (error) {
+      console.error('Error fetching tasks:', error);
+      setTasks([]);
+    }
   };
 
-  const handleSearchByAssignedOrUnAssignedTask = async (assigned) => {
-    await apiService.getAllTasksByAssignedOrUnAssigned(assigned,currentPage - 1, pageSize);
-    fetchTasks(); // Refresh the task list
+  const handleSearchByAssignedOrUnAssignedTask = async () => {
+    const input = searchToggle.current;
+    const assigned = input.checked;
+    alert(assigned);
+    try{
+      const response =await apiService.getAllTasksByAssignedOrUnAssigned(assigned,currentPage - 1, pageSize);
+      setTasks(response.content);
+    }catch (error) {
+      console.error('Error fetching tasks:', error);
+      setTasks([]);
+     }
   };
 
   const handleCreateTask = async () => {
-    try {
-      const fileReader = new FileReader();
-      fileReader.onload = async () => {
-        const base64File = fileReader.result.split(',')[1];
-        const taskData = {
-          FirNumber: newTask.FirNumber,
-          FileName: newTask.file.name,
-          AttachmentFileBytes: base64File,
-          AssigneeUserId: newTask.AssigneeUserId,
+    const firNumberInput = firNumber.current.value;
+    const firDateInput = firDate.current.value;
+    const firFileInput = firFile.current.value;
+
+    if(firNumberInput == '' || firDateInput == '' || firFileInput == '')
+    {
+      alert("Mandatory Fields Are Not Populated");
+    }
+    else{
+      try {
+        const fileReader = new FileReader();
+        fileReader.onload = async () => {
+          const base64File = fileReader.result.split(',')[1];
+          const taskData = {
+            FirNumber: newTask.FirNumber,
+            FileName: newTask.file.name,
+            AttachmentFileBytes: base64File,
+            AssigneeUserId: newTask.AssigneeUserId,
+          };
+          await apiService.createTask(taskData);
+          alert('FIR created successfully');
+          setNewTask({ FirNumber: '', file: null, AssigneeUserId: '' });
+          setCurrentPage(1); // Reset to first page to see the new task
+          fetchTasks();
         };
-        await apiService.createTask(taskData);
-        alert('FIR created successfully');
-        setShowPopup(false);
-        setNewTask({ FirNumber: '', file: null, AssigneeUserId: '' });
-        setCurrentPage(1); // Reset to first page to see the new task
-        fetchTasks();
-      };
-      fileReader.readAsDataURL(newTask.file);
-    } catch (error) {
-      alert('Error creating FIR. Please try again.');
+        fileReader.readAsDataURL(newTask.file);
+      } catch (error) {
+        alert('Error creating FIR. Please try again.');
+      }
     }
   };
+
+  const handleReset = async () => {
+    firNumber.current.value = '';
+    firDate.current.value = '';
+    firFile.current.value = '';
+  }
 
   const handleSaveAssignee = async () => {
     try {
@@ -132,6 +169,7 @@ const AdminDashboard = () => {
   };
 
   const handleCreateForm = async () => {
+  //updated method as required
     try {
       const payload = {
         FileName: createFormPopup.FileName,
@@ -139,7 +177,8 @@ const AdminDashboard = () => {
         FileContent: ''
       };
 
-      await apiService.assignTask(payload);
+
+      await apiService.createTaskItemData(payload);
       alert('Assignee updated successfully');
       setAssignPopup({ visible: false, FirNumber: '', AssigneeUserId: '' });
       fetchTasks();
@@ -174,48 +213,77 @@ const AdminDashboard = () => {
 
   return (
     <div>
-      <header className="dashboard-header">
-      <img className="navbar-brand" src={logo}></img>
-      				<a className="navbar-brand-text">KSP</a>
-        <h1 className="page-title">Dashboard</h1>
-        <button className="logout-button" onClick={() => handleLogout()}>
-        </button>
-      </header>
-      <button className="create-button" onClick={() => setShowPopup(true)}>
-      <i className = "create-button-image"></i>Create New FIR</button>
-      <hr className="rounded"></hr>
-      <h2 className="section-title">LIST OF FIRs</h2>
-      <div className="admin-dashboard">
-      <div className="search-section">
-      <h2 className="section-title">SEARCH</h2>
-      <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => HandleSearchByIdTask()}></button>
-      <label> || &nbsp;&nbsp;&nbsp;&nbsp;Enter Date : </label><input type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
-<label> || &nbsp;&nbsp;&nbsp;&nbsp;Un-Assigned  </label><label class="switch"><input type="checkbox"></input><span class="slider round"></span></label><label>  Assigned</label><button className="search-buttons" onClick={() => handleSearchByAssignedOrUnAssignedTask()}></button>
-      </div>
-      <button className="create-button pulse-button" onClick={() => setShowPopup(true)}>
-      <img className = "create-button-image"></img><span className="create-button-span">Upload New FIR</span></button>
+        <header className="dashboard-header">
+            <img className="navbar-brand" src={logo}></img>
+            <a className="navbar-brand-text">Crime Tracking System</a>
+            <button className="logout-button" onClick={() => handleLogout()}>
+            </button>
+        </header>
+        <div className="admin-dashboard">
+            <div className="create-section">
+                <div className="create-header">Upload FIR</div>
+                <table class="create-table"><tbody><tr><td >
+                    <label className="required-field">FIR Number : </label>
+                    <input ref={firNumber}
+                            type="text"
+                            value={newTask.FirNumber}
+                            onChange={(e) => setNewTask({ ...newTask, FirNumber: e.target.value })}
+                    /></td><td>
+                    <label className="required-field">File Upload : </label>
+                    <input ref={firFile} type="file" onChange={handleFileUpload} />
+                </td></tr><tr><td>
+                    <label>Assignee : </label>
+                    <select
+                            value={newTask.AssigneeUserId}
+                            onChange={(e) => setNewTask({ ...newTask, AssigneeUserId: e.target.value })}
+                    >
+                    <option value="">Select Assignee</option>
+                    {assignees.map((assignee) => (
+                    <option key={assignee.UserId} value={assignee.UserId}>
+                        {assignee.UserName}
+                    </option>
+                    ))}
+                    </select>
+                </td><td>
+                    <label className="required-field">FIR Date : </label>
+                    <input ref={firDate} type = "date"></input>
+                </td></tr></tbody></table>
+                <div className="popup-buttons create-buttons">
+                    <button onClick={handleCreateTask}>Submit</button>
+                    <button onClick={() => handleReset()}>Reset</button>
+                </div>
+            </div>
 
-      <hr className="rounded"></hr>
-      <h2 className="section-title">LIST OF FIRs</h2>
+            <div className="search-section">
+                <table className="search-table"><thead><tr><td>
+                    <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
+                </td><td>
+                    <label>Enter Date : </label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
+                </td><td>
+                    <label>Un-Assigned  </label><label class="switch"><input id="toggle-switch" ref={searchToggle} type="checkbox"></input><span class="slider round"></span></label><label>  Assigned</label><button className="search-buttons" onClick={() => handleSearchByAssignedOrUnAssignedTask()}></button>
+                </td></tr></thead></table>
+            </div>
+        </div>
+        <div className="list-section">
+            <h2 className="section-title">LIST OF FIRs</h2>
 
-      <div className="task-list">
-      <div className="task-header">
-      <span>FIR</span>
-      <span>ASSIGNEE</span>
-      <span>ACTIONS</span></div>
-
+            <div className="task-list">
+                <div className="task-header">
+                    <span>FIR</span>
+                    <span>ASSIGNEE</span>
+                    <span>ACTIONS</span></div>
         {tasks.length > 0 ? (
           tasks.map((task) => (
             <details key={task.FirNumber} className="task-item">
               <summary className="task-summary">
                 <div className="task-row">
-                  <div><img className="arrow"></img><span className="task-table-span"><strong>No:</strong> {task.Fir.FirNumber}</span></div>
-                  <div><strong></strong> {task.Fir.AssigneeUserId || 'Unassigned'}</div>
+                  <div><img className="arrow"></img><span className="task-table-span"><strong>No:</strong> {task.FirDTO.FirNumber}</span></div>
+                  <div><strong></strong> {task.FirDTO.AssigneeUserId || 'Unassigned'}</div>
                   <div className="actions-span">
-                    <button className="action-buttons-mainlist assign-button" onClick={() => handleAssignPopup(task.Fir.FirNumber, task.AssigneeUserId || '')}></button>
-                    <button className="action-buttons-mainlist add-button" onClick={() => handleFormCreationPopup(task.Fir.FirNumber, '')}></button>
+                    <button className="action-buttons-mainlist assign-button" onClick={() => handleAssignPopup(task.FirDTO.FirNumber, task.AssigneeUserId || '')}></button>
+                    <button className="action-buttons-mainlist add-button" onClick={() => handleFormCreationPopup(task.FirDTO.FirNumber, '')}></button>
                     <button className="action-buttons-mainlist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
-                    <button className="action-buttons-mainlist delete-button" onClick={() => handleDeleteTask(task.Fir.FirNumber)}></button>
+                    <button className="action-buttons-mainlist delete-button" onClick={() => handleDeleteTask(task.FirDTO.FirNumber)}></button>
                   </div>
                 </div>
               </summary>
@@ -224,21 +292,18 @@ const AdminDashboard = () => {
                   <thead>
                     <tr>
                       <th>Document</th>
-                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                //  task.FirSupportingDocumentList.map((firSupportingDocumentList) => (
-                    <tr>
-                      <td>{task.FileName || 'Unnamed Document'}</td>
-                      <td className="task-table-column">
-                        <button className="action-buttons-sublist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
+                    {task.FirSupportingDocumentList != null ? (
+                      <tr>
+                      <td>{task.FirSupportingDocumentList.FileName || 'Unnamed Document'}</td>
+                      <td className="task-table-column">                        
                         <button className="action-buttons-sublist edit-button" onClick={() => apiService.editTask(task.FirNumber)}></button>
+                        <button className="action-buttons-sublist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
                         <button className="action-buttons-sublist delete-button" onClick={() => handleDeleteTask(task.FirNumber)}></button>
-                        <button className="action-buttons-sublist print-button" onClick={() => apiService.printTask(task.FirNumber)}></button>
                       </td>
-                    </tr>
-                   // ))
+                    </tr>) :(<p>No Document</p>)}
                   </tbody>
                 </table>
               </div>
@@ -265,37 +330,6 @@ const AdminDashboard = () => {
           Next
         </button>
       </div>
-      {showPopup && (
-        <div className="popup">
-          <div className="popup-content">
-            <h2 className="popup-header"><u>Create FIR</u></h2>
-            <label>FIR Number:</label>
-            <input
-              type="text"
-              value={newTask.FirNumber}
-              onChange={(e) => setNewTask({ ...newTask, FirNumber: e.target.value })}
-            />
-            <label>File Upload:</label>
-            <input type="file" onChange={handleFileUpload} />
-            <label>Assignee:</label>
-            <select
-              value={newTask.AssigneeUserId}
-              onChange={(e) => setNewTask({ ...newTask, AssigneeUserId: e.target.value })}
-            >
-              <option value="">Select Assignee</option>
-              {assignees.map((assignee) => (
-                <option key={assignee.UserId} value={assignee.UserId}>
-                  {assignee.UserName}
-                </option>
-              ))}
-            </select>
-            <div className="popup-buttons">
-              <button onClick={handleCreateTask}>Save</button>
-              <button onClick={() => setShowPopup(false)}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
       {assignPopup.visible && (
         <div className="popup">
           <div className="popup-content">
