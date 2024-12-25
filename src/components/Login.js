@@ -8,7 +8,6 @@ const Login = () => {
   useEffect(() => {
     // Add class to the body tag for this page
     document.body.classList.add('login-container-body');
-  
     // Cleanup by removing the class when the component unmounts
     return () => {
       document.body.classList.remove('login-container-body');
@@ -38,6 +37,7 @@ const Login = () => {
       const response = await apiService.login(userDetails);
 
       if (response && response.Role) {
+        localStorage.setItem('UserId' , response.UserId)
         navigate('/admin');
       } else {
         alert('Login failed. Invalid credentials.');

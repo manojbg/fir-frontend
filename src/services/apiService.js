@@ -53,21 +53,21 @@ const getAllTasks = async (pageNumber = 0, size = 10) => {
 const processResponseData = async (data) => {
 // Process tasks and create document URLs
     const tasks = (data.content || []).map((task) => {
-      const documentUrl = task.AttachmentFileBytes
+      const documentUrl = task.FirDTO.AttachmentFileBytes
         ? (() => {
-            const byteArray = Uint8Array.from(atob(task.Fir.AttachmentFileBytes), (c) => c.charCodeAt(0));
+            const byteArray = Uint8Array.from(atob(task.FirDTO.AttachmentFileBytes), (c) => c.charCodeAt(0));
             const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming PDFs
             return URL.createObjectURL(blob);
           })()
         : null;
 
-      return {
+      return{
         ...task,
         documentUrl,
       };
       });
 
-      return tasks;
+      return await tasks;
 };
 
 const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId }) => {
@@ -180,124 +180,158 @@ const deleteTask = async (firNumber) =>{
 };
 
 const searchByIdTask = async (firNumber) => {
-var data = null;
-  try {
-    const response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-        data = await response.json();
-       const tasks = await processResponseData(data);
-        return {...data, tasks };
-
-  } catch (error) {
-    alert('FIR not found due to an error');
-        console.error('FIR Not Found:', error);
-        return {
-                  ...data,
-                  content: [],
-                };
+  var data = null;
+    try {
+      const response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      data = await response.json();
+      const tasks = await processResponseData(data);
+      return {...data, tasks };
+    } catch (error) {
+      alert('FIR not found due to an error');
+      console.error('FIR Not Found:', error);
+      return { ...data,content: []};
   }
 };
 
 const getAllTasksByDate = async (date, pageNumber = 0, size = 10) => {
+  var data = null;
   try {
     const response = await fetch(`${API_URL}/dashboard/listFIRsByDate?date=${date}&pageNumber=${pageNumber}&size=${size}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
-
-    // Process tasks and create document URLs
-    const tasks = (data.content || []).map((task) => {
-      const documentUrl = task.AttachmentFileBytes
-        ? (() => {
-            const byteArray = Uint8Array.from(atob(task.AttachmentFileBytes), (c) => c.charCodeAt(0));
-            const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming PDFs
-            return URL.createObjectURL(blob);
-          })()
-        : null;
-
-      return {
-        ...task,
-        documentUrl,
-      };
-    });
-
-    return {
-      ...data,
-      content: tasks,
-    };
-  } catch (error) {
-    console.error('Error fetching tasks by date:', error);
-    throw error;
+      data = await response.json();
+      const tasks = await processResponseData(data);
+      return {...data, tasks };
+    } catch (error) {
+      alert('FIR not found due to an error');
+      console.error('FIR Not Found:', error);
+      return { ...data,content: []};
   }
 };
 
 const getAllTasksByUserId = async (userId, pageNumber = 0, size = 10) => {
+  var data = null;
   try {
     const response = await fetch(`${API_URL}/dashboard/listAllFIRsWithDocumentDataByUserId?userId=${userId}&pageNumber=${pageNumber}&size=${size}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
-
-    // Process tasks and create document URLs
-    const tasks = (data.content || []).map((task) => {
-      const documentUrl = task.AttachmentFileBytes
-        ? (() => {
-            const byteArray = Uint8Array.from(atob(task.AttachmentFileBytes), (c) => c.charCodeAt(0));
-            const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming PDFs
-            return URL.createObjectURL(blob);
-          })()
-        : null;
-
-      return {
-        ...task,
-        documentUrl,
-      };
-    });
-
-    return {
-      ...data,
-      content: tasks,
-    };
-  } catch (error) {
-    console.error('Error fetching tasks by userId:', error);
-    throw error;
+      data = await response.json();
+      const tasks = await processResponseData(data);
+      return {...data, tasks };
+    } catch (error) {
+      alert('FIR not found due to an error');
+      console.error('FIR Not Found:', error);
+      return { ...data,content: []};
   }
 };
 
 const getAllTasksByAssignedOrUnAssigned = async (assigned, pageNumber = 0, size = 10) => {
+  var data = null;
   try {
     const response = await fetch(`${API_URL}/dashboard/listEitherAssignedOrUnAssignedFIRsWithPaging?assigned=${assigned}&pageNumber=${pageNumber}&size=${size}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
+      data = await response.json();
+      const tasks = await processResponseData(data);
+      return {...data, tasks };
+    } catch (error) {
+      alert('FIR not found due to an error');
+      console.error('FIR Not Found:', error);
+      return { ...data,content: []};
+  }
+};
 
-    // Process tasks and create document URLs
-    const tasks = (data.content || []).map((task) => {
-      const documentUrl = task.AttachmentFileBytes
-        ? (() => {
-            const byteArray = Uint8Array.from(atob(task.AttachmentFileBytes), (c) => c.charCodeAt(0));
-            const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming PDFs
-            return URL.createObjectURL(blob);
-          })()
-        : null;
+const createTaskItemData = async ({ FirNumber, FileName, FileContent }) => {
+  try {
+    const payload = {
+      FirNumber,
+      FileName,
+      FileContent
+    };
 
-      return {
-        ...task,
-        documentUrl,
-      };
+    const response = await fetch(`${API_URL}/fileOps/saveFIRSupportingDocument`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      },
+      body: JSON.stringify(payload),
     });
 
-    return {
-      ...data,
-      content: tasks,
-    };
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response;
   } catch (error) {
-    console.error('Error fetching tasks by assigned/unassigned', error);
+    console.error('Error creating task item:', error);
+    throw error;
+  }
+};
+
+const deleteAllNotificationsForUser = async (userId) =>{
+  try {
+    const response = await fetch(`${API_URL}/notification/deleteAllNotificationsByUserId?userId=${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+  } catch (error) {
+    alert('Error deleting Notifications for user '+userId+' . Please try again.');
+    console.error('Delete Notifications Error:', error);
+  }
+};
+
+const deleteNotification = async (firNumber, userId) =>{
+  try {
+    const payload =
+      {
+        AssigneeUserId: userId,
+        FirNumber: firNumber,
+      }
+
+    const response = await fetch(`${API_URL}/notification/deleteNotification`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+  } catch (error) {
+    alert('Error deleting Notification. Please try again.');
+    console.error('Delete Notification Error:', error);
+  }
+};
+
+const getAllNotificationForUser = async (userId) => {
+  try {
+    const response = await fetch(`${API_URL}/notification/listNotificationsByUserId?userId=${userId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching all tasks:', error);
     throw error;
   }
 };
@@ -312,5 +346,8 @@ export default {
   searchByIdTask,
   getAllTasksByDate,
   getAllTasksByAssignedOrUnAssigned,
-  getAllTasksByUserId
+  getAllTasksByUserId,
+  getAllNotificationForUser,
+  deleteAllNotificationsForUser,
+  deleteNotification
 };
