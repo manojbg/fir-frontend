@@ -41,8 +41,8 @@
   .task-item {
     border: 1px solid #ccc;
     border-radius: 5px;
-    margin-bottom: 10px;
-    padding: 10px;
+    margin-bottom: 5px;
+    padding: 5px;
     background-color: #f9f9f9;
     border: 1px solid black;
   }
@@ -232,13 +232,13 @@
   }
 
   .actions-span {
-      width : 15%;
+      width : 10%;
       display: flex;
    }
 
   .action-buttons-mainlist {
     cursor: pointer;
-    padding: 8%;
+    padding: 9%;
     border: none;
     margin-bottom: 5%;
     margin-right: 10%;
@@ -250,9 +250,10 @@
 
   .action-buttons-sublist {
     cursor: pointer;
-    padding: 5%;
+    padding: 4%;
     border: none;
-    margin: 5%;
+    margin: 4%;
+    float : right;
   }
 
   .action-buttons-sublist:hover{
@@ -320,7 +321,7 @@
     background-repeat : no-repeat;
     width: 22px;
     height: 22px;
-    transform: rotate(90deg);
+    transform: rotate(00deg);
   }
 
   .task-table-span {
