@@ -16,6 +16,8 @@ const AdminDashboard = () => {
   const [assignPopup, setAssignPopup] = useState({ visible: false, FirNumber: '', AssigneeUserId: '' });
   const [createFormPopup, setCreateFormPopup] = useState({ visible: false, FirNumber: '', FileName: '' });
   const searchBox = React.createRef(null);
+  const searchDate = React.createRef(null);
+  const searchToggle = React.createRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -66,8 +68,8 @@ const AdminDashboard = () => {
   };
 
   const handleSearchByIdTask = async () => {
-    const div = searchBox.current;
-    const firNumber = div.value;
+    const input = searchBox.current;
+    const firNumber = input.value;
     try{
      const response = await apiService.searchByIdTask(firNumber);
      setTasks(response.content);
@@ -78,14 +80,30 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleSearchByDateTask = async (date) => {
-    await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
-    fetchTasks(); // Refresh the task list
+  const handleSearchByDateTask = async () => {
+    const input = searchDate.current;
+    const date = input.value;
+
+    try{
+      const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
+      setTasks(response.content);
+    }
+    catch (error) {
+      console.error('Error fetching tasks:', error);
+      setTasks([]);
+    }
   };
 
-  const handleSearchByAssignedOrUnAssignedTask = async (assigned) => {
+  const handleSearchByAssignedOrUnAssignedTask = async () => {
+    const input = searchToggle.current;
+    const toggle = input.value;
+    alert(toggle);
     try{
-      const response =await apiService.getAllTasksByAssignedOrUnAssigned(true,currentPage - 1, pageSize);
+      const assigned = false;
+      if(toggle == "on"){
+        assigned = true
+      }
+      const response =await apiService.getAllTasksByAssignedOrUnAssigned(assigned,currentPage - 1, pageSize);
       setTasks(response.content);
     }catch (error) {
       console.error('Error fetching tasks:', error);
@@ -190,8 +208,8 @@ const AdminDashboard = () => {
       <div className="search-section">
       <h2 className="section-title">SEARCH</h2>
       <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
-      <label> || &nbsp;&nbsp;&nbsp;&nbsp;Enter Date : </label><input type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
-<label> || &nbsp;&nbsp;&nbsp;&nbsp;Un-Assigned  </label><label class="switch"><input type="checkbox"></input><span class="slider round"></span></label><label>  Assigned</label><button className="search-buttons" onClick={() => handleSearchByAssignedOrUnAssignedTask()}></button>
+      <label> || &nbsp;&nbsp;&nbsp;&nbsp;Enter Date : </label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
+      <label> || &nbsp;&nbsp;&nbsp;&nbsp;Un-Assigned  </label><label class="switch"><input ref={searchToggle} type="checkbox"></input><span class="slider round"></span></label><label>  Assigned</label><button className="search-buttons" onClick={() => handleSearchByAssignedOrUnAssignedTask()}></button>
       </div>
       <button className="create-button pulse-button" onClick={() => setShowPopup(true)}>
       <img className = "create-button-image"></img><span className="create-button-span">Upload New FIR</span></button>
@@ -209,13 +227,13 @@ const AdminDashboard = () => {
             <details key={task.FirNumber} className="task-item">
               <summary className="task-summary">
                 <div className="task-row">
-                  <div><img className="arrow"></img><span className="task-table-span"><strong>No:</strong> {task.Fir.FirNumber}</span></div>
-                  <div><strong></strong> {task.Fir.AssigneeUserId || 'Unassigned'}</div>
+                  <div><img className="arrow"></img><span className="task-table-span"><strong>No:</strong> {task.FirDTO.FirNumber}</span></div>
+                  <div><strong></strong> {task.FirDTO.AssigneeUserId || 'Unassigned'}</div>
                   <div className="actions-span">
-                    <button className="action-buttons-mainlist assign-button" onClick={() => handleAssignPopup(task.Fir.FirNumber, task.AssigneeUserId || '')}></button>
-                    <button className="action-buttons-mainlist add-button" onClick={() => handleFormCreationPopup(task.Fir.FirNumber, '')}></button>
+                    <button className="action-buttons-mainlist assign-button" onClick={() => handleAssignPopup(task.FirDTO.FirNumber, task.AssigneeUserId || '')}></button>
+                    <button className="action-buttons-mainlist add-button" onClick={() => handleFormCreationPopup(task.FirDTO.FirNumber, '')}></button>
                     <button className="action-buttons-mainlist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
-                    <button className="action-buttons-mainlist delete-button" onClick={() => handleDeleteTask(task.Fir.FirNumber)}></button>
+                    <button className="action-buttons-mainlist delete-button" onClick={() => handleDeleteTask(task.FirDTO.FirNumber)}></button>
                   </div>
                 </div>
               </summary>
@@ -224,7 +242,6 @@ const AdminDashboard = () => {
                   <thead>
                     <tr>
                       <th>Document</th>
-                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>

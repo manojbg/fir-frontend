@@ -1,4 +1,4 @@
-  .admin-dashboard-root {
+.admin-dashboard-root {
     width : 100%;
     height : 100%;
  }
@@ -232,13 +232,13 @@
   }
 
   .actions-span {
-      width : 15%;
+      width : 10%;
       display: flex;
    }
 
   .action-buttons-mainlist {
     cursor: pointer;
-    padding: 5%;
+    padding: 9%;
     border: none;
     margin-bottom: 5%;
     margin-right: 10%;
@@ -250,9 +250,10 @@
 
   .action-buttons-sublist {
     cursor: pointer;
-    padding: 5%;
+    padding: 4%;
     border: none;
-    margin: 5%;
+    margin: 4%;
+    float : right;
   }
 
   .action-buttons-sublist:hover{
