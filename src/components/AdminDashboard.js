@@ -18,6 +18,9 @@ const AdminDashboard = () => {
   const searchBox = React.createRef(null);
   const searchDate = React.createRef(null);
   const searchToggle = React.createRef(null);
+  const firNumber = React.createRef(null);
+  const firFile = React.createRef(null);
+  const firDate = React.createRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -96,13 +99,9 @@ const AdminDashboard = () => {
 
   const handleSearchByAssignedOrUnAssignedTask = async () => {
     const input = searchToggle.current;
-    const toggle = input.value;
-    alert(toggle);
+    const assigned = input.checked;
+    alert(assigned);
     try{
-      const assigned = false;
-      if(toggle == "on"){
-        assigned = true
-      }
       const response =await apiService.getAllTasksByAssignedOrUnAssigned(assigned,currentPage - 1, pageSize);
       setTasks(response.content);
     }catch (error) {
@@ -112,28 +111,43 @@ const AdminDashboard = () => {
   };
 
   const handleCreateTask = async () => {
-    try {
-      const fileReader = new FileReader();
-      fileReader.onload = async () => {
-        const base64File = fileReader.result.split(',')[1];
-        const taskData = {
-          FirNumber: newTask.FirNumber,
-          FileName: newTask.file.name,
-          AttachmentFileBytes: base64File,
-          AssigneeUserId: newTask.AssigneeUserId,
+    const firNumberInput = firNumber.current.value;
+    const firDateInput = firDate.current.value;
+    const firFileInput = firFile.current.value;
+
+    if(firNumberInput == '' || firDateInput == '' || firFileInput == '')
+    {
+      alert("Mandatory Fields Are Not Populated");
+    }
+    else{
+      try {
+        const fileReader = new FileReader();
+        fileReader.onload = async () => {
+          const base64File = fileReader.result.split(',')[1];
+          const taskData = {
+            FirNumber: newTask.FirNumber,
+            FileName: newTask.file.name,
+            AttachmentFileBytes: base64File,
+            AssigneeUserId: newTask.AssigneeUserId,
+          };
+          await apiService.createTask(taskData);
+          alert('FIR created successfully');
+          setNewTask({ FirNumber: '', file: null, AssigneeUserId: '' });
+          setCurrentPage(1); // Reset to first page to see the new task
+          fetchTasks();
         };
-        await apiService.createTask(taskData);
-        alert('FIR created successfully');
-        setShowPopup(false);
-        setNewTask({ FirNumber: '', file: null, AssigneeUserId: '' });
-        setCurrentPage(1); // Reset to first page to see the new task
-        fetchTasks();
-      };
-      fileReader.readAsDataURL(newTask.file);
-    } catch (error) {
-      alert('Error creating FIR. Please try again.');
+        fileReader.readAsDataURL(newTask.file);
+      } catch (error) {
+        alert('Error creating FIR. Please try again.');
+      }
     }
   };
+
+  const handleReset = async () => {
+    firNumber.current.value = '';
+    firDate.current.value = '';
+    firFile.current.value = '';
+  }
 
   const handleSaveAssignee = async () => {
     try {
@@ -155,6 +169,7 @@ const AdminDashboard = () => {
   };
 
   const handleCreateForm = async () => {
+  //updated method as required
     try {
       const payload = {
         FileName: createFormPopup.FileName,
@@ -162,7 +177,8 @@ const AdminDashboard = () => {
         FileContent: ''
       };
 
-      await apiService.assignTask(payload);
+
+      await apiService.createTaskItemData(payload);
       alert('Assignee updated successfully');
       setAssignPopup({ visible: false, FirNumber: '', AssigneeUserId: '' });
       fetchTasks();
@@ -197,31 +213,65 @@ const AdminDashboard = () => {
 
   return (
     <div>
-      <header className="dashboard-header">
-      <img className="navbar-brand" src={logo}></img>
-      				<a className="navbar-brand-text">KSP</a>
-        <h1 className="page-title">Dashboard</h1>
-        <button className="logout-button" onClick={() => handleLogout()}>
-        </button>
-      </header>
-      <div className="admin-dashboard">
-      <div className="search-section">
-      <h2 className="section-title">SEARCH</h2>
-      <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
-      <label> || &nbsp;&nbsp;&nbsp;&nbsp;Enter Date : </label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
-      <label> || &nbsp;&nbsp;&nbsp;&nbsp;Un-Assigned  </label><label class="switch"><input ref={searchToggle} type="checkbox"></input><span class="slider round"></span></label><label>  Assigned</label><button className="search-buttons" onClick={() => handleSearchByAssignedOrUnAssignedTask()}></button>
-      </div>
-      <button className="create-button pulse-button" onClick={() => setShowPopup(true)}>
-      <img className = "create-button-image"></img><span className="create-button-span">Upload New FIR</span></button>
+        <header className="dashboard-header">
+            <img className="navbar-brand" src={logo}></img>
+            <a className="navbar-brand-text">Crime Report Tracking System</a>
+            <button className="logout-button" onClick={() => handleLogout()}>
+            </button>
+        </header>
+        <div className="admin-dashboard">
+            <div className="create-section">
+                <div className="create-header">Upload FIR</div>
+                <table class="create-table"><tbody><tr><td >
+                    <label className="required-field">FIR Number </label>
+                    <input ref={firNumber}
+                            type="text"
+                            value={newTask.FirNumber}
+                            onChange={(e) => setNewTask({ ...newTask, FirNumber: e.target.value })}
+                    /></td><td>
+                    <label className="required-field">File Upload </label>
+                    <input ref={firFile} className="fileInput" type="file" accept="application/pdf" onChange={handleFileUpload} />
+                </td></tr><tr><td>
+                    <label>Assignee &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </label>
+                    <select
+                            value={newTask.AssigneeUserId}
+                            onChange={(e) => setNewTask({ ...newTask, AssigneeUserId: e.target.value })}
+                    >
+                    <option value="">Select Assignee</option>
+                    {assignees.map((assignee) => (
+                    <option key={assignee.UserId} value={assignee.UserId}>
+                        {assignee.UserName}
+                    </option>
+                    ))}
+                    </select>
+                </td><td>
+                    <label className="required-field">FIR Date &nbsp;&nbsp;&nbsp; </label>
+                    <input ref={firDate} type = "date"></input>
+                </td></tr></tbody></table>
+                <div className="popup-buttons create-buttons">
+                    <button onClick={handleCreateTask}>Submit</button>
+                    <button onClick={() => handleReset()}>Reset</button>
+                </div>
+            </div>
 
-      <h2 className="section-title">LIST OF FIRs</h2>
+            <div className="search-section">
+                <table className="search-table"><thead><tr><td>
+                    <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
+                </td><td>
+                    <label>Enter Date : </label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
+                </td><td>
+                    <label>Un-Assigned  </label><label class="switch"><input id="toggle-switch" ref={searchToggle} type="checkbox"></input><span class="slider round"></span></label><label>  Assigned</label><button className="search-buttons" onClick={() => handleSearchByAssignedOrUnAssignedTask()}></button>
+                </td></tr></thead></table>
+            </div>
+        </div>
+        <div className="list-section">
+            <h2 className="section-title">LIST OF FIRs</h2>
 
-      <div className="task-list">
-      <div className="task-header">
-      <span>FIR</span>
-      <span>ASSIGNEE</span>
-      <span>ACTIONS</span></div>
-
+            <div className="task-list">
+                <div className="task-header">
+                    <span>FIR</span>
+                    <span>ASSIGNEE</span>
+                    <span>ACTIONS</span></div>
         {tasks.length > 0 ? (
           tasks.map((task) => (
             <details key={task.FirNumber} className="task-item">
@@ -280,37 +330,6 @@ const AdminDashboard = () => {
           Next
         </button>
       </div>
-      {showPopup && (
-        <div className="popup">
-          <div className="popup-content">
-            <h2 className="popup-header"><u>Create FIR</u></h2>
-            <label>FIR Number:</label>
-            <input
-              type="text"
-              value={newTask.FirNumber}
-              onChange={(e) => setNewTask({ ...newTask, FirNumber: e.target.value })}
-            />
-            <label>File Upload:</label>
-            <input type="file" onChange={handleFileUpload} />
-            <label>Assignee:</label>
-            <select
-              value={newTask.AssigneeUserId}
-              onChange={(e) => setNewTask({ ...newTask, AssigneeUserId: e.target.value })}
-            >
-              <option value="">Select Assignee</option>
-              {assignees.map((assignee) => (
-                <option key={assignee.UserId} value={assignee.UserId}>
-                  {assignee.UserName}
-                </option>
-              ))}
-            </select>
-            <div className="popup-buttons">
-              <button onClick={handleCreateTask}>Save</button>
-              <button onClick={() => setShowPopup(false)}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
       {assignPopup.visible && (
         <div className="popup">
           <div className="popup-content">

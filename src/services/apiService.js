@@ -247,6 +247,34 @@ const getAllTasksByAssignedOrUnAssigned = async (assigned, pageNumber = 0, size 
   }
 };
 
+const createTaskItemData = async ({ FirNumber, FileName, FileContent }) => {
+  try {
+    const payload = {
+      FirNumber,
+      FileName,
+      FileContent
+    };
+
+    const response = await fetch(`${API_URL}/fileOps/saveFIRSupportingDocument`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response;
+  } catch (error) {
+    console.error('Error creating task item:', error);
+    throw error;
+  }
+};
+
 export default {
   login,
   getAllTasks,
