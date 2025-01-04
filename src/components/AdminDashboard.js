@@ -14,7 +14,7 @@ const AdminDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [showPopup, setShowPopup] = useState(false);
   const [newTask, setNewTask] = useState({ FirNumber: '', file: null, AssigneeUserId: '' });
-  const [assignPopup, setAssignPopup] = useState({ visible: false, FirNumber: '', AssigneeUserId: '' });
+  const [assignPopup, setAssignPopup] = useState({ visible: false, FirNumber: '', FirDate:'', AssigneeUserId: '' });
   const [createFormPopup, setCreateFormPopup] = useState({ visible: false, FirNumber: '', FileName: '' });
   const searchBox = React.createRef(null);
   const searchDate = React.createRef(null);
@@ -22,17 +22,22 @@ const AdminDashboard = () => {
   const firNumber = React.createRef(null);
   const firFile = React.createRef(null);
   const firDate = React.createRef(null);
+  const firDatePopup = React.createRef(null);
   const navigate = useNavigate();
   const [modalShow, setModalShow] = useState(false);
+  const [userClick, setUserClick] = useState(false);
 
   useEffect(() => {
     fetchTasks();
     fetchAssignees();
+    //handleNotification(true);
     document.querySelector("#root").classList.add('admin-dashboard-root');
+    //const intervalId = setInterval(handleNotification, 60000);
 
         // Cleanup by removing the class when the component unmounts
         return () => {
           document.querySelector("#root").classList.remove('admin-dashboard-root');
+          //clearInterval(intervalId);
         };
   }, [currentPage]);
 
@@ -131,11 +136,13 @@ const AdminDashboard = () => {
             FileName: newTask.file.name,
             AttachmentFileBytes: base64File,
             AssigneeUserId: newTask.AssigneeUserId,
+            FirDate : firDateInput
           };
           await apiService.createTask(taskData);
           alert('FIR created successfully');
           setNewTask({ FirNumber: '', file: null, AssigneeUserId: '' });
           setCurrentPage(1); // Reset to first page to see the new task
+          handleReset();
           fetchTasks();
         };
         fileReader.readAsDataURL(newTask.file);
@@ -152,6 +159,7 @@ const AdminDashboard = () => {
   }
 
   const handleSaveAssignee = async () => {
+    const firDateInput = firDatePopup.current.value;
     try {
       const payload = {
         AssigneeUserId: assignPopup.AssigneeUserId,
@@ -159,11 +167,12 @@ const AdminDashboard = () => {
         AttachmentFileBytes: '',
         CreatedDateTime: '',
         FileName: '',
+        FirDate: firDateInput
       };
 
       await apiService.assignTask(payload);
       alert('Assignee updated successfully');
-      setAssignPopup({ visible: false, FirNumber: '', AssigneeUserId: '' });
+      setAssignPopup({ visible: false, FirNumber: '', FirDate: '', AssigneeUserId: '' });
       fetchTasks();
     } catch (error) {
       alert('Error assigning FIR. Please try again.');
@@ -200,8 +209,8 @@ const AdminDashboard = () => {
     setNewTask({ ...newTask, file: e.target.files[0] });
   };
 
-  const handleAssignPopup = (FirNumber, AssigneeUserId) => {
-    setAssignPopup({ visible: true, FirNumber: FirNumber, AssigneeUserId: AssigneeUserId });
+  const handleAssignPopup = (FirNumber, FirDate, AssigneeUserId) => {
+    setAssignPopup({ visible: true, FirNumber: FirNumber, FirDate: FirDate, AssigneeUserId: AssigneeUserId });
   };
 
   const handleFormCreationPopup = (FirNumber, FileName) => {
@@ -212,24 +221,30 @@ const AdminDashboard = () => {
     navigate("/");
   };
 
-  const handleNotification = () => {
+  const handleNotification = (triggerSourceIsUser) => {
+    setUserClick(triggerSourceIsUser);
     setModalShow(true);
+  };
+
+  const handleNotificationHide = () => {
+    setUserClick(false);
+    setModalShow(false);
   };
 
   return (
     <div bsClass='AdminDashboard' >
         <header className="dashboard-header">
-            <img className="navbar-brand" src={logo}></img>
+            <div><img className="navbar-brand" src={logo}></img></div>
             <div>
             <h1 className="navbar-brand-text"><u>Crime Report Tracking System</u></h1>
             <p><strong>Karnataka State</strong></p></div>
-
-            <button className="notification-button" onClick={() => handleNotification()}></button>
+            <div>
+            <button className="notification-button" onClick={() => handleNotification(true)}></button>
             <button className="logout-button" onClick={() => handleLogout()}></button>
-
+            </div>
         </header>
          {modalShow && (
-                <NotificationModal show={modalShow} onHide={() => setModalShow(false)} />
+                <NotificationModal handleNotification={handleNotification} show={modalShow} onHide={handleNotificationHide} userClick={userClick} />
               )}
         <div className="admin-dashboard">
             <div className="create-section">
@@ -282,24 +297,26 @@ const AdminDashboard = () => {
 
             <div className="task-list">
                 <div className="task-header">
-                    <span>FIR</span>
-                    <span>ASSIGNEE</span>
-                    <span>FIR DATE</span>
-                    <span>ACTIONS</span></div>
+                    <table><thead><tr><td>FIR</td>
+                    <td>ASSIGNEE</td>
+                    <td>FIR DATE</td>
+                    <td>ACTIONS</td></tr></thead></table></div>
         {tasks.length > 0 ? (
           tasks.map((task) => (
             <details key={task.FirNumber} className="task-item">
               <summary className="task-summary">
                 <div className="task-row">
-                  <div><span className="task-table-span"><strong>No:</strong> {task.FirDTO.FirNumber}</span></div>
-                  <div><strong></strong> {task.FirDTO.AssigneeUserId || 'Unassigned'}</div>
-                  <div><strong></strong> {task.FirDTO.FirDate}</div>
-                  <div className="actions-span">
-                    <button className="action-buttons-mainlist assign-button" onClick={() => handleAssignPopup(task.FirDTO.FirNumber, task.AssigneeUserId || '')}></button>
+                <table><tbody><tr>
+                  <td><strong>No:</strong> {task.FirDTO.FirNumber}</td>
+                  <td><strong></strong> {task.FirDTO.AssigneeUserId || 'Unassigned'}</td>
+                  <td><strong></strong> {task.FirDTO.FirDate}</td>
+                  <td>
+                    <button className="action-buttons-mainlist assign-button" onClick={() => handleAssignPopup(task.FirDTO.FirNumber, task.FirDTO.FirDate, task.FirDTO.AssigneeUserId || '')}></button>
                     <button className="action-buttons-mainlist add-button" onClick={() => handleFormCreationPopup(task.FirDTO.FirNumber, '')}></button>
                     <button className="action-buttons-mainlist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
                     <button className="action-buttons-mainlist delete-button" onClick={() => handleDeleteTask(task.FirDTO.FirNumber)}></button>
-                  </div>
+                  </td>
+                  </tr></tbody></table>
                 </div>
               </summary>
               <div className="task-details">
@@ -348,10 +365,13 @@ const AdminDashboard = () => {
       {assignPopup.visible && (
         <div className="popup">
           <div className="popup-content">
-            <h2 className="popup-header"><u>Assign Assignee</u></h2>
-            <p>FIR Number : {assignPopup.FirNumber}</p>
+            <h2 className="popup-header"><u>Assign Assignee</u></h2><br/>
+            <label><b>FIR Number : </b>{assignPopup.FirNumber}</label><br/><br/>
+            <label><b>FIR Date : </b>{assignPopup.FirDate}</label><br/>
+            <label><b>Change FIR Date To : </b>&nbsp;</label>
+                                <input ref={firDatePopup} id="assigneeDate" type = "date"></input><br/><br/>
             <div>
-            <label>Assignee : </label>
+            <label><b>Assignee : </b></label>
             <select className="assignee-select"
               value={assignPopup.AssigneeUserId}
               onChange={(e) => setAssignPopup({ ...assignPopup, AssigneeUserId: e.target.value })}
@@ -363,10 +383,10 @@ const AdminDashboard = () => {
                 </option>
               ))}
             </select>
-            </div>
+            </div><br/>
             <div className="popup-buttons">
               <button onClick={handleSaveAssignee}>Save</button>
-              <button onClick={() => setAssignPopup({ visible: false, FirNumber: '', AssigneeUserId: '' })}>Cancel</button>
+              <button onClick={() => setAssignPopup({ visible: false, FirNumber: '', FirDate:'', AssigneeUserId: '' })}>Cancel</button>
             </div>
           </div>
         </div>

@@ -70,13 +70,14 @@ const processResponseData = async (data) => {
       return await tasks;
 };
 
-const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId }) => {
+const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId, FirDate }) => {
   try {
     const payload = {
       FirNumber,
       FileName,
       AttachmentFileBytes,
       AssigneeUserId,
+      FirDate
     };
 
     const response = await fetch(`${API_URL}/user/assignOrDeAssignUserToFIR`, {
