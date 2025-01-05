@@ -3,9 +3,8 @@
     cursor: pointer;
     background-size: contain;
     background-repeat: no-repeat;
-    padding: 2%;
+    padding: 20%;
     border: none;
-    margin-left: 50%;
   }
 
   .notification-button:hover{
@@ -25,7 +24,7 @@
 
   .modal-header {
     border-bottom: 1px solid black;
-    padding: 3%;
+    padding: 1%;
     background: rgba(211, 211, 211, 1.0);
   }
 
@@ -50,5 +49,6 @@
   }
 
   .modal-footer {
+    padding : 0;
     background : rgba(211, 211, 211, 1.0);
   }
