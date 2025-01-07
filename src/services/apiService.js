@@ -70,13 +70,14 @@ const processResponseData = async (data) => {
       return await tasks;
 };
 
-const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId }) => {
+const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId, FirDate }) => {
   try {
     const payload = {
       FirNumber,
       FileName,
       AttachmentFileBytes,
       AssigneeUserId,
+      FirDate
     };
 
     const response = await fetch(`${API_URL}/user/assignOrDeAssignUserToFIR`, {
@@ -275,6 +276,67 @@ const createTaskItemData = async ({ FirNumber, FileName, FileContent }) => {
   }
 };
 
+const deleteAllNotificationsForUser = async (userId) =>{
+  try {
+    const response = await fetch(`${API_URL}/notification/deleteAllNotificationsByUserId?userId=${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+  } catch (error) {
+    alert('Error deleting Notifications for user '+userId+' . Please try again.');
+    console.error('Delete Notifications Error:', error);
+  }
+};
+
+const deleteNotification = async (firNumber, userId) =>{
+  try {
+    const payload =
+      {
+        AssigneeUserId: userId,
+        FirNumber: firNumber,
+      }
+
+    const response = await fetch(`${API_URL}/notification/deleteNotification`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+  } catch (error) {
+    alert('Error deleting Notification. Please try again.');
+    console.error('Delete Notification Error:', error);
+  }
+};
+
+const getAllNotificationForUser = async (userId) => {
+  try {
+    const response = await fetch(`${API_URL}/notification/listNotificationsByUserId?userId=${userId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching all tasks:', error);
+    throw error;
+  }
+};
+
 export default {
   login,
   getAllTasks,
@@ -285,5 +347,8 @@ export default {
   searchByIdTask,
   getAllTasksByDate,
   getAllTasksByAssignedOrUnAssigned,
-  getAllTasksByUserId
+  getAllTasksByUserId,
+  getAllNotificationForUser,
+  deleteAllNotificationsForUser,
+  deleteNotification
 };

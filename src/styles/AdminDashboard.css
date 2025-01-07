@@ -6,21 +6,35 @@
 .admin-dashboard {
   padding: 10px;
   font-family: Arial, sans-serif;
-  background : url("./assets/images/background2.jpg");
+  background : url("./assets/images/emblem.jpg");
   overflow : auto;
-  background-size: cover;
+  background-size: contain;
   /* height: calc(70vh - 100px); */
   background-repeat: no-repeat;
-  background-position: center;
+  background-position: right;
   border-bottom-left-radius: 20%;
   border-bottom-right-radius: 20%;
+  background-position-y: -45px;
+  background-color: #7287a6;
 }
 
 .dashboard-header {
   display: flex;
   align-items: center;
-  height: 50px;
+  height: 70px;
   background : linear-gradient(to right, yellow, red);
+}
+
+.dashboard-header div:nth-child(2) {
+  line-height : 1px;
+  width : 50%;
+}
+
+.dashboard-header div:nth-child(3) {
+  margin-left : 35%;
+  justify-content : end;
+  display: flex;
+  width: 10%;
 }
 
 .create-button {
@@ -52,27 +66,45 @@
 }
 
 .task-header {
-  display: flex;
-  width: 98%;
-  justify-content: space-between;
   background-color: rgba(211, 211, 211, 1.0);
   font-weight: 700;
   padding: 1%;
 }
 
 .task-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   font-weight: bold;
   cursor: pointer;
 }
 
+.task-header table {
+  width : 100%;
+}
+
+.task-header td:nth-child(1) {
+  width : 40%;
+  text-align : left;
+}
+
+.task-header td:nth-child(2) {
+  width : 20%;
+  text-align : left;
+}
+
+.task-header td:nth-child(3) {
+  width : 10%;
+  text-align : left;
+}
+
+.task-header td:nth-child(4) {
+  width : 20%;
+  text-align : center;
+}
+
 .task-row {
-  display: flex;
+  display: inline-flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
+  width: 98%;
   border-bottom : 1px solid black;
 }
 
@@ -137,7 +169,7 @@
 }
 
 .popup-content {
-  display: flex;
+  display: flow;
   flex-direction: column;
   gap: 10px;
   text-align: center;
@@ -185,8 +217,8 @@
 }
 
 .navbar-brand{
-  height : 45px;
-  margin: 1%;
+  height : 50px;
+  padding: 1%;
   animation: flip-with-rotate 1s infinite;
 }
 
@@ -202,9 +234,9 @@
   cursor: pointer;
   background-size: contain;
   background-repeat: no-repeat;
-  padding: 1%;
+  padding: 18%;
   border: none;
-  margin-left: 58%;
+  margin-left: 5%;
 }
 
 .logout-button:hover{
@@ -231,16 +263,10 @@
   width : 90%;
 }
 
-.actions-span {
-    width : 10%;
-    display: flex;
- }
-
 .action-buttons-mainlist {
   cursor: pointer;
-  padding: 9%;
+  padding: 6%;
   border: none;
-  margin-bottom: 5%;
   margin-right: 10%;
 }
 
@@ -250,7 +276,7 @@
 
 .action-buttons-sublist {
   cursor: pointer;
-  padding: 4%;
+  padding: 5%;
   border: none;
   margin: 4%;
   float : right;
@@ -322,10 +348,7 @@
   width: 22px;
   height: 22px;
   transform: rotate(00deg);
-}
-
-.task-table-span {
-  vertical-align: super;
+  vertical-align: top;
 }
 
 .pulse-button {
@@ -364,13 +387,13 @@
   transform: scale(1.5);
 }
 
- .search-table{
+ .search-table {
    width : 100%;
    background-color: darkslategrey;
    border: 1px solid;
    border-radius: 25px;
-   margin-top: 2%;
    color : white;
+   border-collapse: separate;
  }
 
 .switch {
@@ -435,9 +458,10 @@ input:checked + .slider:before {
 }
 
 .search-section{
-  width: 75%;
+  width: 80%;
   margin-left: auto;
   margin-right: auto;
+  margin-top: 1%;
 }
 
 .create-table{
@@ -445,11 +469,9 @@ input:checked + .slider:before {
 }
 
 .create-section{
-  width: 65%;
+  width: 56%;
   background-color: rgba(255,255,255,0.7);
-  margin-left: auto;
-  margin-right: auto;
-  border : 1px solid black;
+   border : 1px solid black;
   border-radius : 25px;
 }
 
@@ -466,12 +488,6 @@ input:checked + .slider:before {
   font-weight : 600;
 }
 
-.create-table td:nth-child(even) {
-  width: 60%;
-  float: right;
-  padding-top: 4%
-}
-
 .fileInput {
   width: 60%;
 }
@@ -481,12 +497,12 @@ input:checked + .slider:before {
 }
 
 .create-buttons{
-  justify-content: normal;
+  justify-content: center;
+  margin-bottom: 1%;
 }
 
-.create-buttons button{
-  margin-left: 29%;
-  margin-bottom: 1%;
+.create-buttons button:nth-child(2){
+  margin-left: 20%;
 }
 
 .list-section{
@@ -507,4 +523,28 @@ input:checked + .slider:before {
   100% {
       transform: perspective(400px) rotateY(180deg);
   }
+}
+
+.task-row table {
+  width : 100%;
+}
+
+.task-row td:nth-child(1) {
+  width : 37%;
+  text-align : left;
+}
+
+.task-row td:nth-child(2) {
+  width : 20%;
+  text-align : center;
+}
+
+.task-row td:nth-child(3) {
+  width : 25%;
+  text-align : center;
+}
+
+.task-row td:nth-child(4) {
+  width : 30%;
+  text-align : center;
 }

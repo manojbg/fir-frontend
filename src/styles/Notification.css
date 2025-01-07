@@ -1,0 +1,54 @@
+  .notification-button {
+    background : url("./assets/images/notifications.png");
+    cursor: pointer;
+    background-size: contain;
+    background-repeat: no-repeat;
+    padding: 2%;
+    border: none;
+    margin-left: 50%;
+  }
+
+  .notification-button:hover{
+    transform: scale(1.5);
+  }
+
+  .modal-body {
+    padding: 1%;
+  }
+
+  .modal-dialog {
+    width: 30%;
+    float: right;
+    margin-top: 5%;
+    padding: 0;
+  }
+
+  .modal-header {
+    border-bottom: 1px solid black;
+    padding: 3%;
+    background: rgba(211, 211, 211, 1.0);
+  }
+
+  .clear-button {
+    cursor: pointer;
+    padding: 3%;
+    border: none;
+    background : url("./assets/images/broom.png");
+    background-size : contain;
+    background-repeat : no-repeat;
+    float : right;
+  }
+
+  .clear-button:hover {
+    transform: scale(1.5);
+  }
+
+  .notification-text {
+    border-bottom : 1px solid black;
+    padding : 3%;
+    overflow: auto;
+  }
+
+  .modal-footer {
+    background : rgba(211, 211, 211, 1.0);
+  }
