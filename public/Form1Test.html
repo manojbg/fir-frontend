@@ -113,7 +113,7 @@
         FileContent: JSON.stringify(obj), // Convert `obj` to a JSON string
         FileName: formName, // Pass the form name
         FirNumber: firNumber // Pass the FIR number
-    };
+    }
 
     // Debugging logs
     console.log("Saving data:", JSON.stringify(req));
@@ -121,10 +121,9 @@
     // AJAX POST request to the API
     $.ajax({
         url: "http://localhost:8080/firFileArchival/api/fileOps/saveFIRSupportingDocument",
-        method: "POST",
+        type: "POST",
         contentType: "application/json",
         headers: { // Example custom header
-            "X-Custom-Header": "value"
         },
         data: JSON.stringify(req), // Send payload in the body
         success: function (response) {
@@ -142,7 +141,7 @@
     function fetchData() {
         $.ajax({
             url: "/api/read", // Replace with your API endpoint
-            method: "GET",
+            type: "GET",
             success: function (response) {
                 console.log("Fetched data:", response);
 

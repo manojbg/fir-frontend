@@ -11,7 +11,7 @@ import '../styles/Notification.css';
 function NotificationModal(props) {
   const [notifications, setNotifications] = useState([]);
   useEffect(() => {
-    fetchNotifications();
+      checkForNewNotifications();
   },[props.show]);
 
   const fetchNotifications = async () => {
@@ -36,6 +36,20 @@ function NotificationModal(props) {
   const handleClearSpecificNotification = async (firNumber, assignee) => {
     await apiService.deleteNotification(firNumber, assignee);
     fetchNotifications();
+  }
+
+  const checkForNewNotifications = async () =>
+  {
+    const response = await fetchNotifications();
+    if(!props.userClick && response.length > 0)
+    {
+      let isNewEntryAbsent = response.every(element => element.NewEntry === false);
+      if(isNewEntryAbsent)
+      {
+      alert("no new notification so closing");
+        props.onHide();
+      }
+    }
   }
 
   return (
