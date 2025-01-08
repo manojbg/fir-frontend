@@ -140,18 +140,18 @@
     // Function to fetch data and populate the fields
     function fetchData() {
         $.ajax({
-            url: "/api/read", // Replace with your API endpoint
+            url: "http://localhost:8080/firFileArchival/api/dashboard/getSupportingDocumentData?firNumber=FIR001&fileName=Form1test.html", // Replace with your API endpoint
             type: "GET",
             success: function (response) {
                 console.log("Fetched data:", response);
 
                 // Populate fields with response data
-                $("#datePicker").val(response.date || "");
-                $("#caseIdentifier").text(response.caseIdentifier || "ENTER FIR NUMBER");
-                $("#reportingDate").text(response.reportingDate || "--.--.----");
-                $("#reportingTime").text(response.reportingTime || "00:00 AM");
-                $("#toAddress").val(response.toAddress || "");
-                populateTable("table1", response.table1 || []);
+                $("#datePicker").val(response.FileContent.date || "");
+                $("#caseIdentifier").text(response.FileContent.caseIdentifier || "ENTER FIR NUMBER");
+                $("#reportingDate").text(response.FileContent.reportingDate || "--.--.----");
+                $("#reportingTime").text(response.FileContent.reportingTime || "00:00 AM");
+                $("#toAddress").val(response.FileContent.toAddress || "");
+                populateTable("table1", response.FileContent.table1 || []);
             },
             error: function (error) {
                 console.error("Error fetching data:", error);
