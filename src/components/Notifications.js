@@ -11,8 +11,9 @@ import '../styles/Notification.css';
 function NotificationModal(props) {
   const [notifications, setNotifications] = useState([]);
   useEffect(() => {
-      checkForNewNotifications();
-  },[props.show]);
+    document.querySelector(".Notification").childNodes[0].classList.add("custom-dialog");
+    checkForNewNotifications();
+    },[props.show]);
 
   const fetchNotifications = async () => {
     const userId = localStorage.getItem('UserId');
@@ -46,14 +47,14 @@ function NotificationModal(props) {
       let isNewEntryAbsent = response.every(element => element.NewEntry === false);
       if(isNewEntryAbsent)
       {
-      alert("no new notification so closing");
+      alert("No new notification so closing");
         props.onHide();
       }
     }
   }
 
   return (
-    <Modal bsClass='Notification' {...props}>
+    <Modal className='Notification' {...props}>
       <Modal.Header closeButton>
         <Modal.Title id="contained-modal-title-vcenter">
           Notifications
