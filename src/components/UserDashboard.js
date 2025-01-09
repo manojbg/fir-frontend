@@ -47,11 +47,17 @@ const UserDashboard = () => {
         };
   }, [currentPage]);
 
-  const handleShow = (firNumber) => {
+  const handleShow = (firNumber, fileName, type) => {
     const encodedFIR = encodeURIComponent(firNumber); // Encode to safely pass in URL
     const encodedForm = encodeURIComponent("Form1test.html");
+    let form = "";
+    if(type == "edit"){
+      form = fileName;
+    }else{
+      form = document.querySelector('.form-select').value;
+    }   
 
-    const iframeSrc = `/Form1test.html?firNumber=${encodedFIR}&formName=${encodedForm}`;
+    const iframeSrc = `/Forms/`+form+`?firNumber=${encodedFIR}&formName=${encodedForm}&type=`+type;
     setIframeSrc(iframeSrc);// Update the iframe source dynamically
     setShowModal(true); // Show the modal
 };
@@ -305,15 +311,30 @@ const UserDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {task.FirSupportingDocumentList != null ? (
-                      <tr>
-                      <td>{task.FirSupportingDocumentList.FileName || 'Unnamed Document'}</td>
-                      <td className="task-table-column">                        
-                        <button className="action-buttons-sublist edit-button" onClick={() => apiService.editTask(task.FirNumber)}></button>
-                        <button className="action-buttons-sublist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
-                        <button className="action-buttons-sublist delete-button" onClick={() => handleDeleteTask(task.FirNumber)}></button>
-                      </td>
-                    </tr>) :(<p>No Document</p>)}
+                  {task.FirSupportingDocumentList && task.FirSupportingDocumentList.length > 0 ? (
+  task.FirSupportingDocumentList.map((document, index) => (
+    <tr key={index}>
+      <td>{document.FileName || 'Unnamed Document'}</td>
+      <td className="task-table-column">
+        <button
+          className="action-buttons-sublist edit-button"
+          onClick={() => handleShow(task.FirNumber, document.FileName ,"edit")}
+        ></button>
+        <button
+          className="action-buttons-sublist view-button"
+          onClick={() => handleViewDocument(document.documentUrl)}
+        ></button>
+        <button
+          className="action-buttons-sublist delete-button"
+          onClick={() => handleDeleteTask(task.FirNumber)}
+        ></button>
+      </td>
+    </tr>
+  ))
+) : (
+  <p>No Document</p>
+)}
+
                   </tbody>
                 </table>
               </div>
@@ -380,16 +401,17 @@ const UserDashboard = () => {
               value={createFormPopup.FileName}
               onChange={(e) => setCreateFormPopup({ ...createFormPopup, FileName: e.target.value })}
             >
-              <option value="Form1">Form 1</option>
-              <option value="Form2">Form 2</option>
-              <option value="Form3">Form 3</option>
-              <option value="Form4">Form 4</option>
-              <option value="Form5">Form 5</option>
+              <option value="Form1test.html">Form1</option>
+              <option value="35 (3) Notice.html">35 (3) Notice</option>
+              <option value="41(A) Notice.html">41(A) Notice</option>
+              <option value="94 & 179 NOTICE ENGLISH.html">94 & 179 NOTICE ENGLISH</option>
+              <option value="FB LETTER.html">FB LETTER</option>
+              <option value="FREEZE INTIMATION TO COURT.html">FREEZE INTIMATION TO COURT</option>
             </select>
             </div>
             <div className="popup-buttons">
               <button onClick={() => {
-                        handleShow(createFormPopup.FirNumber);
+                        handleShow(createFormPopup.FirNumber,"create");
                     }}>Create</button>
               <button onClick={() => setCreateFormPopup({ visible: false, FirNumber: '', FileName: '' })}>Cancel</button>
             </div>

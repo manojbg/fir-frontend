@@ -4,6 +4,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+
 
     <style>
         /* Set A4 size */
@@ -56,7 +58,6 @@
 <script>
     // On page load, read data from the API and populate the fields
     $(document).ready(function () {
-        fetchData();
 
         // Add a new row to the table
         $("#addRowBtnAfter").click(function () {
@@ -73,7 +74,8 @@
         // Remove a row from the table
         $(document).on("click", ".removeBtn", function () {
             $(this).closest("tr").remove();
-        });
+        });        
+        fetchData();        
     });
 
     function generatePdfByteArray(){
@@ -110,6 +112,7 @@
     const params = new URLSearchParams(window.location.search);
     const firNumber = params.get("firNumber");
     const formName = params.get("formName");
+    const type = params.get("type");
 
     // Use the values
     console.log("FIR Number:", firNumber);
@@ -126,86 +129,220 @@
 
   }
 
-    // Function to save data
-    function save() {
-    // Gather data from the form elements
-
-        hidedata();
-    //const byteArray =  generatePdfByteArray();
-
-    const htmlContent = document.documentElement.outerHTML;
-
-            // Convert to byte array
-            const byteArray = convertHTMLToByteArray(htmlContent);
-
-            // Debugging log
-            console.log("HTML Content:", htmlContent);
-            console.log("Byte Array:", byteArray);
-
-    const obj = {
-        date: $("#datePicker").val(), // Get date from the date picker
-        caseIdentifier: $("#caseIdentifier").text(), // Get case identifier text
-        reportingDate: $("#reportingDate").text(), // Get reporting date
-        reportingTime: $("#reportingTime").text(), // Get reporting time
-        toAddress: $("#toAddress").val(), // Get the address text
-        table1: getTableData("table1") // Custom function to parse table data
+  function htmlToPdfByteArray(element, callback) {
+    const options = {
+        margin: 0.5, // Adjust margin for better content fitting
+        filename: 'example.pdf',
+        image: { type: 'jpeg', quality: 0.8 }, // Slightly lower quality for optimization
+        html2canvas: { scale: 1.5 }, // Reduce scale to minimize memory usage
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
     };
 
-    // Retrieve FIR number and form name from the respective fields
-    const firNumber = document.getElementById("firNumberField").textContent;
-    const formName = document.getElementById("formNameField").textContent;
+    try {
+        // Break content into sections if it's too large
+        const sections = splitContentForLargePages(element);
 
-    // Construct the request payload
-    const req = {
-        FileContent: JSON.stringify(obj), // Convert `obj` to a JSON string
-        FileName: formName, // Pass the form name
-        FirNumber: firNumber, // Pass the FIR number
-        File: byteArray // view content
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF(options.jsPDF.orientation, options.jsPDF.unit, options.jsPDF.format);
+
+        let currentY = 0; // Track vertical offset in the PDF
+
+        // Process each section one by one
+        (async function processSections() {
+            for (let i = 0; i < sections.length; i++) {
+                const sectionCanvas = await html2canvas(sections[i], options.html2canvas);
+                const imgData = sectionCanvas.toDataURL('image/jpeg');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (sectionCanvas.height * pdfWidth) / sectionCanvas.width;
+
+                if (i > 0) {
+                    pdf.addPage(); // Add a new page for subsequent sections
+                }
+                pdf.addImage(imgData, 'JPEG', 0, currentY, pdfWidth, pdfHeight);
+            }
+
+            // Convert the final PDF to a byte array
+            const pdfBlob = pdf.output('blob');
+            const reader = new FileReader();
+            reader.onload = function () {
+                const byteArray = new Uint8Array(reader.result);
+                callback(null, byteArray); // Pass the byte array to the callback
+            };
+            reader.onerror = function (error) {
+                console.error('Error reading PDF Blob:', error);
+                callback(error, null);
+            };
+            reader.readAsArrayBuffer(pdfBlob);
+        })();
+    } catch (error) {
+        console.error('Error in htmlToPdfByteArray:', error);
+        callback(error, null); // Handle errors gracefully
+    }
+}
+
+/**
+ * Splits a large HTML element into manageable sections.
+ * @param {HTMLElement} element - The root HTML element.
+ * @returns {Array} - Array of smaller HTML elements.
+ */
+function splitContentForLargePages(element) {
+    const pageHeight = 800; // Approximate height for one PDF page (adjust as needed)
+    const sections = [];
+    const children = Array.from(element.children);
+
+    let currentSection = document.createElement('div');
+    let currentHeight = 0;
+
+    children.forEach((child) => {
+        const childHeight = child.offsetHeight || 0;
+        if (currentHeight + childHeight > pageHeight) {
+            sections.push(currentSection);
+            currentSection = document.createElement('div');
+            currentHeight = 0;
+        }
+        currentSection.appendChild(child.cloneNode(true));
+        currentHeight += childHeight;
+    });
+
+    if (currentSection.children.length > 0) {
+        sections.push(currentSection);
     }
 
-    // Debugging logs
-    console.log("Saving data:", JSON.stringify(req));
+    return sections;
+}
 
-    // AJAX POST request to the API
-    $.ajax({
-        url: "http://localhost:8080/firFileArchival/api/fileOps/saveFIRSupportingDocument",
-        type: "POST",
-        contentType: "application/json",
-        headers: { // Example custom header
-        },
-        data: JSON.stringify(req), // Send payload in the body
-        success: function (response) {
-            alert("Data saved successfully!");
-            console.log("Response:", response);
-        },
-        error: function (error) {
-            console.error("Error saving data:", error);
-            alert("Failed to save data. Please try again.");
+function convertHtmlToPdfDirectly(element, callback) {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+
+        // Use html2canvas to capture the element
+        html2canvas(element)
+            .then((canvas) => {
+                const imgData = canvas.toDataURL('image/jpeg');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+
+                // Convert the PDF to a Blob and then to a byte array
+                const pdfBlob = pdf.output('blob');
+                pdfBlob.arrayBuffer().then((arrayBuffer) => {
+                    const byteArray = new Uint8Array(arrayBuffer);
+
+                    // Call the callback with the byte array
+                    callback(null, byteArray);
+                });
+            })
+            .catch((error) => {
+                console.error('Error in convertHtmlToPdfDirectly:', error);
+                callback(error, null);
+            });
+    }
+
+function save() {
+    // Get the content inside modal-body
+    const saveButton = document.getElementById("saveForm");
+    const htmlContent = saveButton.closest("html").outerHTML;
+    console.log(htmlContent);
+
+        if (!saveButton) {
+            console.error("Save button not found");
+            return;
         }
-    });
+
+        // Traverse up to the <body> or <html> element for the content
+        const elementToConvert = saveButton.closest("body");
+
+        if (!elementToConvert) {
+            console.error("Element to convert not found");
+            return;
+        }
+
+        // Log for debugging
+        console.log("Element to Convert:", elementToConvert);
+
+        let byteArraynew = new Uint8Array(0);
+
+        // Pass the element for PDF generation
+        convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
+            if (error) {
+                console.error("Error in convertHtmlToPdfDirectly:", error);
+                return;
+            }
+            byteArraynew = byteArray;
+            console.log("PDF ByteArray:", byteArraynew);
+
+            // You can now send the byte array to your backend or perform other operations
+        });
+
+        // Construct the request payload
+        const obj = {
+                    date: $("#datePicker").val(),
+                    caseIdentifier: $("#caseIdentifier").text(),
+                    reportingDate: $("#reportingDate").text(),
+                    reportingTime: $("#reportingTime").text(),
+                    toAddress: $("#toAddress").val(),
+                    table1: getTableData("table1"),
+                };
+
+                const firNumber = document.getElementById("firNumberField").textContent;
+                const formName = document.getElementById("formNameField").textContent;
+                const base64String = btoa(String.fromCharCode(byteArraynew));
+
+                const req = {
+                    FileContent: JSON.stringify(obj),
+                    FileName: formName,
+                    FirNumber: firNumber,
+                    File: base64String,
+                };
+
+    // Send the data via AJAX
+    $.ajax({
+                    url: "http://localhost:8080/firFileArchival/api/fileOps/saveFIRSupportingDocument",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(req),
+                    success: (response) => {
+                        alert("Data saved successfully!");
+                        console.log("Response:", response);
+                    },
+                    error: (error) => {
+                        console.error("Error saving data:", error);
+                        alert("Failed to save data. Please try again.");
+                    },
+                });
+
 }
 
     // Function to fetch data and populate the fields
     function fetchData() {
+
+        const params = new URLSearchParams(window.location.search);
+    const firNumber = params.get("firNumber");
+    const formName = params.get("formName");
+    const type = params.get("type");
+    if(type == "edit"){
         $.ajax({
             url: "http://localhost:8080/firFileArchival/api/dashboard/getSupportingDocumentData?firNumber=FIR001&fileName=Form1test.html", // Replace with your API endpoint
             type: "GET",
             success: function (response) {
                 console.log("Fetched data:", response);
-
+                const jsonObject = JSON.parse(response.FileContent);
                 // Populate fields with response data
-                $("#datePicker").val(response.FileContent.date || "");
-                $("#caseIdentifier").text(response.FileContent.caseIdentifier || "ENTER FIR NUMBER");
-                $("#reportingDate").text(response.FileContent.reportingDate || "--.--.----");
-                $("#reportingTime").text(response.FileContent.reportingTime || "00:00 AM");
-                $("#toAddress").val(response.FileContent.toAddress || "");
-                populateTable("table1", response.FileContent.table1 || []);
+                $("#datePicker").val(jsonObject.date || "");
+                $("#caseIdentifier").text(jsonObject.caseIdentifier || "ENTER FIR NUMBER");
+                $("#reportingDate").text(jsonObject.reportingDate || "--.--.----");
+                $("#reportingTime").text(jsonObject.reportingTime || "00:00 AM");
+                $("#toAddress").val(jsonObject.toAddress || "");
+                populateTable("table1", jsonObject.table1 || []);
             },
             error: function (error) {
                 console.error("Error fetching data:", error);
                 alert("Failed to fetch data. Please reload the page.");
             }
         });
+    }
+        
     }
 
     // Function to extract table data as an array of objects

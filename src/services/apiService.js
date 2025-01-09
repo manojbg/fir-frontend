@@ -39,7 +39,7 @@ const getAllTasks = async (pageNumber = 0, size = 10) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    const tasks = await processResponseData(data);
+    const tasks = await processResponseDatanew(data);
     return {
       ...data,
       content: tasks,
@@ -69,6 +69,49 @@ const processResponseData = async (data) => {
 
       return await tasks;
 };
+
+const processResponseDatanew = async (data) => {
+  // Process tasks and create document URLs
+  const tasks = (data.content || []).map((task) => {
+    // Generate documentUrl for FirDTO.AttachmentFileBytes
+    const mainDocumentUrl = task.FirDTO.AttachmentFileBytes
+      ? (() => {
+          const byteArray = Uint8Array.from(
+            atob(task.FirDTO.AttachmentFileBytes),
+            (c) => c.charCodeAt(0)
+          );
+          const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming PDFs
+          return URL.createObjectURL(blob);
+        })()
+      : null;
+
+    // Generate documentUrl for each FirSupportingDocumentList.File
+    const supportingDocuments = (task.FirSupportingDocumentList || []).map(
+      (supportingDocument) => ({
+        ...supportingDocument,
+        documentUrl: supportingDocument.File
+          ? (() => {
+              const byteArray = Uint8Array.from(
+                atob(supportingDocument.File),
+                (c) => c.charCodeAt(0)
+              );
+              const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming HTML
+              return URL.createObjectURL(blob);
+            })()
+          : null,
+      })
+    );
+
+    return {
+      ...task,
+      documentUrl: mainDocumentUrl,
+      FirSupportingDocumentList: supportingDocuments,
+    };
+  });
+
+  return await tasks;
+};
+
 
 const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId, FirDate }) => {
   try {
