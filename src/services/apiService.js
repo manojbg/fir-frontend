@@ -89,10 +89,10 @@ const processResponseDatanew = async (data) => {
     const supportingDocuments = (task.FirSupportingDocumentList || []).map(
       (supportingDocument) => ({
         ...supportingDocument,
-        documentUrl: supportingDocument.File
+        documentUrl: supportingDocument.FileBytes
           ? (() => {
               const byteArray = Uint8Array.from(
-                atob(supportingDocument.File),
+                atob(supportingDocument.FileBytes),
                 (c) => c.charCodeAt(0)
               );
               const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming HTML

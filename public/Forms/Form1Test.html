@@ -78,37 +78,7 @@
         fetchData();        
     });
 
-    function generatePdfByteArray(){
-        const { jsPDF } = window.jspdf;
-
-        // Create a jsPDF instance
-        const pdf = new jsPDF();
-
-        // Capture the HTML content using html2canvas
-        const canvas =  html2canvas(document.body);
-
-        // Convert the canvas to an image
-        const imgData = canvas.toDataURL('image/png');
-
-        // Add the image to the PDF
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-
-        // Convert the PDF to a byte array
-        const pdfBlob = pdf.output('blob');
-        const arrayBuffer =  pdfBlob.arrayBuffer();
-        const byteArray = new Uint8Array(arrayBuffer);
-        return byteArray;
-    }
-
-    function convertHTMLToByteArray(html) {
-            const encoder = new TextEncoder();
-            return encoder.encode(html);
-    }
-
-    function getQueryParams() {
+     function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
     const firNumber = params.get("firNumber");
     const formName = params.get("formName");
@@ -125,122 +95,49 @@
 
   window.onload = getQueryParams;
 
-  function hidedata(){
+    function convertHtmlToPdfDirectly1(element, callback) {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
 
-  }
+    // Use html2canvas to capture the element
+    html2canvas(element)
+        .then((canvas) => {
+            const imgData = canvas.toDataURL('image/jpeg');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-  function htmlToPdfByteArray(element, callback) {
-    const options = {
-        margin: 0.5, // Adjust margin for better content fitting
-        filename: 'example.pdf',
-        image: { type: 'jpeg', quality: 0.8 }, // Slightly lower quality for optimization
-        html2canvas: { scale: 1.5 }, // Reduce scale to minimize memory usage
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-    };
+            // Add the image to the PDF
+            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
-    try {
-        // Break content into sections if it's too large
-        const sections = splitContentForLargePages(element);
-
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF(options.jsPDF.orientation, options.jsPDF.unit, options.jsPDF.format);
-
-        let currentY = 0; // Track vertical offset in the PDF
-
-        // Process each section one by one
-        (async function processSections() {
-            for (let i = 0; i < sections.length; i++) {
-                const sectionCanvas = await html2canvas(sections[i], options.html2canvas);
-                const imgData = sectionCanvas.toDataURL('image/jpeg');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (sectionCanvas.height * pdfWidth) / sectionCanvas.width;
-
-                if (i > 0) {
-                    pdf.addPage(); // Add a new page for subsequent sections
-                }
-                pdf.addImage(imgData, 'JPEG', 0, currentY, pdfWidth, pdfHeight);
-            }
-
-            // Convert the final PDF to a byte array
+            // Convert the PDF to a Blob
             const pdfBlob = pdf.output('blob');
+
+            // Log Blob for debugging
+            console.log('Generated PDF Blob:', pdfBlob);
+
+            // Convert the Blob to a Base64 string
             const reader = new FileReader();
             reader.onload = function () {
-                const byteArray = new Uint8Array(reader.result);
-                callback(null, byteArray); // Pass the byte array to the callback
+                const base64String = reader.result.split(',')[1]; // Extract the Base64 part
+                callback(null, base64String); // Pass the Base64 string to the callback
             };
             reader.onerror = function (error) {
-                console.error('Error reading PDF Blob:', error);
-                callback(error, null);
+                console.error('Error reading Blob:', error);
+                callback(error, null); // Pass the error to the callback
             };
-            reader.readAsArrayBuffer(pdfBlob);
-        })();
-    } catch (error) {
-        console.error('Error in htmlToPdfByteArray:', error);
-        callback(error, null); // Handle errors gracefully
-    }
+
+            reader.readAsDataURL(pdfBlob); // Read the Blob as a Base64 string
+        })
+        .catch((error) => {
+            console.error('Error in convertHtmlToPdfDirectly:', error);
+            callback(error, null); // Pass the error to the callback
+        });
 }
 
-/**
- * Splits a large HTML element into manageable sections.
- * @param {HTMLElement} element - The root HTML element.
- * @returns {Array} - Array of smaller HTML elements.
- */
-function splitContentForLargePages(element) {
-    const pageHeight = 800; // Approximate height for one PDF page (adjust as needed)
-    const sections = [];
-    const children = Array.from(element.children);
-
-    let currentSection = document.createElement('div');
-    let currentHeight = 0;
-
-    children.forEach((child) => {
-        const childHeight = child.offsetHeight || 0;
-        if (currentHeight + childHeight > pageHeight) {
-            sections.push(currentSection);
-            currentSection = document.createElement('div');
-            currentHeight = 0;
-        }
-        currentSection.appendChild(child.cloneNode(true));
-        currentHeight += childHeight;
-    });
-
-    if (currentSection.children.length > 0) {
-        sections.push(currentSection);
-    }
-
-    return sections;
-}
-
-function convertHtmlToPdfDirectly(element, callback) {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF();
-
-        // Use html2canvas to capture the element
-        html2canvas(element)
-            .then((canvas) => {
-                const imgData = canvas.toDataURL('image/jpeg');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-
-                // Convert the PDF to a Blob and then to a byte array
-                const pdfBlob = pdf.output('blob');
-                pdfBlob.arrayBuffer().then((arrayBuffer) => {
-                    const byteArray = new Uint8Array(arrayBuffer);
-
-                    // Call the callback with the byte array
-                    callback(null, byteArray);
-                });
-            })
-            .catch((error) => {
-                console.error('Error in convertHtmlToPdfDirectly:', error);
-                callback(error, null);
-            });
-    }
 
 function save() {
     // Get the content inside modal-body
+    hideElementsForView();
     const saveButton = document.getElementById("saveForm");
     const htmlContent = saveButton.closest("html").outerHTML;
     console.log(htmlContent);
@@ -261,22 +158,15 @@ function save() {
         // Log for debugging
         console.log("Element to Convert:", elementToConvert);
 
-        let byteArraynew = new Uint8Array(0);
-
         // Pass the element for PDF generation
-        convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
+        convertHtmlToPdfDirectly1(elementToConvert, (error, byteArray) => {
             if (error) {
                 console.error("Error in convertHtmlToPdfDirectly:", error);
                 return;
             }
-            byteArraynew = byteArray;
-            console.log("PDF ByteArray:", byteArraynew);
+            console.log("PDF ByteArray:", byteArray);
 
-            // You can now send the byte array to your backend or perform other operations
-        });
-
-        // Construct the request payload
-        const obj = {
+            const obj = {
                     date: $("#datePicker").val(),
                     caseIdentifier: $("#caseIdentifier").text(),
                     reportingDate: $("#reportingDate").text(),
@@ -287,13 +177,11 @@ function save() {
 
                 const firNumber = document.getElementById("firNumberField").textContent;
                 const formName = document.getElementById("formNameField").textContent;
-                const base64String = btoa(String.fromCharCode(byteArraynew));
-
                 const req = {
                     FileContent: JSON.stringify(obj),
                     FileName: formName,
                     FirNumber: firNumber,
-                    File: base64String,
+                    FileBytes: byteArray,
                 };
 
     // Send the data via AJAX
@@ -312,6 +200,10 @@ function save() {
                     },
                 });
 
+
+            // You can now send the byte array to your backend or perform other operations
+        });
+       
 }
 
     // Function to fetch data and populate the fields
@@ -381,6 +273,14 @@ function save() {
             </tr>`;
             tbody.innerHTML += newRow;
         });
+    }
+
+    function hideElementsForView()
+    {
+       $('#table1 tr > *:nth-child(4)').remove();
+       $('#addRowBtnAfter').hide()
+       $('#saveForm').hide()
+       $('.background-edit').removeClass();
     }
 </script>
 </head>

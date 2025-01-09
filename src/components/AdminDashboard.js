@@ -220,16 +220,6 @@ const AdminDashboard = () => {
     navigate("/");
   };
 
-  const handleNotification = (triggerSourceIsUser) => {
-    setUserClick(triggerSourceIsUser);
-    setModalShow(true);
-  };
-
-  const handleNotificationHide = () => {
-    setUserClick(false);
-    setModalShow(false);
-  };
-
   return (
     <div bsClass='AdminDashboard' >
         <header className="dashboard-header">
