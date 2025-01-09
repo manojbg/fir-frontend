@@ -273,8 +273,6 @@ const UserDashboard = () => {
                     <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
                 </td><td>
                     <label>Enter Date : </label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
-                </td><td>
-                    <label>Un-Assigned &nbsp;&nbsp;</label><label class="switch"><input id="toggle-switch" ref={searchToggle} type="checkbox"></input><span class="slider round"></span></label><label>&nbsp;&nbsp;Assigned</label><button className="search-buttons" onClick={() => handleSearchByAssignedOrUnAssignedTask()}></button>
                 </td></tr></thead></table>
             </div>
         </div>
@@ -318,7 +316,7 @@ const UserDashboard = () => {
       <td className="task-table-column">
         <button
           className="action-buttons-sublist edit-button"
-          onClick={() => handleShow(task.FirNumber, document.FileName ,"edit")}
+          onClick={() => handleShow(task.FirDTO.FirNumber, document.FileName ,"edit")}
         ></button>
         <button
           className="action-buttons-sublist view-button"
@@ -326,7 +324,7 @@ const UserDashboard = () => {
         ></button>
         <button
           className="action-buttons-sublist delete-button"
-          onClick={() => handleDeleteTask(task.FirNumber)}
+          onClick={() => handleDeleteTask(task.FirDTO.FirNumber)}
         ></button>
       </td>
     </tr>

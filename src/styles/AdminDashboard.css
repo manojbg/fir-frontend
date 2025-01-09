@@ -21,8 +21,8 @@
 .dashboard-header {
   display: flex;
   align-items: center;
-  height: 70px;
-  background : linear-gradient(to right, yellow, red);
+  height: 55px;
+  background : linear-gradient(to right, #ffff00c9, #ff0707d4);
 }
 
 .dashboard-header div:nth-child(2) {
@@ -217,6 +217,7 @@
 }
 
 .navbar-brand{
+  margin: 10px;
   height : 50px;
   padding: 1%;
   animation: flip-with-rotate 1s infinite;
@@ -234,7 +235,7 @@
   cursor: pointer;
   background-size: contain;
   background-repeat: no-repeat;
-  padding: 18%;
+  padding: 15%;
   border: none;
   margin-left: 5%;
 }

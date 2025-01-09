@@ -137,6 +137,7 @@
 
 function save() {
     // Get the content inside modal-body
+    hideElementsForView();
     const saveButton = document.getElementById("saveForm");
     const htmlContent = saveButton.closest("html").outerHTML;
     console.log(htmlContent);
@@ -272,6 +273,14 @@ function save() {
             </tr>`;
             tbody.innerHTML += newRow;
         });
+    }
+
+    function hideElementsForView()
+    {
+       $('#table1 tr > *:nth-child(4)').remove();
+       $('#addRowBtnAfter').hide()
+       $('#saveForm').hide()
+       $('.background-edit').removeClass();
     }
 </script>
 </head>

@@ -4,21 +4,21 @@
   }
   
   .user-dashboard {
-    padding: 10px;
+    padding: 5px;
     font-family: Arial, sans-serif;
-    background : url("./assets/images/emblem.jpg");
+    /*background : url("./assets/images/emblem.jpg");
     overflow : auto;
-    background-size: contain;
+    *//*background-size: contain;
     background-repeat: no-repeat;
-    background-position: right;
-    background-color: #7287a6;
+    background-position: right;*/
+    background-color: #7287a6d9;
   }
   
   .user-dashboard-header {
     display: flex;
     align-items: center;
-    height: 70px;
-    background : linear-gradient(to right, yellow, red);
+    height: 55px;
+    background : linear-gradient(to right, #ffff00c9, #ff0707d4);
   }
   
   .user-dashboard-header div:nth-child(2) {
@@ -213,6 +213,7 @@
   }
   
   .navbar-brand{
+    margin: 10px;
     height : 50px;
     padding: 1%;
     animation: flip-with-rotate 1s infinite;
@@ -454,8 +455,10 @@
   }
   
   .user-search-section{
-    width: 80%;
+    width: 65%;
     margin: 1%;
+    margin-left : auto;
+    margin-right : auto;
   }
   
   .create-table{
