@@ -1,4 +1,4 @@
-// Updated AdminDashboard.js
+// Updated UserDashboard.js
 import React, { useEffect, useState } from 'react';
 import apiService from '../services/apiService';
 import '../styles/UserDashboard.css';
@@ -37,12 +37,12 @@ const UserDashboard = () => {
     fetchTasks();
     fetchAssignees();
     //handleNotification(true);
-    document.querySelector("#root").classList.add('admin-dashboard-root');
+    document.querySelector("#root").classList.add('user-dashboard-root');
     //const intervalId = setInterval(handleNotification, 60000);
 
         // Cleanup by removing the class when the component unmounts
         return () => {
-          document.querySelector("#root").classList.remove('admin-dashboard-root');
+          document.querySelector("#root").classList.remove('user-dashboard-root');
           //clearInterval(intervalId);
         };
   }, [currentPage]);
@@ -52,7 +52,7 @@ const UserDashboard = () => {
     const encodedForm = encodeURIComponent("Form1test.html");
 
     const iframeSrc = `/Form1test.html?firNumber=${encodedFIR}&formName=${encodedForm}`;
-    setIframeSrc(iframeSrc); // Update the iframe source dynamically
+    setIframeSrc(iframeSrc);// Update the iframe source dynamically
     setShowModal(true); // Show the modal
 };
 
@@ -247,8 +247,8 @@ const UserDashboard = () => {
   };
 
   return (
-    <div bsClass='AdminDashboard' >
-        <header className="dashboard-header">
+    <div bsClassName='UserDashboard' >
+        <header className="user-dashboard-header">
             <div><img className="navbar-brand" src={logo}></img></div>
             <div>
             <h1 className="navbar-brand-text"><u>Crime Report Tracking System</u></h1>
@@ -261,8 +261,8 @@ const UserDashboard = () => {
          {modalShow && (
                 <NotificationModal handleNotification={handleNotification} show={modalShow} onHide={handleNotificationHide} userClick={userClick} />
               )}
-        <div className="admin-dashboard">
-            <div className="search-section">
+        <div className="user-dashboard">
+            <div className="user-search-section">
                 <table className="search-table"><thead><tr><td>
                     <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
                 </td><td>
@@ -404,6 +404,10 @@ const UserDashboard = () => {
   backdrop="static"
   keyboard={false}
   dialogClassName="custom-modal"
+  style={{content : {
+    width : "100%",
+    float : "center",
+  }}}
   aria-labelledby="example-custom-modal-styling-title"
   centered
 >

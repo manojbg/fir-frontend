@@ -4,7 +4,6 @@ import apiService from '../services/apiService';
 import '../styles/AdminDashboard.css';
 import logo from '../styles/assets/images/ksplogo1.jpg';
 import { useNavigate } from 'react-router-dom';
-import NotificationModal from '../components/Notifications';
 
 const AdminDashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -239,13 +238,9 @@ const AdminDashboard = () => {
             <h1 className="navbar-brand-text"><u>Crime Report Tracking System</u></h1>
             <p><strong>Karnataka State</strong></p></div>
             <div>
-            <button className="notification-button" onClick={() => handleNotification(true)}></button>
             <button className="logout-button" onClick={() => handleLogout()}></button>
             </div>
         </header>
-         {modalShow && (
-                <NotificationModal handleNotification={handleNotification} show={modalShow} onHide={handleNotificationHide} userClick={userClick} />
-              )}
         <div className="admin-dashboard">
             <div className="create-section">
                 <div className="create-header">Upload FIR</div>
