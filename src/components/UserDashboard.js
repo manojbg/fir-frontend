@@ -49,7 +49,7 @@ const UserDashboard = () => {
 
   const handleShow = (firNumber, fileName, type) => {
     const encodedFIR = encodeURIComponent(firNumber); // Encode to safely pass in URL
-    const encodedForm = encodeURIComponent("Form1test.html");
+    const encodedForm = encodeURIComponent(fileName);
     let form = "";
     if(type == "edit"){
       form = fileName;
