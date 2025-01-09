@@ -2,9 +2,6 @@
 <html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.8.0/css/bootstrap-datepicker.min.css"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.8.0/js/bootstrap-datepicker.min.js"></script>
     <style>
         /* Set A4 size */
         * {
@@ -53,155 +50,33 @@
         }
 
     </style>
-<script>
-    // On page load, read data from the API and populate the fields
-    $(document).ready(function () {
-        fetchData();
+    <script>
 
-        // Add a new row to the table
-        $("#addRowBtnAfter").click(function () {
-            var newRow = `
-            <tr>
-                <td><div class="background-edit" contenteditable>New Bank</div></td>
-                <td><div class="background-edit" contenteditable>New Account</div></td>
-                <td><div class="background-edit" contenteditable>New IFSC</div></td>
-                <td><button class="removeBtn">Delete</button></td>
-            </tr>`;
-            $("#table1 tbody").append(newRow);
-        });
+        function save() {
+          var obj = new Object();
+          obj.date = $('#datePicker').val();
+          obj.caseIdentifier = $("#caseIdentifier").text();
+          obj.reportingDuration = $("#reportingDuration").text();
+          obj.toAddress = $("#toAddress").val();
+          var string = JSON.stringify(obj);
+          console.log(JSON.parse(string));
 
-        // Remove a row from the table
-        $(document).on("click", ".removeBtn", function () {
-            $(this).closest("tr").remove();
-        });
-    });
-
-    function getQueryParams() {
-    const params = new URLSearchParams(window.location.search);
-    const firNumber = params.get("firNumber");
-    const formName = params.get("formName");
-
-    // Use the values
-    console.log("FIR Number:", firNumber);
-    console.log("formName:", formName);
-
-    // Populate your form fields if needed
-    document.getElementById("firNumberField").textContent = firNumber;
-    document.getElementById("formNameField").textContent = formName;
-  }
-
-  window.onload = getQueryParams;
-
-    // Function to save data
-    function save() {
-    // Gather data from the form elements
-    const obj = {
-        date: $("#datePicker").val(), // Get date from the date picker
-        caseIdentifier: $("#caseIdentifier").text(), // Get case identifier text
-        reportingDate: $("#reportingDate").text(), // Get reporting date
-        reportingTime: $("#reportingTime").text(), // Get reporting time
-        toAddress: $("#toAddress").val(), // Get the address text
-        table1: getTableData("table1") // Custom function to parse table data
-    };
-
-    // Retrieve FIR number and form name from the respective fields
-    const firNumber = document.getElementById("firNumberField").textContent;
-    const formName = document.getElementById("formNameField").textContent;
-
-    // Construct the request payload
-    const req = {
-        FileContent: JSON.stringify(obj), // Convert `obj` to a JSON string
-        FileName: formName, // Pass the form name
-        FirNumber: firNumber // Pass the FIR number
-    }
-
-    // Debugging logs
-    console.log("Saving data:", JSON.stringify(req));
-
-    // AJAX POST request to the API
-    $.ajax({
-        url: "http://localhost:8080/firFileArchival/api/fileOps/saveFIRSupportingDocument",
-        type: "POST",
-        contentType: "application/json",
-        headers: { // Example custom header
-        },
-        data: JSON.stringify(req), // Send payload in the body
-        success: function (response) {
-            alert("Data saved successfully!");
-            console.log("Response:", response);
-        },
-        error: function (error) {
-            console.error("Error saving data:", error);
-            alert("Failed to save data. Please try again.");
+          var obj2 = JSON.parse(string);
+          console.log(obj.reportingDuration);
         }
-    });
-}
 
-    // Function to fetch data and populate the fields
-    function fetchData() {
-        $.ajax({
-            url: "http://localhost:8080/firFileArchival/api/dashboard/getSupportingDocumentData?firNumber=FIR001&fileName=Form1test.html", // Replace with your API endpoint
-            type: "GET",
-            success: function (response) {
-                console.log("Fetched data:", response);
+        function hideElementsForView()
+        {
+        $('.background-edit').removeClass();
+        $('#saveForm').hide();
+        }
 
-                // Populate fields with response data
-                $("#datePicker").val(response.FileContent.date || "");
-                $("#caseIdentifier").text(response.FileContent.caseIdentifier || "ENTER FIR NUMBER");
-                $("#reportingDate").text(response.FileContent.reportingDate || "--.--.----");
-                $("#reportingTime").text(response.FileContent.reportingTime || "00:00 AM");
-                $("#toAddress").val(response.FileContent.toAddress || "");
-                populateTable("table1", response.FileContent.table1 || []);
-            },
-            error: function (error) {
-                console.error("Error fetching data:", error);
-                alert("Failed to fetch data. Please reload the page.");
-            }
-        });
-    }
 
-    // Function to extract table data as an array of objects
-    function getTableData(tableId) {
-        const table = document.getElementById(tableId);
-        const rows = table.querySelectorAll("tbody tr");
-        const data = [];
-
-        rows.forEach(row => {
-            const cells = row.querySelectorAll("td div");
-            if (cells.length >= 3) {
-                data.push({
-                    bank: cells[0].innerText.trim(),
-                    accountNo: cells[1].innerText.trim(),
-                    ifscCode: cells[2].innerText.trim()
-                });
-            }
-        });
-
-        return data;
-    }
-
-    // Function to populate the table with data
-    function populateTable(tableId, data) {
-        const table = document.getElementById(tableId);
-        const tbody = table.querySelector("tbody");
-        tbody.innerHTML = ""; // Clear existing rows
-
-        data.forEach(row => {
-            const newRow = `
-            <tr>
-                <td><div class="background-edit" contenteditable>${row.bank}</div></td>
-                <td><div class="background-edit" contenteditable>${row.accountNo}</div></td>
-                <td><div class="background-edit" contenteditable>${row.ifscCode}</div></td>
-                <td><button class="removeBtn">Delete</button></td>
-            </tr>`;
-            tbody.innerHTML += newRow;
-        });
-    }
-</script>
+    </script>
 </head>
 <body>
 <div>
-    <br>
+    <br/>
     <div style='text-align:center;'>
         <p>
 <span><img
@@ -211,80 +86,41 @@
             <strong>CEN Police Station, North Division, Bengaluru City</strong>
         </p>
         <p>
-            <span style=''>2<sup>nd</sup> Floor, Deputy Commissioner Office Building, North Division, Bengaluru city -560022</span>
+            <span >2<sup>nd</sup> Floor, Deputy Commissioner Office Building, North Division, Bengaluru city -560022</span>
         </p>
         <p>
-            <u><span style=''>E-mail ID:-</span></u><a
-                href="mailto:cenpsnorthbcp@ksp.gov.in"><span style=''>cenpsnorthbcp@ksp.gov.in</span></a><span
-                style=''>&nbsp;; Phone No-080-22942302; Mob No-9449295758</span>
+            <u><span >E-mail ID:-</span></u><a
+                href="mailto:cenpsnorthbcp@ksp.gov.in"><span >cenpsnorthbcp@ksp.gov.in</span></a><span
+                >&nbsp;; Phone No-080-22942302; Mob No-9449295758</span>
         </p>
     </div>
-    <br> <br> <br>
+    <br/> <br/> <br/>
     <p style='text-align:center;'>
-        <strong><u><span
-                style=''>POLICE NOTICE U/s 94 &amp; 179 Bharatiya Nagarik Suraksha Sanhita, 2023</span></u></strong>
+        <strong><u><span>Police Notice U/s 41(A) Criminal Procedure Code</span></u></strong>
     </p>
-    <br>
+    <br/>
     <p style='text-align:right;'>
         <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
     </p>
-    <br>
+    <br/>
     <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
         <div style="display:inline">
-            In Exercise of the powers conferred U/s 94 of BNSS, I hereby inform you that during the investigation of FIR
-            No
+            In Exercise of the powers conferred under sub section (1) of section 41(A) of CrPC.  I hereby inform you that during the investigation of <b>FIR No</b>
         </div>
         <div id="caseIdentifier" style="display:inline" class="background-edit" contenteditable>ENTER FIR NUMBER</div>
-        <div style="display:inline"> registered in CEN Police Station, North Division Bengaluru. During the course of
-            investigation, it is revealed that there are reasonable grounds to question you to ascertain/ circumstances
-            the facts and circumstance from you.&nbsp;
+        <div style="display:inline"> registered in CEN Police Station, North Division, Bengaluru city. During the course of investigation,
+            it is revealed that there are reasonable grounds to question you to ascertain/circumstances the facts and circumstance from you. &nbsp;
         </div>
         <div>
             Hence you are directed to appear before me on
-            <div id="reportingDate" style="display:inline" class="background-edit" contenteditable>--.--.----</div>
-            at
-            <div id="reportingTime" style="display:inline" class="background-edit" contenteditable>00:00 AM</div>
+            <div id="reportingDuration" style="display:inline" class="background-edit" contenteditable>--.--.----</div>
             in CEN Police Station, North division, Bengaluru city for enquiry along with relevant documents.
         </div>
     </div>
-    <br>
-    <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center">
-        <tbody>
-        <tr>
-            <td>
-                <p><strong>BANK</strong></p>
-            </td>
-            <td>
-                <p><strong>ACCOUNT NO</strong></p>
-            </td>
-            <td>
-                <p><strong>IFSC CODE</strong></p>
-            </td>
-            <td id="actions">
-                <p><strong>ACTIONS</strong></p>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div class="background-edit" contenteditable>RBL Bank</div>
-            </td>
-            <td>
-                <div class="background-edit" contenteditable>409000546479</div>
-            </td>
-            <td>
-                <div class="background-edit" contenteditable>RATN0000104</div>
-            </td>
-            <td>
-                <button class="removeBtn">Delete</button>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    <button style="float:right" id="addRowBtnAfter">Add Row</button>
-    <br>
+    <br/>
     <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
     </p>
-    <br><br>
+    <br/><br/>
     <div style="display: inline-block;width: 100%;">
         <div style="float : right; text-align:center; width : 35%">
             <p>Assistant commissioner of police,</p>
@@ -292,14 +128,13 @@
             <p><strong>North division, Bengaluru city</strong></p>
         </div>
     </div>
-    <br>
+    <br/>
     <div style="display: inline-block;width: 30%;">
         <p><strong>To,</strong></p>
-        <textarea id="toAddress" name="toAddress" rows="5" cols="30" style="border : none;"></textarea>
+        <textarea id="toAddress" class="background-edit" name="toAddress" rows="5" cols="30" style="border : none;"></textarea>
     </div>
 </div>
 <button style="display:inline; float:right" id="saveForm" onclick="save()">Save</button>
-<p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
-<p style="display: none;">form Name: <span id="formNameField"></span></p>
+
 </body>
 </html>

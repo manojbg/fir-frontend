@@ -9,7 +9,6 @@
     background : url("./assets/images/emblem.jpg");
     overflow : auto;
     background-size: contain;
-    /* height: calc(70vh - 100px); */
     background-repeat: no-repeat;
     background-position: right;
     border-bottom-left-radius: 20%;
