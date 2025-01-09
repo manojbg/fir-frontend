@@ -34,7 +34,14 @@ const login = async (userDetails) => {
 
 const getAllTasks = async (pageNumber = 0, size = 10) => {
   try {
-    const response = await fetch(`${API_URL}/dashboard/listAllFIRsWithDocumentDataByUserId?userId=&pageNumber=${pageNumber}&size=${size}`);
+    const userId = localStorage.getItem('UserId');
+    const role = localStorage.getItem('role');
+    let response = "";
+    if(role  === "admin"){
+      response = await fetch(`${API_URL}/dashboard/listAllFIRsWithDocumentDataByUserId?userId=&pageNumber=${pageNumber}&size=${size}`);
+    }else{
+      response = await fetch(`${API_URL}/dashboard/listAllFIRsWithDocumentDataByUserId?userId=${userId}&pageNumber=${pageNumber}&size=${size}`);
+    }    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -223,10 +230,40 @@ const deleteTask = async (firNumber) =>{
   }
 };
 
+const deleteTaskDocument = async (firNumber, fileName) =>{
+  try {
+    const payload = [
+      {
+        FileName: fileName,
+        FirNumber: firNumber,
+      },
+    ];
+
+    const response = await fetch(`${API_URL}/fileOps/deleteFIRSupportDocument`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+  } catch (error) {
+    alert('Error deleting FIR. Please try again.');
+    console.error('Delete Task Error:', error);
+  }
+};
+
+
 const searchByIdTask = async (firNumber) => {
   var data = null;
+  const userId = localStorage.getItem('UserId');
     try {
-      const response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}`);
+      const response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}&userId=${userId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -242,8 +279,9 @@ const searchByIdTask = async (firNumber) => {
 
 const getAllTasksByDate = async (date, pageNumber = 0, size = 10) => {
   var data = null;
+  const userId = localStorage.getItem('UserId');
   try {
-    const response = await fetch(`${API_URL}/dashboard/listFIRsByDate?date=${date}&pageNumber=${pageNumber}&size=${size}`);
+    const response = await fetch(`${API_URL}/dashboard/listFIRsByDate?date=${date}&pageNumber=${pageNumber}&size=${size}&userId=${userId}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -387,6 +425,7 @@ export default {
   createTask,
   getAssignees,
   deleteTask,
+  deleteTaskDocument,
   searchByIdTask,
   getAllTasksByDate,
   getAllTasksByAssignedOrUnAssigned,

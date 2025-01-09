@@ -297,7 +297,6 @@ const AdminDashboard = () => {
                   <td><strong></strong> {task.FirDTO.FirDate}</td>
                   <td>
                     <button className="action-buttons-mainlist assign-button" onClick={() => handleAssignPopup(task.FirDTO.FirNumber, task.FirDTO.FirDate, task.FirDTO.AssigneeUserId || '')}></button>
-                    <button className="action-buttons-mainlist add-button" onClick={() => handleFormCreationPopup(task.FirDTO.FirNumber, '')}></button>
                     <button className="action-buttons-mainlist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
                     <button className="action-buttons-mainlist delete-button" onClick={() => handleDeleteTask(task.FirDTO.FirNumber)}></button>
                   </td>
@@ -311,16 +310,25 @@ const AdminDashboard = () => {
                       <th>Document</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {task.FirSupportingDocumentList != null ? (
-                      <tr>
-                      <td>{task.FirSupportingDocumentList.FileName || 'Unnamed Document'}</td>
-                      <td className="task-table-column">                        
-                        <button className="action-buttons-sublist edit-button" onClick={() => apiService.editTask(task.FirNumber)}></button>
-                        <button className="action-buttons-sublist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
-                        <button className="action-buttons-sublist delete-button" onClick={() => handleDeleteTask(task.FirNumber)}></button>
-                      </td>
-                    </tr>) :(<p>No Document</p>)}
+                  <tbody>{task.FirSupportingDocumentList && task.FirSupportingDocumentList.length > 0 ? (
+  task.FirSupportingDocumentList.map((document, index) => (
+    <tr key={index}>
+      <td>{(document.FileName && document.FileName.substring(0, document.FileName.lastIndexOf('.'))) || 'Unnamed Document'}</td>
+      <td className="task-table-column">
+        <button
+          className="action-buttons-sublist view-button"
+          onClick={() => handleViewDocument(document.documentUrl)}
+        ></button>
+        <button
+          className="action-buttons-sublist delete-button"
+          onClick={() => handleDeleteTask(task.FirDTO.FirNumber, document.FileName)}
+        ></button>
+      </td>
+    </tr>
+  ))
+) : (
+  <p>No Document</p>
+)}
                   </tbody>
                 </table>
               </div>

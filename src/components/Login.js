@@ -38,6 +38,7 @@ const Login = () => {
 
       if (response && response.Role) {
         localStorage.setItem('UserId' , response.UserId)
+        localStorage.setItem('role', response.Role.toLowerCase())
         if(response.Role.toLowerCase() === "admin"){
           navigate('/admin');
         }else{

@@ -57,7 +57,7 @@ const UserDashboard = () => {
       form = document.querySelector('.form-select').value;
     }   
 
-    const iframeSrc = `/Forms/`+form+`?firNumber=${encodedFIR}&formName=${encodedForm}&type=`+type;
+    const iframeSrc = `/Forms/`+form+`?firNumber=${encodedFIR}&formName=${encodedForm}&type=`+type+`&closeModal=true`;
     setIframeSrc(iframeSrc);// Update the iframe source dynamically
     setShowModal(true); // Show the modal
 };
@@ -90,11 +90,11 @@ const UserDashboard = () => {
     }
   };
 
-  const handleDeleteTask = async (firNumber) => {
+  const handleDeleteTask = async (firNumber, fileName) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete FIR Number: ${firNumber}?`);
     if (!confirmDelete) return;
 
-    await apiService.deleteTask(firNumber);
+    await apiService.deleteTask(firNumber, fileName);
     fetchTasks(); // Refresh the task list
   };
 
@@ -125,54 +125,6 @@ const UserDashboard = () => {
     }
   };
 
-  const handleSearchByAssignedOrUnAssignedTask = async () => {
-    const input = searchToggle.current;
-    const assigned = input.checked;
-    alert(assigned);
-    try{
-      const response =await apiService.getAllTasksByAssignedOrUnAssigned(assigned,currentPage - 1, pageSize);
-      setTasks(response.content);
-    }catch (error) {
-      console.error('Error fetching tasks:', error);
-      setTasks([]);
-     }
-  };
-
-  const handleCreateTask = async () => {
-    const firNumberInput = firNumber.current.value;
-    const firDateInput = firDate.current.value;
-    const firFileInput = firFile.current.value;
-
-    if(firNumberInput == '' || firDateInput == '' || firFileInput == '')
-    {
-      alert("Mandatory Fields Are Not Populated");
-    }
-    else{
-      try {
-        const fileReader = new FileReader();
-        fileReader.onload = async () => {
-          const base64File = fileReader.result.split(',')[1];
-          const taskData = {
-            FirNumber: newTask.FirNumber,
-            FileName: newTask.file.name,
-            AttachmentFileBytes: base64File,
-            AssigneeUserId: newTask.AssigneeUserId,
-            FirDate : firDateInput
-          };
-          await apiService.createTask(taskData);
-          alert('FIR created successfully');
-          setNewTask({ FirNumber: '', file: null, AssigneeUserId: '' });
-          setCurrentPage(1); // Reset to first page to see the new task
-          handleReset();
-          fetchTasks();
-        };
-        fileReader.readAsDataURL(newTask.file);
-      } catch (error) {
-        alert('Error creating FIR. Please try again.');
-      }
-    }
-  };
-
   const handleReset = async () => {
     firNumber.current.value = '';
     firDate.current.value = '';
@@ -200,38 +152,12 @@ const UserDashboard = () => {
     }
   };
 
-  const handleCreateForm = async () => {
-  //updated method as required
-    try {
-      const payload = {
-        FileName: createFormPopup.FileName,
-        FirNumber: createFormPopup.FirNumber,
-        FileContent: ''
-      };
-
-      await apiService.createTaskItemData(payload);
-      alert('Assignee updated successfully');
-      setAssignPopup({ visible: false, FirNumber: '', AssigneeUserId: '' });
-      fetchTasks();
-    } catch (error) {
-      alert('Error assigning FIR. Please try again.');
-    }
-  };
-
   const handlePreviousPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-
-  const handleFileUpload = (e) => {
-    setNewTask({ ...newTask, file: e.target.files[0] });
-  };
-
-  const handleAssignPopup = (FirNumber, FirDate, AssigneeUserId) => {
-    setAssignPopup({ visible: true, FirNumber: FirNumber, FirDate: FirDate, AssigneeUserId: AssigneeUserId });
   };
 
   const handleFormCreationPopup = (FirNumber, FileName) => {
@@ -312,7 +238,7 @@ const UserDashboard = () => {
                   {task.FirSupportingDocumentList && task.FirSupportingDocumentList.length > 0 ? (
   task.FirSupportingDocumentList.map((document, index) => (
     <tr key={index}>
-      <td>{document.FileName || 'Unnamed Document'}</td>
+      <td>{(document.FileName && document.FileName.substring(0, document.FileName.lastIndexOf('.'))) || 'Unnamed Document'}</td>
       <td className="task-table-column">
         <button
           className="action-buttons-sublist edit-button"
@@ -324,7 +250,7 @@ const UserDashboard = () => {
         ></button>
         <button
           className="action-buttons-sublist delete-button"
-          onClick={() => handleDeleteTask(task.FirDTO.FirNumber)}
+          onClick={() => handleDeleteTask(task.FirDTO.FirNumber, document.FileName)}
         ></button>
       </td>
     </tr>
@@ -446,7 +372,7 @@ const UserDashboard = () => {
     />
   </Modal.Body>
   <Modal.Footer>
-    <Button variant="secondary" onClick={handleClose}>
+    <Button variant="secondary" onClick={handleClose} id="iclose">
       Close
     </Button>
   </Modal.Footer>

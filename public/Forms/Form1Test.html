@@ -78,6 +78,14 @@
         fetchData();        
     });
 
+    function closeParentModal() {
+      if (window.parent && typeof window.parent.handleClose === "function") {
+        window.parent.handleClose(); // Call the parent's `handleClose` function
+      } else {
+        console.error("handleClose function not found on the parent window.");
+      }
+    }
+
      function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
     const firNumber = params.get("firNumber");
@@ -140,6 +148,7 @@ function save() {
     hideElementsForView();
     const saveButton = document.getElementById("saveForm");
     const htmlContent = saveButton.closest("html").outerHTML;
+    const closebuttons = document.getElementById("iclose");
     console.log(htmlContent);
 
         if (!saveButton) {
@@ -191,8 +200,9 @@ function save() {
                     contentType: "application/json",
                     data: JSON.stringify(req),
                     success: (response) => {
-                        alert("Data saved successfully!");
                         console.log("Response:", response);
+                        alert("Data saved successfully!");
+                        closeParentModal();
                     },
                     error: (error) => {
                         console.error("Error saving data:", error);
