@@ -47,7 +47,6 @@ function NotificationModal(props) {
       let isNewEntryAbsent = response.every(element => element.NewEntry === false);
       if(isNewEntryAbsent)
       {
-      alert("No new notification so closing");
         props.onHide();
       }
     }

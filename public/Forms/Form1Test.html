@@ -78,14 +78,6 @@
         fetchData();        
     });
 
-    function closeParentModal() {
-      if (window.parent && typeof window.parent.handleClose === "function") {
-        window.parent.handleClose(); // Call the parent's `handleClose` function
-      } else {
-        console.error("handleClose function not found on the parent window.");
-      }
-    }
-
      function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
     const firNumber = params.get("firNumber");
@@ -202,7 +194,7 @@ function save() {
                     success: (response) => {
                         console.log("Response:", response);
                         alert("Data saved successfully!");
-                        closeParentModal();
+                        handleCloseModal();
                     },
                     error: (error) => {
                         console.error("Error saving data:", error);
@@ -213,7 +205,7 @@ function save() {
 
             // You can now send the byte array to your backend or perform other operations
         });
-       
+
 }
 
     // Function to fetch data and populate the fields
@@ -291,6 +283,10 @@ function save() {
        $('#addRowBtnAfter').hide()
        $('#saveForm').hide()
        $('.background-edit').removeClass();
+    }
+
+    function handleCloseModal(){
+      window.parent.document.getElementById("iclose").click();
     }
 </script>
 </head>
