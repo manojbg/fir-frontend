@@ -4,6 +4,7 @@ import apiService from '../services/apiService';
 import '../styles/AdminDashboard.css';
 import logo from '../styles/assets/images/ksplogo1.jpg';
 import { useNavigate } from 'react-router-dom';
+import Alert from 'react-bootstrap/Alert';
 
 const AdminDashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -25,19 +26,18 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [modalShow, setModalShow] = useState(false);
   const [userClick, setUserClick] = useState(false);
+  const [show, setShow] = useState(false);
+  const [alertMessage, setAlertMessage] = useState();
+  const [variant, setVariant] = useState();
 
   useEffect(() => {
     fetchTasks();
     fetchAssignees();
-    //handleNotification(true);
     document.querySelector("#root").classList.add('admin-dashboard-root');
-    //const intervalId = setInterval(handleNotification, 60000);
-
-        // Cleanup by removing the class when the component unmounts
-        return () => {
-          document.querySelector("#root").classList.remove('admin-dashboard-root');
-          //clearInterval(intervalId);
-        };
+            // Cleanup by removing the class when the component unmounts
+    return () => {
+      document.querySelector("#root").classList.remove('admin-dashboard-root');
+    };
   }, [currentPage]);
 
   const fetchTasks = async () => {
@@ -47,6 +47,7 @@ const AdminDashboard = () => {
         setTotalPages(response.totalPages || 1);
       } catch (error) {
         console.error('Error fetching tasks:', error);
+        handleAlertDisplay("No FIRs found/assigned.","danger");
         setTasks([]);
       }
   };
@@ -57,6 +58,7 @@ const AdminDashboard = () => {
       setAssignees(assigneeList);
     } catch (error) {
       console.error('Error fetching assignees:', error);
+      handleAlertDisplay("Error fetching assignees.","danger");
     }
   };
 
@@ -76,15 +78,27 @@ const AdminDashboard = () => {
     fetchTasks(); // Refresh the task list
   };
 
+  const handleDeleteDocument = async (firNumber, fileName) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete Document: ${fileName} for FIR No: ${firNumber}?`);
+    if (!confirmDelete) return;
+
+    await apiService.deleteTaskDocument(firNumber, fileName);
+    fetchTasks(); // Refresh the task list
+  };
+
   const handleSearchByIdTask = async () => {
     const input = searchBox.current;
     const firNumber = input.value;
     try{
      const response = await apiService.searchByIdTask(firNumber);
      setTasks(response.content);
+     if(response.content.length == 0)
+     {
+       handleAlertDisplay("No FIR/s found.","danger");
+     }
     }
     catch (error) {
-     console.error('Error fetching tasks:', error);
+     handleAlertDisplay("No FIR/s found.","danger");
      setTasks([]);
     }
   };
@@ -96,23 +110,32 @@ const AdminDashboard = () => {
     try{
       const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
       setTasks(response.content);
+      if(response.content.length == 0)
+      {
+        handleAlertDisplay("No FIR/s found.","danger");
+      }
     }
     catch (error) {
       console.error('Error fetching tasks:', error);
       setTasks([]);
+      handleAlertDisplay("No FIR/s found.","danger");
     }
   };
 
   const handleSearchByAssignedOrUnAssignedTask = async () => {
     const input = searchToggle.current;
     const assigned = input.checked;
-    alert(assigned);
     try{
       const response =await apiService.getAllTasksByAssignedOrUnAssigned(assigned,currentPage - 1, pageSize);
       setTasks(response.content);
+      if(response.content.length == 0)
+      {
+        handleAlertDisplay("No FIR/s found.","danger");
+      }
     }catch (error) {
       console.error('Error fetching tasks:', error);
       setTasks([]);
+      handleAlertDisplay("No FIR/s found.","danger");
      }
   };
 
@@ -123,7 +146,7 @@ const AdminDashboard = () => {
 
     if(firNumberInput == '' || firDateInput == '' || firFileInput == '')
     {
-      alert("Mandatory Fields Are Not Populated");
+       handleAlertDisplay("Mandatory Fields Are Not Populated","danger");
     }
     else{
       try {
@@ -137,8 +160,14 @@ const AdminDashboard = () => {
             AssigneeUserId: newTask.AssigneeUserId,
             FirDate : firDateInput
           };
-          await apiService.createTask(taskData);
-          alert('FIR created successfully');
+          try{
+            await apiService.createTask(taskData);
+          }catch (error) {
+            console.error('Error creating FIR:', error);
+            handleAlertDisplay("Error creating FIR. Please try again.","danger");
+            return;
+          }
+          handleAlertDisplay("FIR created successfully","success");
           setNewTask({ FirNumber: '', file: null, AssigneeUserId: '' });
           setCurrentPage(1); // Reset to first page to see the new task
           handleReset();
@@ -146,7 +175,8 @@ const AdminDashboard = () => {
         };
         fileReader.readAsDataURL(newTask.file);
       } catch (error) {
-        alert('Error creating FIR. Please try again.');
+        console.error('Error creating FIR:', error);
+        handleAlertDisplay("Error creating FIR. Please try again.","danger");
       }
     }
   };
@@ -170,16 +200,17 @@ const AdminDashboard = () => {
       };
 
       await apiService.assignTask(payload);
-      alert('Assignee updated successfully');
+      handleAlertDisplay("Assignee updated successfully","success");
       setAssignPopup({ visible: false, FirNumber: '', FirDate: '', AssigneeUserId: '' });
       fetchTasks();
     } catch (error) {
-      alert('Error assigning FIR. Please try again.');
+      console.error('Error assigning FIR:', error);
+      handleAlertDisplay("Error assigning FIR. Please try again.","danger");
     }
   };
 
+  //Used in userDashboard, duplicate code
   const handleCreateForm = async () => {
-  //updated method as required
     try {
       const payload = {
         FileName: createFormPopup.FileName,
@@ -188,11 +219,10 @@ const AdminDashboard = () => {
       };
 
       await apiService.createTaskItemData(payload);
-      alert('Assignee updated successfully');
-      setAssignPopup({ visible: false, FirNumber: '', AssigneeUserId: '' });
       fetchTasks();
     } catch (error) {
-      alert('Error assigning FIR. Please try again.');
+      console.error('Error linking Form to FIR:', error);
+      handleAlertDisplay("Error linking Form to FIR. Please try again.","danger");
     }
   };
 
@@ -220,6 +250,15 @@ const AdminDashboard = () => {
     navigate("/");
   };
 
+  const handleAlertDisplay = (message,variant) => {
+    setVariant(variant);
+    setAlertMessage(message);
+    setShow(true);
+    setTimeout(() => {
+      setShow(false)
+    }, 5000);
+  }
+
   return (
     <div bsClass='AdminDashboard' >
         <header className="dashboard-header">
@@ -232,6 +271,8 @@ const AdminDashboard = () => {
             </div>
         </header>
         <div className="admin-dashboard">
+               <Alert className="alert-box" show={show} key={variant} variant={variant} onClose={() => setShow(false)} dismissible>
+                   <b>{alertMessage}</b></Alert>
             <div className="create-section">
                 <div className="create-header">Upload FIR</div>
                 <table class="create-table"><tbody><tr><td >
@@ -269,17 +310,16 @@ const AdminDashboard = () => {
 
             <div className="search-section">
                 <table className="search-table"><thead><tr><td>
-                    <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
+                    <label>Enter FIR Number &nbsp;&nbsp;</label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
                 </td><td>
-                    <label>Enter Date : </label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
+                    <label>Enter Date &nbsp;&nbsp;</label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
                 </td><td>
                     <label>Un-Assigned &nbsp;&nbsp;</label><label class="switch"><input id="toggle-switch" ref={searchToggle} type="checkbox"></input><span class="slider round"></span></label><label>&nbsp;&nbsp;Assigned</label><button className="search-buttons" onClick={() => handleSearchByAssignedOrUnAssignedTask()}></button>
                 </td></tr></thead></table>
             </div>
         </div>
         <div className="list-section">
-            <h2 className="section-title">LIST OF FIRs</h2>
-
+            <h2 className="section-title">LIST OF FIRs<button className="refresh-button" onClick={() => fetchTasks()}></button></h2>
             <div className="task-list">
                 <div className="task-header">
                     <table><thead><tr><td>FIR</td>
@@ -321,7 +361,7 @@ const AdminDashboard = () => {
         ></button>
         <button
           className="action-buttons-sublist delete-button"
-          onClick={() => handleDeleteTask(task.FirDTO.FirNumber, document.FileName)}
+          onClick={() => handleDeleteDocument(task.FirDTO.FirNumber, document.FileName)}
         ></button>
       </td>
     </tr>
@@ -364,7 +404,7 @@ const AdminDashboard = () => {
             <label><b>Change FIR Date To : </b>&nbsp;</label>
                                 <input ref={firDatePopup} id="assigneeDate" type = "date"></input><br/><br/>
             <div>
-            <label><b>Assignee : </b></label>
+            <label><b>Assignee : </b>&nbsp;</label>
             <select className="assignee-select"
               value={assignPopup.AssigneeUserId}
               onChange={(e) => setAssignPopup({ ...assignPopup, AssigneeUserId: e.target.value })}
@@ -388,9 +428,9 @@ const AdminDashboard = () => {
         <div className="popup">
           <div className="popup-content">
             <h2 className="popup-header"><u>Select Form</u></h2>
-            <p>FIR Number : {createFormPopup.FirNumber}</p>
+            <p><b>FIR Number : </b>{createFormPopup.FirNumber}</p>
             <div>
-            <label>Form : </label>
+            <label><b>Form : </b></label>
             <select className="form-select"
               value={createFormPopup.FileName}
               onChange={(e) => setCreateFormPopup({ ...createFormPopup, FileName: e.target.value })}

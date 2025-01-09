@@ -17,13 +17,11 @@ const login = async (userDetails) => {
       },
       body: JSON.stringify(payload), // Send the payload
     });
-
-    if (!response.ok) {
-      // Log and throw an error if the response status is not 2xx
-      throw new Error(`HTTP error! status: ${response.status}`);
+    var data;
+    if(response.ok)
+    {
+      data = await response.json();
     }
-
-    const data = await response.json();
     return data; // Return the response data
   } catch (error) {
     console.error('Login API Error:', error);
@@ -150,13 +148,14 @@ const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUs
   }
 };
 
-const createTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId }) => {
+const createTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId, FirDate }) => {
   try {
     const payload = {
       FirNumber,
       FileName,
       AttachmentFileBytes,
       AssigneeUserId,
+      FirDate
     };
 
     const response = await fetch(`${API_URL}/fileOps/saveFIRDocument`, {

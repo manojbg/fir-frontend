@@ -13,7 +13,7 @@ function NotificationModal(props) {
   useEffect(() => {
     document.querySelector(".Notification").childNodes[0].classList.add("custom-dialog");
     checkForNewNotifications();
-    },[props.show]);
+  },[props.show]);
 
   const fetchNotifications = async () => {
     const userId = localStorage.getItem('UserId');
@@ -42,12 +42,15 @@ function NotificationModal(props) {
   const checkForNewNotifications = async () =>
   {
     const response = await fetchNotifications();
-    if(!props.userClick && response.length > 0)
+    if(props.userClick == "undefined" || !props.userClick)
     {
-      let isNewEntryAbsent = response.every(element => element.NewEntry === false);
+      let isNewEntryAbsent = true;
+      if(response.length > 0)
+      {
+        isNewEntryAbsent = response.every(element => element.NewEntry === false);
+      }
       if(isNewEntryAbsent)
       {
-      alert("No new notification so closing");
         props.onHide();
       }
     }
@@ -72,7 +75,7 @@ function NotificationModal(props) {
            </React.Fragment>
           ))
           ) : (
-                    <p>No Notifications available</p>
+                    <p>No Notifications Available</p>
           )}
         </Container>
       </Modal.Body>

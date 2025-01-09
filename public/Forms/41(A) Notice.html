@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
-    <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <script src="./scripts.js"></script>
     <style>
         /* Set A4 size */
         * {
@@ -49,29 +53,102 @@
         background-color : yellow;
         }
 
+        .save-button {
+        display: inline;
+        border-radius: 15px;
+        background-color: #4CAF50;
+        color: white;
+        font-size: 20px;
+        width: 10%;
+        height: 45px;
+        }
+
+        .save-button:hover {
+        background-color: #45a049;
+        }
     </style>
     <script>
+        $(document).ready(function () {
+          fetchData();
+        });
+        window.onload = getQueryParams;
 
         function save() {
-          var obj = new Object();
-          obj.date = $('#datePicker').val();
-          obj.caseIdentifier = $("#caseIdentifier").text();
-          obj.reportingDuration = $("#reportingDuration").text();
-          obj.toAddress = $("#toAddress").val();
-          var string = JSON.stringify(obj);
-          console.log(JSON.parse(string));
+          // Get the content inside modal-body
+          hideElementsForView();
+          const saveButton = document.getElementById("saveForm");
+          const htmlContent = saveButton.closest("html").outerHTML;
+          const closebuttons = document.getElementById("iclose");
+          //console.log(htmlContent);
 
-          var obj2 = JSON.parse(string);
-          console.log(obj.reportingDuration);
+          if (!saveButton) {
+            console.error("Save button not found");
+            return;
+          }
+
+          // Traverse up to the <body> or <html> element for the content
+          const elementToConvert = saveButton.closest("body");
+          if (!elementToConvert) {
+            console.error("Element to convert not found");
+            return;
+          }
+
+        // Pass the element for PDF generation
+          convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
+          if (error) {
+            console.error("Error in convertHtmlToPdfDirectly:", error);
+            return;
+          }
+
+          const obj = {
+            date: $('#datePicker').val(),
+            caseIdentifier: $("#caseIdentifier").text(),
+            reportingDuration: $("#reportingDuration").text(),
+            toAddress: $("#toAddress").val(),
+          };
+
+          const firNumber = document.getElementById("firNumberField").textContent;
+          const formName = document.getElementById("formNameField").textContent;
+          const req = {
+            FileContent: JSON.stringify(obj),
+            FileName: formName,
+            FirNumber: firNumber,
+            FileBytes: byteArray,
+          };
+          saveAPICall(req);
+          });
+        }
+
+        // Function to fetch data and populate the fields
+        function fetchData() {
+          const params = new URLSearchParams(window.location.search);
+          const firNumber = params.get("firNumber");
+          const formName = params.get("formName");
+          const type = params.get("type");
+          if(type == "edit"){
+            $.ajax({
+              url: globalOptions.uri+"?firNumber="+firNumber+"&fileName="+formName,
+              type: "GET",
+              success: function (response) {
+                const jsonObject = JSON.parse(response.FileContent);
+                $("#datePicker").val(jsonObject.date || "");
+                $("#caseIdentifier").text(jsonObject.caseIdentifier || "ENTER FIR NUMBER");
+                $("#reportingDuration").text(jsonObject.reportingDuration || "dd.mm.yyyy");
+                $("#toAddress").val(jsonObject.toAddress || "");
+                },
+                error: function (error) {
+                    console.error("Error fetching data:", error);
+                    handleModalError();
+                }
+            });
+          }
         }
 
         function hideElementsForView()
         {
-        $('.background-edit').removeClass();
-        $('#saveForm').hide();
+          $('.background-edit').removeClass();
+          $('#saveForm').hide();
         }
-
-
     </script>
 </head>
 <body>
@@ -86,15 +163,15 @@
             <strong>CEN Police Station, North Division, Bengaluru City</strong>
         </p>
         <p>
-            <span >2<sup>nd</sup> Floor, Deputy Commissioner Office Building, North Division, Bengaluru city -560022</span>
+            <span>2<sup>nd</sup> Floor, Deputy Commissioner Office Building, North Division, Bengaluru city -560022</span>
         </p>
         <p>
-            <u><span >E-mail ID:-</span></u><a
-                href="mailto:cenpsnorthbcp@ksp.gov.in"><span >cenpsnorthbcp@ksp.gov.in</span></a><span
-                >&nbsp;; Phone No-080-22942302; Mob No-9449295758</span>
+            <u><span>E-mail ID:-</span></u><a
+                href="mailto:cenpsnorthbcp@ksp.gov.in"><span>cenpsnorthbcp@ksp.gov.in</span></a><span
+        >&nbsp;; Phone No-080-22942302; Mob No-9449295758</span>
         </p>
     </div>
-    <br/> <br/> <br/>
+    <br/> <br/>
     <p style='text-align:center;'>
         <strong><u><span>Police Notice U/s 41(A) Criminal Procedure Code</span></u></strong>
     </p>
@@ -105,16 +182,19 @@
     <br/>
     <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
         <div style="display:inline">
-            In Exercise of the powers conferred under sub section (1) of section 41(A) of CrPC.  I hereby inform you that during the investigation of <b>FIR No</b>
+            In Exercise of the powers conferred under sub section (1) of section 41(A) of CrPC. I hereby inform you that
+            during the investigation of <b>FIR No</b>
         </div>
         <div id="caseIdentifier" style="display:inline" class="background-edit" contenteditable>ENTER FIR NUMBER</div>
-        <div style="display:inline"> registered in CEN Police Station, North Division, Bengaluru city. During the course of investigation,
-            it is revealed that there are reasonable grounds to question you to ascertain/circumstances the facts and circumstance from you. &nbsp;
+        <div style="display:inline"> registered in CEN Police Station, North Division, Bengaluru city. During the course
+            of investigation,
+            it is revealed that there are reasonable grounds to question you to ascertain/circumstances the facts and
+            circumstance from you. &nbsp;
         </div>
         <div>
             Hence you are directed to appear before me on
-            <div id="reportingDuration" style="display:inline" class="background-edit" contenteditable>--.--.----</div>
-            in CEN Police Station, North division, Bengaluru city for enquiry along with relevant documents.
+            <div id="reportingDuration" style="display:inline" class="background-edit" contenteditable>dd.mm.yyyy at 00:00 AM</div>
+            in Cyber Crime Police Station, North division, Bengaluru city for enquiry along with relevant documents.
         </div>
     </div>
     <br/>
@@ -131,10 +211,13 @@
     <br/>
     <div style="display: inline-block;width: 30%;">
         <p><strong>To,</strong></p>
-        <textarea id="toAddress" class="background-edit" name="toAddress" rows="5" cols="30" style="border : none;"></textarea>
+        <textarea id="toAddress" class="background-edit" name="toAddress" rows="5" cols="30"
+                  style="border : none;margin-left : 10%"></textarea>
     </div>
 </div>
-<button style="display:inline; float:right" id="saveForm" onclick="save()">Save</button>
-
+<button class="save-button" id="saveForm" onclick="save()">Save</button>
+<p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
+<p style="display: none;">Form Name: <span id="formNameField"></span></p>
+<p style="display: none;">Action Type: <span id="actionType"></span></p>
 </body>
 </html>

@@ -1,16 +1,16 @@
 // Updated UserDashboard.js
 import React, { useEffect, useState } from 'react';
 import apiService from '../services/apiService';
-import '../styles/UserDashboard.css';
 import logo from '../styles/assets/images/ksplogo1.jpg';
 import { useNavigate } from 'react-router-dom';
 import NotificationModal from '../components/Notifications';
-import { Button, Modal } from "react-bootstrap"; 
+import { Button, Modal } from "react-bootstrap";
+import Alert from 'react-bootstrap/Alert';
 import "react-resizable/css/styles.css"; // Include the required CSS
+import '../styles/UserDashboard.css';
 
 const UserDashboard = () => {
   const [tasks, setTasks] = useState([]);
-  const [assignees, setAssignees] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -32,24 +32,31 @@ const UserDashboard = () => {
   //const handleShow = () => setShowModal(true);
   const handleClose = () => setShowModal(false);
   const [iframeSrc, setIframeSrc] = useState('');
+  const [show, setShow] = useState(false);
+  const [alertMessage, setAlertMessage] = useState();
+  const [variant, setVariant] = useState();
 
   useEffect(() => {
     fetchTasks();
-    fetchAssignees();
-    //handleNotification(true);
+    handleNotification(false);
     document.querySelector("#root").classList.add('user-dashboard-root');
-    //const intervalId = setInterval(handleNotification, 60000);
+    const intervalId = setInterval(handleNotification, 60000);
 
         // Cleanup by removing the class when the component unmounts
-        return () => {
-          document.querySelector("#root").classList.remove('user-dashboard-root');
-          //clearInterval(intervalId);
-        };
+    return () => {
+      document.querySelector("#root").classList.remove('user-dashboard-root');
+      clearInterval(intervalId);
+    };
   }, [currentPage]);
 
   const handleShow = (firNumber, fileName, type) => {
+    if(fileName == "select" || fileName == "")
+    {
+      handleAlertDisplay("Please select a valid form","danger");
+      return;
+    }
     const encodedFIR = encodeURIComponent(firNumber); // Encode to safely pass in URL
-    const encodedForm = encodeURIComponent("Form1test.html");
+    const encodedForm = encodeURIComponent(fileName);
     let form = "";
     if(type == "edit"){
       form = fileName;
@@ -70,16 +77,8 @@ const UserDashboard = () => {
       } catch (error) {
         console.error('Error fetching tasks:', error);
         setTasks([]);
+        handleAlertDisplay("No FIR/s found.","danger");
       }
-  };
-
-  const fetchAssignees = async () => {
-    try {
-      const assigneeList = await apiService.getAssignees();
-      setAssignees(assigneeList);
-    } catch (error) {
-      console.error('Error fetching assignees:', error);
-    }
   };
 
   const handleViewDocument = (documentUrl) => {
@@ -98,16 +97,29 @@ const UserDashboard = () => {
     fetchTasks(); // Refresh the task list
   };
 
+  const handleDeleteDocument = async (firNumber, fileName) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete Document: ${fileName} for FIR No: ${firNumber}?`);
+    if (!confirmDelete) return;
+
+    await apiService.deleteTaskDocument(firNumber, fileName);
+    fetchTasks(); // Refresh the task list
+  };
+
   const handleSearchByIdTask = async () => {
     const input = searchBox.current;
     const firNumber = input.value;
     try{
      const response = await apiService.searchByIdTask(firNumber);
      setTasks(response.content);
+     if(response.content.length == 0)
+     {
+       handleAlertDisplay("No FIR/s found.","danger");
+     }
     }
     catch (error) {
      console.error('Error fetching tasks:', error);
      setTasks([]);
+     handleAlertDisplay("No FIR/s found.","danger");
     }
   };
 
@@ -118,10 +130,15 @@ const UserDashboard = () => {
     try{
       const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
       setTasks(response.content);
+      if(response.content.length == 0)
+      {
+        handleAlertDisplay("No FIR/s found.","danger");
+      }
     }
     catch (error) {
       console.error('Error fetching tasks:', error);
       setTasks([]);
+      handleAlertDisplay("No FIR/s found.","danger");
     }
   };
 
@@ -130,27 +147,6 @@ const UserDashboard = () => {
     firDate.current.value = '';
     firFile.current.value = '';
   }
-
-  const handleSaveAssignee = async () => {
-    const firDateInput = firDatePopup.current.value;
-    try {
-      const payload = {
-        AssigneeUserId: assignPopup.AssigneeUserId,
-        FirNumber: assignPopup.FirNumber,
-        AttachmentFileBytes: '',
-        CreatedDateTime: '',
-        FileName: '',
-        FirDate: firDateInput
-      };
-
-      await apiService.assignTask(payload);
-      alert('Assignee updated successfully');
-      setAssignPopup({ visible: false, FirNumber: '', FirDate: '', AssigneeUserId: '' });
-      fetchTasks();
-    } catch (error) {
-      alert('Error assigning FIR. Please try again.');
-    }
-  };
 
   const handlePreviousPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
@@ -178,6 +174,24 @@ const UserDashboard = () => {
     setModalShow(false);
   };
 
+  const handleAlertDisplay = (message,variant) => {
+    setVariant(variant);
+    setAlertMessage(message);
+    setShow(true);
+    setTimeout(() => {
+      setShow(false)
+    }, 5000);
+  }
+
+  const handleCloseWithAlert = () => {
+    handleClose();
+    handleAlertDisplay("Form saved successfully","success");
+  }
+
+  const handleErrorWithAlert = () => {
+    handleAlertDisplay("Failed to fetch/save data. Please try again.","danger");
+  }
+
   return (
     <div bsClassName='UserDashboard' >
         <header className="user-dashboard-header">
@@ -190,21 +204,22 @@ const UserDashboard = () => {
             <button className="logout-button" onClick={() => handleLogout()}></button>
             </div>
         </header>
+        <Alert className="alert-box" show={show} key={variant} variant={variant} onClose={() => setShow(false)} dismissible>
+                         <b>{alertMessage}</b></Alert>
          {modalShow && (
                 <NotificationModal handleNotification={handleNotification} show={modalShow} onHide={handleNotificationHide} userClick={userClick} />
               )}
         <div className="user-dashboard">
             <div className="user-search-section">
                 <table className="search-table"><thead><tr><td>
-                    <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
+                    <label>Enter FIR Number &nbsp;&nbsp;</label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
                 </td><td>
-                    <label>Enter Date : </label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
+                    <label>Enter Date &nbsp;&nbsp;</label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
                 </td></tr></thead></table>
             </div>
         </div>
         <div className="list-section">
-            <h2 className="section-title">LIST OF FIRs</h2>
-
+            <h2 className="section-title">LIST OF FIRs<button className="refresh-button" onClick={() => fetchTasks()}></button></h2>
             <div className="task-list">
                 <div className="task-header">
                     <table><thead><tr><td>FIR</td>
@@ -250,7 +265,7 @@ const UserDashboard = () => {
         ></button>
         <button
           className="action-buttons-sublist delete-button"
-          onClick={() => handleDeleteTask(task.FirDTO.FirNumber, document.FileName)}
+          onClick={() => handleDeleteDocument   (task.FirDTO.FirNumber, document.FileName)}
         ></button>
       </td>
     </tr>
@@ -285,57 +300,35 @@ const UserDashboard = () => {
           Next
         </button>
       </div>
-      {assignPopup.visible && (
-        <div className="popup">
-          <div className="popup-content">
-            <h2 className="popup-header"><u>Assign Assignee</u></h2><br/>
-            <label><b>FIR Number : </b>{assignPopup.FirNumber}</label><br/><br/>
-            <label><b>FIR Date : </b>{assignPopup.FirDate}</label><br/>
-            <label><b>Change FIR Date To : </b>&nbsp;</label>
-                                <input ref={firDatePopup} id="assigneeDate" type = "date"></input><br/><br/>
-            <div>
-            <label><b>Assignee : </b></label>
-            <select className="assignee-select"
-              value={assignPopup.AssigneeUserId}
-              onChange={(e) => setAssignPopup({ ...assignPopup, AssigneeUserId: e.target.value })}
-            >
-              <option value="">Select Assignee</option>
-              {assignees.map((assignee) => (
-                <option key={assignee.UserId} value={assignee.UserId}>
-                  {assignee.UserName}
-                </option>
-              ))}
-            </select>
-            </div><br/>
-            <div className="popup-buttons">
-              <button onClick={handleSaveAssignee}>Save</button>
-              <button onClick={() => setAssignPopup({ visible: false, FirNumber: '', FirDate:'', AssigneeUserId: '' })}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
       {createFormPopup.visible && (
         <div className="popup">
           <div className="popup-content">
             <h2 className="popup-header"><u>Select Form</u></h2>
-            <p>FIR Number : {createFormPopup.FirNumber}</p>
+            <p><b>FIR Number : </b>{createFormPopup.FirNumber}</p>
             <div>
-            <label>Form : </label>
+            <label><b>Form : </b></label>
             <select className="form-select"
               value={createFormPopup.FileName}
               onChange={(e) => setCreateFormPopup({ ...createFormPopup, FileName: e.target.value })}
             >
-              <option value="Form1test.html">Form1</option>
-              <option value="35 (3) Notice.html">35 (3) Notice</option>
-              <option value="41(A) Notice.html">41(A) Notice</option>
+              <option value="select">Select Form</option>
+              <option value="35 (3) Notice.html">35 (3) NOTICE</option>
+              <option value="41(A) Notice.html">41(A) NOTICE</option>
               <option value="94 & 179 NOTICE ENGLISH.html">94 & 179 NOTICE ENGLISH</option>
               <option value="FB LETTER.html">FB LETTER</option>
               <option value="FREEZE INTIMATION TO COURT.html">FREEZE INTIMATION TO COURT</option>
+              <option value="COURT ORDER.html">COURT ORDER</option>
+              <option value="LIEN LETTER.html">LIEN LETTER</option>
+              <option value="IPDR.html">IPDR</option>
+              <option value="Beneficiary details request.html">BENEFICIARY DETAILS REQUEST</option>
+              <option value="Gmail LETTER.html">GMAIL LETTER</option>
+              <option value="WHATSAPP.html">WHATSAPP</option>
+              <option value="INSTA LETTER.html">INSTA LETTER</option>
             </select>
             </div>
             <div className="popup-buttons">
               <button onClick={() => {
-                        handleShow(createFormPopup.FirNumber,"create");
+                        handleShow(createFormPopup.FirNumber,createFormPopup.FileName,"create");
                     }}>Create</button>
               <button onClick={() => setCreateFormPopup({ visible: false, FirNumber: '', FileName: '' })}>Cancel</button>
             </div>
@@ -343,7 +336,7 @@ const UserDashboard = () => {
         </div>
       )}
 
-<Modal
+<Modal id="formModal"
   show={showModal}
   onHide={handleClose}
   size="lg"
@@ -354,16 +347,16 @@ const UserDashboard = () => {
     width : "100%",
     float : "center",
   }}}
-  aria-labelledby="example-custom-modal-styling-title"
+  aria-labelledby="formModal"
   centered
 >
   <Modal.Header closeButton>
-    <Modal.Title id="example-custom-modal-styling-title">Responsive Form</Modal.Title>
+    <Modal.Title id="form-modal-header">Response Form/Notice</Modal.Title>
   </Modal.Header>
   <Modal.Body>
     <iframe
       src={iframeSrc}
-      title="Form1test"
+      title="Forms"
       style={{
         width: "100%",
         height: "80vh",
@@ -372,6 +365,8 @@ const UserDashboard = () => {
     />
   </Modal.Body>
   <Modal.Footer>
+  <Button className="hidden-close-button" onClick={handleErrorWithAlert} id="form-error"></Button>
+   <Button className="hidden-close-button" onClick={handleCloseWithAlert} id="form-close"></Button>
     <Button variant="secondary" onClick={handleClose} id="iclose">
       Close
     </Button>
