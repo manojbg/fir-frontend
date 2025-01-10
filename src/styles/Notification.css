@@ -3,12 +3,13 @@
     cursor: pointer;
     background-size: contain;
     background-repeat: no-repeat;
-    padding: 15%;
+    padding: 16%;
     border: none;
+    margin-right: 5%;
   }
 
   .notification-button:hover{
-    transform: scale(1.5);
+    transform: scale(1.3);
   }
 
   .modal-body {

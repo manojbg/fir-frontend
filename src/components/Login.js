@@ -2,8 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/apiService';
 import '../styles/Login.css';
+import Alert from 'react-bootstrap/Alert';
 
 const Login = () => {
+
+  const [show, setShow] = useState(false);
+  const [alertMessage, setAlertMessage] = useState();
+  const [variant, setVariant] = useState();
 
   useEffect(() => {
     // Add class to the body tag for this page
@@ -45,16 +50,28 @@ const Login = () => {
           navigate('/user');
         }        
       } else {
-        alert('Login failed. Invalid credentials.');
+        handleAlertDisplay("Login failed. Invalid credentials.","danger");
       }
     } catch (error) {
-      alert('Error logging in. Please try again later.');
+      handleAlertDisplay("Error logging in. Please try again later.","danger");
     }
   };
+
+  const handleAlertDisplay = (message,variant) => {
+    setVariant(variant);
+    setAlertMessage(message);
+    setShow(true);
+    setTimeout(() => {
+      setShow(false)
+    }, 5000);
+  }
+
 
   return (
     <div className="login-container">
       <div className="login-card">
+          <Alert show={show} key={variant} variant={variant} onClose={() => setShow(false)} dismissible>
+                 {alertMessage}</Alert>
         <h1 className="login-title"></h1>
         <input
           type="text"

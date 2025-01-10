@@ -4,6 +4,7 @@ import apiService from '../services/apiService';
 import '../styles/AdminDashboard.css';
 import logo from '../styles/assets/images/ksplogo1.jpg';
 import { useNavigate } from 'react-router-dom';
+import Alert from 'react-bootstrap/Alert';
 
 const AdminDashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -25,19 +26,18 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [modalShow, setModalShow] = useState(false);
   const [userClick, setUserClick] = useState(false);
+  const [show, setShow] = useState(false);
+  const [alertMessage, setAlertMessage] = useState();
+  const [variant, setVariant] = useState();
 
   useEffect(() => {
     fetchTasks();
     fetchAssignees();
-    //handleNotification(true);
     document.querySelector("#root").classList.add('admin-dashboard-root');
-    //const intervalId = setInterval(handleNotification, 60000);
-
-        // Cleanup by removing the class when the component unmounts
-        return () => {
-          document.querySelector("#root").classList.remove('admin-dashboard-root');
-          //clearInterval(intervalId);
-        };
+            // Cleanup by removing the class when the component unmounts
+    return () => {
+      document.querySelector("#root").classList.remove('admin-dashboard-root');
+    };
   }, [currentPage]);
 
   const fetchTasks = async () => {
@@ -47,6 +47,7 @@ const AdminDashboard = () => {
         setTotalPages(response.totalPages || 1);
       } catch (error) {
         console.error('Error fetching tasks:', error);
+        handleAlertDisplay("No FIRs found/assigned.","danger");
         setTasks([]);
       }
   };
@@ -57,6 +58,7 @@ const AdminDashboard = () => {
       setAssignees(assigneeList);
     } catch (error) {
       console.error('Error fetching assignees:', error);
+      handleAlertDisplay("Error fetching assignees.","danger");
     }
   };
 
@@ -82,9 +84,13 @@ const AdminDashboard = () => {
     try{
      const response = await apiService.searchByIdTask(firNumber);
      setTasks(response.content);
+     if(response.content.length == 0)
+     {
+       handleAlertDisplay("No FIR/s found.","danger");
+     }
     }
     catch (error) {
-     console.error('Error fetching tasks:', error);
+     handleAlertDisplay("No FIR/s found.","danger");
      setTasks([]);
     }
   };
@@ -96,23 +102,32 @@ const AdminDashboard = () => {
     try{
       const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
       setTasks(response.content);
+      if(response.content.length == 0)
+      {
+        handleAlertDisplay("No FIR/s found.","danger");
+      }
     }
     catch (error) {
       console.error('Error fetching tasks:', error);
       setTasks([]);
+      handleAlertDisplay("No FIR/s found.","danger");
     }
   };
 
   const handleSearchByAssignedOrUnAssignedTask = async () => {
     const input = searchToggle.current;
     const assigned = input.checked;
-    alert(assigned);
     try{
       const response =await apiService.getAllTasksByAssignedOrUnAssigned(assigned,currentPage - 1, pageSize);
       setTasks(response.content);
+      if(response.content.length == 0)
+      {
+        handleAlertDisplay("No FIR/s found.","danger");
+      }
     }catch (error) {
       console.error('Error fetching tasks:', error);
       setTasks([]);
+      handleAlertDisplay("No FIR/s found.","danger");
      }
   };
 
@@ -123,7 +138,7 @@ const AdminDashboard = () => {
 
     if(firNumberInput == '' || firDateInput == '' || firFileInput == '')
     {
-      alert("Mandatory Fields Are Not Populated");
+       handleAlertDisplay("Mandatory Fields Are Not Populated","danger");
     }
     else{
       try {
@@ -138,7 +153,7 @@ const AdminDashboard = () => {
             FirDate : firDateInput
           };
           await apiService.createTask(taskData);
-          alert('FIR created successfully');
+          handleAlertDisplay("FIR created successfully","success");
           setNewTask({ FirNumber: '', file: null, AssigneeUserId: '' });
           setCurrentPage(1); // Reset to first page to see the new task
           handleReset();
@@ -146,7 +161,8 @@ const AdminDashboard = () => {
         };
         fileReader.readAsDataURL(newTask.file);
       } catch (error) {
-        alert('Error creating FIR. Please try again.');
+        console.error('Error creating FIR:', error);
+        handleAlertDisplay("Error creating FIR. Please try again.","danger");
       }
     }
   };
@@ -170,11 +186,12 @@ const AdminDashboard = () => {
       };
 
       await apiService.assignTask(payload);
-      alert('Assignee updated successfully');
+      handleAlertDisplay("Assignee updated successfully","success");
       setAssignPopup({ visible: false, FirNumber: '', FirDate: '', AssigneeUserId: '' });
       fetchTasks();
     } catch (error) {
-      alert('Error assigning FIR. Please try again.');
+      console.error('Error assigning FIR:', error);
+      handleAlertDisplay("Error assigning FIR. Please try again.","danger");
     }
   };
 
@@ -188,11 +205,10 @@ const AdminDashboard = () => {
       };
 
       await apiService.createTaskItemData(payload);
-      alert('Assignee updated successfully');
-      setAssignPopup({ visible: false, FirNumber: '', AssigneeUserId: '' });
       fetchTasks();
     } catch (error) {
-      alert('Error assigning FIR. Please try again.');
+      console.error('Error linking Form to FIR:', error);
+      handleAlertDisplay("Error linking Form to FIR. Please try again.","danger");
     }
   };
 
@@ -220,6 +236,15 @@ const AdminDashboard = () => {
     navigate("/");
   };
 
+  const handleAlertDisplay = (message,variant) => {
+    setVariant(variant);
+    setAlertMessage(message);
+    setShow(true);
+    setTimeout(() => {
+      setShow(false)
+    }, 5000);
+  }
+
   return (
     <div bsClass='AdminDashboard' >
         <header className="dashboard-header">
@@ -232,6 +257,9 @@ const AdminDashboard = () => {
             </div>
         </header>
         <div className="admin-dashboard">
+               <Alert className="alert-box" show={show} key={variant} variant={variant} onClose={() => setShow(false)} dismissible>
+                            {alertMessage}
+                  </Alert>
             <div className="create-section">
                 <div className="create-header">Upload FIR</div>
                 <table class="create-table"><tbody><tr><td >
@@ -278,8 +306,7 @@ const AdminDashboard = () => {
             </div>
         </div>
         <div className="list-section">
-            <h2 className="section-title">LIST OF FIRs</h2>
-
+            <h2 className="section-title">LIST OF FIRs<button className="refresh-button" onClick={() => fetchTasks()}></button></h2>
             <div className="task-list">
                 <div className="task-header">
                     <table><thead><tr><td>FIR</td>

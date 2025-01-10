@@ -5,12 +5,12 @@ import '../styles/UserDashboard.css';
 import logo from '../styles/assets/images/ksplogo1.jpg';
 import { useNavigate } from 'react-router-dom';
 import NotificationModal from '../components/Notifications';
-import { Button, Modal } from "react-bootstrap"; 
+import { Button, Modal } from "react-bootstrap";
+import Alert from 'react-bootstrap/Alert';
 import "react-resizable/css/styles.css"; // Include the required CSS
 
 const UserDashboard = () => {
   const [tasks, setTasks] = useState([]);
-  const [assignees, setAssignees] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -32,19 +32,21 @@ const UserDashboard = () => {
   //const handleShow = () => setShowModal(true);
   const handleClose = () => setShowModal(false);
   const [iframeSrc, setIframeSrc] = useState('');
+  const [show, setShow] = useState(false);
+  const [alertMessage, setAlertMessage] = useState();
+  const [variant, setVariant] = useState();
 
   useEffect(() => {
     fetchTasks();
-    fetchAssignees();
-    //handleNotification(true);
+    handleNotification(true);
     document.querySelector("#root").classList.add('user-dashboard-root');
-    //const intervalId = setInterval(handleNotification, 60000);
+    const intervalId = setInterval(handleNotification, 60000);
 
         // Cleanup by removing the class when the component unmounts
-        return () => {
-          document.querySelector("#root").classList.remove('user-dashboard-root');
-          //clearInterval(intervalId);
-        };
+    return () => {
+      document.querySelector("#root").classList.remove('user-dashboard-root');
+      clearInterval(intervalId);
+    };
   }, [currentPage]);
 
   const handleShow = (firNumber, fileName, type) => {
@@ -70,16 +72,8 @@ const UserDashboard = () => {
       } catch (error) {
         console.error('Error fetching tasks:', error);
         setTasks([]);
+        handleAlertDisplay("No FIR/s found.","danger");
       }
-  };
-
-  const fetchAssignees = async () => {
-    try {
-      const assigneeList = await apiService.getAssignees();
-      setAssignees(assigneeList);
-    } catch (error) {
-      console.error('Error fetching assignees:', error);
-    }
   };
 
   const handleViewDocument = (documentUrl) => {
@@ -104,10 +98,15 @@ const UserDashboard = () => {
     try{
      const response = await apiService.searchByIdTask(firNumber);
      setTasks(response.content);
+     if(response.content.length == 0)
+     {
+       handleAlertDisplay("No FIR/s found.","danger");
+     }
     }
     catch (error) {
      console.error('Error fetching tasks:', error);
      setTasks([]);
+     handleAlertDisplay("No FIR/s found.","danger");
     }
   };
 
@@ -118,10 +117,15 @@ const UserDashboard = () => {
     try{
       const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
       setTasks(response.content);
+      if(response.content.length == 0)
+      {
+        handleAlertDisplay("No FIR/s found.","danger");
+      }
     }
     catch (error) {
       console.error('Error fetching tasks:', error);
       setTasks([]);
+      handleAlertDisplay("No FIR/s found.","danger");
     }
   };
 
@@ -130,27 +134,6 @@ const UserDashboard = () => {
     firDate.current.value = '';
     firFile.current.value = '';
   }
-
-  const handleSaveAssignee = async () => {
-    const firDateInput = firDatePopup.current.value;
-    try {
-      const payload = {
-        AssigneeUserId: assignPopup.AssigneeUserId,
-        FirNumber: assignPopup.FirNumber,
-        AttachmentFileBytes: '',
-        CreatedDateTime: '',
-        FileName: '',
-        FirDate: firDateInput
-      };
-
-      await apiService.assignTask(payload);
-      alert('Assignee updated successfully');
-      setAssignPopup({ visible: false, FirNumber: '', FirDate: '', AssigneeUserId: '' });
-      fetchTasks();
-    } catch (error) {
-      alert('Error assigning FIR. Please try again.');
-    }
-  };
 
   const handlePreviousPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
@@ -178,6 +161,15 @@ const UserDashboard = () => {
     setModalShow(false);
   };
 
+  const handleAlertDisplay = (message,variant) => {
+    setVariant(variant);
+    setAlertMessage(message);
+    setShow(true);
+    setTimeout(() => {
+      setShow(false)
+    }, 5000);
+  }
+
   return (
     <div bsClassName='UserDashboard' >
         <header className="user-dashboard-header">
@@ -190,6 +182,8 @@ const UserDashboard = () => {
             <button className="logout-button" onClick={() => handleLogout()}></button>
             </div>
         </header>
+        <Alert className="alert-box" show={show} key={variant} variant={variant} onClose={() => setShow(false)} dismissible>
+                         {alertMessage}</Alert>
          {modalShow && (
                 <NotificationModal handleNotification={handleNotification} show={modalShow} onHide={handleNotificationHide} userClick={userClick} />
               )}
@@ -203,8 +197,7 @@ const UserDashboard = () => {
             </div>
         </div>
         <div className="list-section">
-            <h2 className="section-title">LIST OF FIRs</h2>
-
+            <h2 className="section-title">LIST OF FIRs<button className="refresh-button" onClick={() => fetchTasks()}></button></h2>
             <div className="task-list">
                 <div className="task-header">
                     <table><thead><tr><td>FIR</td>
@@ -285,35 +278,6 @@ const UserDashboard = () => {
           Next
         </button>
       </div>
-      {assignPopup.visible && (
-        <div className="popup">
-          <div className="popup-content">
-            <h2 className="popup-header"><u>Assign Assignee</u></h2><br/>
-            <label><b>FIR Number : </b>{assignPopup.FirNumber}</label><br/><br/>
-            <label><b>FIR Date : </b>{assignPopup.FirDate}</label><br/>
-            <label><b>Change FIR Date To : </b>&nbsp;</label>
-                                <input ref={firDatePopup} id="assigneeDate" type = "date"></input><br/><br/>
-            <div>
-            <label><b>Assignee : </b></label>
-            <select className="assignee-select"
-              value={assignPopup.AssigneeUserId}
-              onChange={(e) => setAssignPopup({ ...assignPopup, AssigneeUserId: e.target.value })}
-            >
-              <option value="">Select Assignee</option>
-              {assignees.map((assignee) => (
-                <option key={assignee.UserId} value={assignee.UserId}>
-                  {assignee.UserName}
-                </option>
-              ))}
-            </select>
-            </div><br/>
-            <div className="popup-buttons">
-              <button onClick={handleSaveAssignee}>Save</button>
-              <button onClick={() => setAssignPopup({ visible: false, FirNumber: '', FirDate:'', AssigneeUserId: '' })}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
       {createFormPopup.visible && (
         <div className="popup">
           <div className="popup-content">
@@ -343,7 +307,7 @@ const UserDashboard = () => {
         </div>
       )}
 
-<Modal
+<Modal id="formModal"
   show={showModal}
   onHide={handleClose}
   size="lg"
@@ -354,16 +318,16 @@ const UserDashboard = () => {
     width : "100%",
     float : "center",
   }}}
-  aria-labelledby="example-custom-modal-styling-title"
+  aria-labelledby="formModal"
   centered
 >
   <Modal.Header closeButton>
-    <Modal.Title id="example-custom-modal-styling-title">Responsive Form</Modal.Title>
+    <Modal.Title id="form-modal-header">Response Forms/Notice</Modal.Title>
   </Modal.Header>
   <Modal.Body>
     <iframe
       src={iframeSrc}
-      title="Form1test"
+      title="Forms"
       style={{
         width: "100%",
         height: "80vh",
