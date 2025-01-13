@@ -46,6 +46,7 @@ function convertHtmlToPdfDirectly(element, callback) {
        const reader = new FileReader();
        reader.onload = function () {
          const base64String = reader.result.split(',')[1]; // Extract the Base64 part
+         //console.log("bytearray for pdf", base64String);
          callback(null, base64String); // Pass the Base64 string to the callback
        };
        reader.onerror = function (error) {
