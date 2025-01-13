@@ -281,6 +281,10 @@
   .action-buttons-sublist:hover{
     transform: scale(1.5);
   }
+
+  .action-buttons-sublist button:nth-child(1) {
+    margin-left: 25%;
+  }
   
    .view-button {
     background : url("./assets/images/eye.png");
@@ -569,7 +573,14 @@
     left: 50%; /* Center horizontally */
     transform: translate(-50%, -50%); /* Align modal perfectly at the center */
   }
-  
+
+  .hidden-close-button {
+    display : none;
+  }
+
+  .popup-content div {
+    margin-bottom: 5%;
+  }
   
 
   

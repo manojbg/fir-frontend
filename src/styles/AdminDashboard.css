@@ -286,6 +286,10 @@
   transform: scale(1.5);
 }
 
+.task-table-column button:nth-child(1) {
+  margin-left: 25%;
+}
+
  .view-button {
   background : url("./assets/images/eye.png");
   background-size : contain;
@@ -566,10 +570,10 @@ input:checked + .slider:before {
 }
 
 .alert-box {
-  width: 30%;
+  width: 40%;
   text-align: center;
-  margin-left: 35%;
-  z-index: 999;
+  margin-left: 30%;
+  z-index: 9999;
   position: fixed;
+  border : 2px solid;
 }
-

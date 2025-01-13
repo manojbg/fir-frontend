@@ -148,13 +148,14 @@ const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUs
   }
 };
 
-const createTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId }) => {
+const createTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId, FirDate }) => {
   try {
     const payload = {
       FirNumber,
       FileName,
       AttachmentFileBytes,
       AssigneeUserId,
+      FirDate
     };
 
     const response = await fetch(`${API_URL}/fileOps/saveFIRDocument`, {

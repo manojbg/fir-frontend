@@ -1,13 +1,13 @@
 // Updated UserDashboard.js
 import React, { useEffect, useState } from 'react';
 import apiService from '../services/apiService';
-import '../styles/UserDashboard.css';
 import logo from '../styles/assets/images/ksplogo1.jpg';
 import { useNavigate } from 'react-router-dom';
 import NotificationModal from '../components/Notifications';
 import { Button, Modal } from "react-bootstrap";
 import Alert from 'react-bootstrap/Alert';
 import "react-resizable/css/styles.css"; // Include the required CSS
+import '../styles/UserDashboard.css';
 
 const UserDashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -38,7 +38,7 @@ const UserDashboard = () => {
 
   useEffect(() => {
     fetchTasks();
-    handleNotification(true);
+    handleNotification(false);
     document.querySelector("#root").classList.add('user-dashboard-root');
     const intervalId = setInterval(handleNotification, 60000);
 
@@ -50,6 +50,11 @@ const UserDashboard = () => {
   }, [currentPage]);
 
   const handleShow = (firNumber, fileName, type) => {
+    if(fileName == "select" || fileName == "")
+    {
+      handleAlertDisplay("Please select a valid form","danger");
+      return;
+    }
     const encodedFIR = encodeURIComponent(firNumber); // Encode to safely pass in URL
     const encodedForm = encodeURIComponent(fileName);
     let form = "";
@@ -89,6 +94,14 @@ const UserDashboard = () => {
     if (!confirmDelete) return;
 
     await apiService.deleteTask(firNumber, fileName);
+    fetchTasks(); // Refresh the task list
+  };
+
+  const handleDeleteDocument = async (firNumber, fileName) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete Document: ${fileName} for FIR No: ${firNumber}?`);
+    if (!confirmDelete) return;
+
+    await apiService.deleteTaskDocument(firNumber, fileName);
     fetchTasks(); // Refresh the task list
   };
 
@@ -170,6 +183,15 @@ const UserDashboard = () => {
     }, 5000);
   }
 
+  const handleCloseWithAlert = () => {
+    handleClose();
+    handleAlertDisplay("Form saved successfully","success");
+  }
+
+  const handleErrorWithAlert = () => {
+    handleAlertDisplay("Failed to fetch/save data. Please try again.","danger");
+  }
+
   return (
     <div bsClassName='UserDashboard' >
         <header className="user-dashboard-header">
@@ -183,16 +205,16 @@ const UserDashboard = () => {
             </div>
         </header>
         <Alert className="alert-box" show={show} key={variant} variant={variant} onClose={() => setShow(false)} dismissible>
-                         {alertMessage}</Alert>
+                         <b>{alertMessage}</b></Alert>
          {modalShow && (
                 <NotificationModal handleNotification={handleNotification} show={modalShow} onHide={handleNotificationHide} userClick={userClick} />
               )}
         <div className="user-dashboard">
             <div className="user-search-section">
                 <table className="search-table"><thead><tr><td>
-                    <label>Enter FIR Number : </label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
+                    <label>Enter FIR Number &nbsp;&nbsp;</label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
                 </td><td>
-                    <label>Enter Date : </label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
+                    <label>Enter Date &nbsp;&nbsp;</label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
                 </td></tr></thead></table>
             </div>
         </div>
@@ -243,7 +265,7 @@ const UserDashboard = () => {
         ></button>
         <button
           className="action-buttons-sublist delete-button"
-          onClick={() => handleDeleteTask(task.FirDTO.FirNumber, document.FileName)}
+          onClick={() => handleDeleteDocument   (task.FirDTO.FirNumber, document.FileName)}
         ></button>
       </td>
     </tr>
@@ -282,24 +304,31 @@ const UserDashboard = () => {
         <div className="popup">
           <div className="popup-content">
             <h2 className="popup-header"><u>Select Form</u></h2>
-            <p>FIR Number : {createFormPopup.FirNumber}</p>
+            <p><b>FIR Number : </b>{createFormPopup.FirNumber}</p>
             <div>
-            <label>Form : </label>
+            <label><b>Form : </b></label>
             <select className="form-select"
               value={createFormPopup.FileName}
               onChange={(e) => setCreateFormPopup({ ...createFormPopup, FileName: e.target.value })}
             >
-              <option value="Form1test.html">Form1</option>
-              <option value="35 (3) Notice.html">35 (3) Notice</option>
-              <option value="41(A) Notice.html">41(A) Notice</option>
+              <option value="select">Select Form</option>
+              <option value="35 (3) Notice.html">35 (3) NOTICE</option>
+              <option value="41(A) Notice.html">41(A) NOTICE</option>
               <option value="94 & 179 NOTICE ENGLISH.html">94 & 179 NOTICE ENGLISH</option>
               <option value="FB LETTER.html">FB LETTER</option>
               <option value="FREEZE INTIMATION TO COURT.html">FREEZE INTIMATION TO COURT</option>
+              <option value="COURT ORDER.html">COURT ORDER</option>
+              <option value="LIEN LETTER.html">LIEN LETTER</option>
+              <option value="IPDR.html">IPDR</option>
+              <option value="Beneficiary details request.html">BENEFICIARY DETAILS REQUEST</option>
+              <option value="Gmail LETTER.html">GMAIL LETTER</option>
+              <option value="WHATSAPP.html">WHATSAPP</option>
+              <option value="INSTA LETTER.html">INSTA LETTER</option>
             </select>
             </div>
             <div className="popup-buttons">
               <button onClick={() => {
-                        handleShow(createFormPopup.FirNumber,"create");
+                        handleShow(createFormPopup.FirNumber,createFormPopup.FileName,"create");
                     }}>Create</button>
               <button onClick={() => setCreateFormPopup({ visible: false, FirNumber: '', FileName: '' })}>Cancel</button>
             </div>
@@ -322,7 +351,7 @@ const UserDashboard = () => {
   centered
 >
   <Modal.Header closeButton>
-    <Modal.Title id="form-modal-header">Response Forms/Notice</Modal.Title>
+    <Modal.Title id="form-modal-header">Response Form/Notice</Modal.Title>
   </Modal.Header>
   <Modal.Body>
     <iframe
@@ -336,6 +365,8 @@ const UserDashboard = () => {
     />
   </Modal.Body>
   <Modal.Footer>
+  <Button className="hidden-close-button" onClick={handleErrorWithAlert} id="form-error"></Button>
+   <Button className="hidden-close-button" onClick={handleCloseWithAlert} id="form-close"></Button>
     <Button variant="secondary" onClick={handleClose} id="iclose">
       Close
     </Button>

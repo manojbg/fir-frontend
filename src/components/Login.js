@@ -71,7 +71,7 @@ const Login = () => {
     <div className="login-container">
       <div className="login-card">
           <Alert show={show} key={variant} variant={variant} onClose={() => setShow(false)} dismissible>
-                 {alertMessage}</Alert>
+                 <b>{alertMessage}</b></Alert>
         <h1 className="login-title"></h1>
         <input
           type="text"

@@ -8,15 +8,10 @@ body {
   }
 
   .login-container-body {
-    margin: 0;
     font-family: 'Arial', sans-serif;
-    background-image : url("./assets/images/ksplogo2.png");
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-repeat : round;
-    background-position-x : -90%;
+    background-image : url("./assets/images/ksplogo.png");
+    background-repeat : no-repeat;
+    background-size: cover;
   }
   
   .login-container,

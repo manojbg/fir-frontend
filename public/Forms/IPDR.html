@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <script src="./scripts.js"></script>
+    <style>
+        /* Set A4 size */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family:"Times New Roman",sans-serif;
+            font-size:17px;
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        html{
+        height:297mm;
+        width:210mm;
+        margin-left:auto;
+        margin-right:auto;
+        }
+
+        body{
+        padding : 5%;
+         margin-left:auto;
+        margin-right:auto;
+        }
+
+        td{
+        border: 1pt solid windowtext;
+        padding : 1%
+        }
+
+        input{
+        border : none
+        }
+
+        span[placeholder]:empty:before {
+        content: attr(placeholder);
+        color: #555;
+        }
+
+        span { cursor:pointer; }
+
+        .background-edit {
+        background-color : yellow;
+        }
+
+        .save-button {
+        display: inline;
+        border-radius: 15px;
+        background-color: #4CAF50;
+        color: white;
+        font-size: 20px;
+        width: 10%;
+        height: 45px;
+        }
+
+        .save-button:hover {
+        background-color: #45a049;
+        }
+    </style>
+    <script>
+        $(document).ready(function () {
+          $("#addRowBtnAfter").click(function () {
+            var newRow =
+            "<tr>" +
+            "<td><div class='background-edit' contenteditable></td>" +
+            "<td><div class='background-edit' contenteditable></td>" +
+            "<td><div class='background-edit' contenteditable></td>" +
+            "<td><div class='background-edit' contenteditable></td>" +
+            "<td><div class='background-edit' contenteditable></td>" +
+            "<td><div class='background-edit' contenteditable></td>" +
+            "<td><button class='removeBtn'>Delete</button></td>" +
+            "</tr>";
+
+            $("#table1 tbody tr:last").after(newRow);
+          });
+
+          // Remove a row from the table
+          $(document).on("click", ".removeBtn", function () {
+              $(this).closest("tr").remove();
+          });
+          fetchData();
+        });
+        window.onload = getQueryParams;
+
+        function save() {
+          // Get the content inside modal-body
+          hideElementsForView();
+          const saveButton = document.getElementById("saveForm");
+          const htmlContent = saveButton.closest("html").outerHTML;
+          const closebuttons = document.getElementById("iclose");
+          //console.log(htmlContent);
+
+          if (!saveButton) {
+            console.error("Save button not found");
+            return;
+          }
+
+          // Traverse up to the <body> or <html> element for the content
+          const elementToConvert = saveButton.closest("body");
+          if (!elementToConvert) {
+            console.error("Element to convert not found");
+            return;
+          }
+
+        // Pass the element for PDF generation
+          convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
+          if (error) {
+            console.error("Error in convertHtmlToPdfDirectly:", error);
+            return;
+          }
+
+          const obj = {
+            date: $("#datePicker").val(),
+            networkProvider: $('#networkProvider option:selected').text(),
+            psi: $('#psi').text(),
+            ioa: $('#ioa').text(),
+            table1: getTableData("table1"),
+          };
+
+          const firNumber = document.getElementById("firNumberField").textContent;
+          const formName = document.getElementById("formNameField").textContent;
+          const req = {
+            FileContent: JSON.stringify(obj),
+            FileName: formName,
+            FirNumber: firNumber,
+            FileBytes: byteArray,
+          };
+          saveAPICall(req);
+          });
+        }
+
+        // Function to fetch data and populate the fields
+        function fetchData() {
+          const params = new URLSearchParams(window.location.search);
+          const firNumber = params.get("firNumber");
+          const formName = params.get("formName");
+          const type = params.get("type");
+          if(type == "edit"){
+            $.ajax({
+              url: globalOptions.uri+"?firNumber="+firNumber+"&fileName="+formName,
+              type: "GET",
+              success: function (response) {
+                const jsonObject = JSON.parse(response.FileContent);
+                $("#datePicker").val(jsonObject.date || "");
+                $('#networkProvider option:selected').text(jsonObject.networkProvider || "");
+                populateTable("table1", jsonObject.table1 || []);
+                },
+                error: function (error) {
+                    console.error("Error fetching data:", error);
+                    handleModalError();
+                }
+            });
+          }
+        }
+
+        // Function to extract table data as an array of objects
+        function getTableData(tableId) {
+          const table = document.getElementById(tableId);
+          const rows = table.querySelectorAll("tbody tr");
+          const data = [];
+
+          rows.forEach(row => {
+            const cells = row.querySelectorAll("td div");
+            if (cells.length >= 3) {
+              data.push({
+                slNo: cells[0].innerText.trim(),
+                ipdrNumber: cells[1].innerText.trim(),
+                fromPeriod: cells[2].innerText.trim(),
+                toPeriod: cells[3].innerText.trim(),
+                firNumber: cells[4].innerText.trim(),
+                lawSection: cells[5].innerText.trim()
+              });
+            }
+        });
+          return data;
+        }
+
+        // Function to populate the table with data
+        function populateTable(tableId, data) {
+          const table = document.getElementById(tableId);
+          const tbody = table.querySelector("tbody");
+          tbody.innerHTML = ""; // Clear existing rows
+
+          data.forEach(row => {
+            const newRow = `
+            <tr>
+                <td><div class="background-edit" contenteditable>${row.slNo}</div></td>
+                <td><div class="background-edit" contenteditable>${row.ipdrNumber}</div></td>
+                <td><div class="background-edit" contenteditable>${row.fromPeriod}</div></td>
+                <td><div class="background-edit" contenteditable>${row.toPeriod}</div></td>
+                <td><div class="background-edit" contenteditable>${row.firNumber}</div></td>
+                <td><div class="background-edit" contenteditable>${row.lawSection}</div></td>
+                <td><button class="removeBtn">Delete</button></td>
+            </tr>`;
+            tbody.innerHTML += newRow;
+          });
+        }
+
+        function hideElementsForView()
+        {
+           $('#table1 tr > *:last-child').remove();
+           $('#addRowBtnAfter').hide()
+           $('#saveForm').hide()
+           $('.background-edit').removeClass();
+           document.getElementById('networkProvideDiv').innerHTML = "<b>"+$("#networkProvide option:selected").text()+"</b>";
+        }
+    </script>
+</head>
+<body>
+<p style='text-align:center;'><strong><span >Annexure IX</span></strong></p>
+<p style='text-align:center;'><strong><span >Performa to seek Call Data/Detail Record</span></strong></p>
+<p style='text-align:center;'><strong><span >(Request Under Section 94 of the BNSS 2023)</span></strong></p>
+<p style='text-align:justify;'><span >&nbsp;</span></p>
+<div style="display: inline-block;width: 30%;">
+    <p><strong>To,</strong></p>
+    <div style="text-indent:18.0pt">The Nodal Officer</div>
+    <div id="networkProvideDiv" style="text-indent:18.0pt">
+       <select id="networkProvider" class="background-edit">
+        <option value="AIRTEL">AIRTEL</option>
+        <option value="BSNL" selected="selected">BSNL</option>
+        <option value="JIO">JIO</option>
+        <option value="VODAFONE">VODAFONE IDEA</option></select>
+     </div>
+</div>
+<br/><br/>
+<div style='text-align:center'>Kindly arrange to provide the <strong>IPDR</strong> for the following</div>
+<br/>
+    <table id="table1" style="border-collapse: collapse;border: none;text-align:center; table-layout : fixed">
+        <thead>
+        <tr>
+            <td rowspan="2" style="width:5%;">
+                <p><strong>SL No.</strong></p>
+            </td>
+            <td rowspan="2" style="width:18%;">
+                <p><strong>IPDR NUMBER</strong></p>
+            </td>
+            <td colspan="2" style="width:28%;">
+                <p><strong>PERIOD (DD-MM-YYYY) (HH:MM:SS, IST)</strong></p>
+            </td>
+            <td rowspan="2" style="width:15%;">
+                <p><strong>FIR / CASE NO</strong></p>
+            </td>
+            <td rowspan="2" style="width:15%;">
+                <p><strong>PS &amp; SECTIONS OF LAW</strong></p>
+            </td>
+            <td rowspan="2" style="width : 12%" id="actions">
+                <p><strong>ACTIONS</strong></p>
+            </td>
+        </tr>
+        <tr>
+            <td style="width:14%;">
+                <p>FROM</p>
+            </td>
+            <td style="width:14%;">
+                <p>TO</p>
+            </td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>
+                <div class="background-edit" contenteditable>01</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete</button>
+            </td>
+        </tbody>
+    </table>
+<button style="float:right" id="addRowBtnAfter">Add Row</button>
+<br/>
+<p>&nbsp;<strong><span >Reason/Case Brief:</span></strong></p>
+<br/>
+<ol style="margin-left: 2%">
+    <li><span >The subscriber identity has been ascertained and it is ensured that person in question is not someone whose call details are of a sensitive nature.</span></li>
+    <li><span >The number is not subscribed in the name of a sitting MP/MLA/MLC &amp; Governor.</span></li>
+</ol>
+<br/><br/>
+<p>Place: Bengaluru</p>
+<p><strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong></p>
+<br/><br/>
+<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
+<div style="display: inline-block;width: 100%;">
+    <div style="float : right; text-align:center; width : 35%">
+        <p>Assistant commissioner of police,</p>
+        <p><strong>CEN police station,</strong></p>
+        <p><strong>North division, Bengaluru city</strong></p>
+    </div>
+</div>
+
+<div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>RAJU</div></div>
+<div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
+<br/>
+</div><br/>
+<button class="save-button" id="saveForm" onclick="save()">Save</button>
+<p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
+<p style="display: none;">Form Name: <span id="formNameField"></span></p>
+<p style="display: none;">Action Type: <span id="actionType"></span></p>
+</body>
+</html>

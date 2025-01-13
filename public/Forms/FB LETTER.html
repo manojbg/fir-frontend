@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
-    <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <script src="./scripts.js"></script>
     <style>
         /* Set A4 size */
         * {
@@ -49,45 +53,123 @@
         background-color : yellow;
         }
 
+        .save-button {
+        display: inline;
+        border-radius: 15px;
+        background-color: #4CAF50;
+        color: white;
+        font-size: 20px;
+        width: 10%;
+        height: 45px;
+        }
+
+        .save-button:hover {
+        background-color: #45a049;
+        }
     </style>
     <script>
+        $(document).ready(function () {
+          fetchData();
+        });
+        window.onload = getQueryParams;
+
         function save() {
-          var obj = new Object();
-          obj.date = $('#datePicker').val();
-          obj.subjectIdentifier = $("#subjectIdentifier").text();
-          obj.identifierType = $('#identifierType option:selected').text()
-          obj.referenceIdentifier = $("#referenceIdentifier").text();
-          obj.letterBody = $("#letterBody").text();
-          obj.deActivate = $('#deActivate option:selected').text();
-          obj.duration = $('#duration').text();
-          obj.fbUserName = $('#fbUserName').text();
-          obj.fbURL = $('#fbURL').text();
+          // Get the content inside modal-body
+          hideElementsForView();
+          const saveButton = document.getElementById("saveForm");
+          const htmlContent = saveButton.closest("html").outerHTML;
+          const closebuttons = document.getElementById("iclose");
+          //console.log(htmlContent);
 
-          obj.caseIdentifier = $("#caseIdentifier").text();
-          obj.reportingDuration = $("#reportingDuration").text();
-          obj.toAddress = $("#toAddress").val();
-          var string = JSON.stringify(obj);
-          console.log(JSON.parse(string));
+          if (!saveButton) {
+            console.error("Save button not found");
+            return;
+          }
 
-          var obj2 = JSON.parse(string);
-          console.log(obj.reportingDuration);
+          // Traverse up to the <body> or <html> element for the content
+          const elementToConvert = saveButton.closest("body");
+          if (!elementToConvert) {
+            console.error("Element to convert not found");
+            return;
+          }
+
+        // Pass the element for PDF generation
+          convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
+          if (error) {
+            console.error("Error in convertHtmlToPdfDirectly:", error);
+            return;
+          }
+
+          const obj = {
+            date: $('#datePicker').val(),
+            caseIdentifier: $("#caseIdentifier").text(),
+            caseType: $('#caseType option:selected').text(),
+            subjectIdentifier: $("#subjectIdentifier").text(),
+            letterBody: $("#letterBody").text(),
+            deActivate: $('#deActivate option:selected').text(),
+            duration: $('#duration').text(),
+            fbUserName: $('#fbUserName').text(),
+            fbURL: $('#fbURL').text(),
+            psi: $('#psi').text(),
+            ioa: $('#ioa').text(),
+          };
+
+          const firNumber = document.getElementById("firNumberField").textContent;
+          const formName = document.getElementById("formNameField").textContent;
+          const req = {
+            FileContent: JSON.stringify(obj),
+            FileName: formName,
+            FirNumber: firNumber,
+            FileBytes: byteArray,
+          };
+          saveAPICall(req);
+          });
+        }
+
+        // Function to fetch data and populate the fields
+        function fetchData() {
+          const params = new URLSearchParams(window.location.search);
+          const firNumber = params.get("firNumber");
+          const formName = params.get("formName");
+          const type = params.get("type");
+          if(type == "edit"){
+            $.ajax({
+              url: globalOptions.uri+"?firNumber="+firNumber+"&fileName="+formName,
+              type: "GET",
+              success: function (response) {
+                const jsonObject = JSON.parse(response.FileContent);
+                $("#datePicker").val(jsonObject.date || "");
+                $("#caseIdentifier").text(jsonObject.caseIdentifier || "ENTER FIR NUMBER");
+                $("#caseType option:selected").text(jsonObject.caseType || "FIR No :");
+                $("#subjectIdentifier").text(jsonObject.subjectIdentifier || "");
+                $("#letterBody").text(jsonObject.letterBody || "");
+                $('#deActivate option:selected').text(jsonObject.deActivate || "none");
+                $('#duration').text(jsonObject.duration || "");
+                $('#fbUserName').text(jsonObject.fbUserName || "");
+                $('#fbURL').text(jsonObject.fbURL || "");
+                $('#psi').text(jsonObject.psi || "");
+                $('#ioa').text(jsonObject.ioa || "");
+                },
+                error: function (error) {
+                    console.error("Error fetching data:", error);
+                    handleModalError();
+                }
+            });
+          }
         }
 
         function hideElementsForView()
         {
-        //fetch json obj from backend
-        $('.background-edit').removeClass();
-        $('#saveForm').hide();
-        if($("#deActivate").val() == "none"){
-        document.getElementById('deActivateDiv').innerHTML='';
-        }else
-        {
-        document.getElementById('deActivateDiv').innerHTML =  obj.identifierType;
+          $('.background-edit').removeClass();
+          $('#saveForm').hide();
+          if($("#deActivate").val() == "none"){
+            document.getElementById('deActivateDiv').innerHTML='';
+          }
+          else{
+            document.getElementById('deActivateDiv').innerHTML = $('#deActivate option:selected').text()
+          }
+          document.getElementById('caseTypeDiv').innerHTML = "<b>"+$("#caseType option:selected").text()+"</b>";
         }
-        document.getElementById('identifierTypeDiv').innerHTML =  obj.deActivate;
-        }
-
-
     </script>
 </head>
 <body>
@@ -110,7 +192,7 @@
                 >&nbsp;; Phone No-080-22942302; Mob No-9449295758</span>
         </p>
     </div>
-    <br/> <br/> <br/>
+    <br/> <br/>
     <p style='text-align:center;'>
         <strong><u><span>Police Notice U/s 94 Bharatiya Nagarik Suraksha Sanhita, 2023</span></u></strong>
     </p>
@@ -118,30 +200,36 @@
     <p style='text-align:right;'>
         <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
     </p>
-    <br/>
     <div style="display: inline-block;width: 30%;">
         <p><strong>To,</strong></p>
-        <textarea id="toAddress" class="background-edit" name="toAddress" rows="5" cols="30" style="border : none;"></textarea>
+        <div style="margin-left:10%">Meta Platforms, Inc.,<br/>
+            1 Meta way,<br/>
+            Menlo Park,CA 94025
+        </div>
     </div>
-    <br/>
+    <br/><br/>
     Sir/Madam, <br/>
     <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
         <div>
-            Sub:	Request to provide the details of below mentioned <div id="subjectIdentifier" style="display:inline" class="background-edit" contenteditable>256/2024</div>
+            Sub:	Request to provide the details of below mentioned <div id="subjectIdentifier" style="display:inline" class="background-edit" contenteditable>Facebook ID (or page) </div>
             <br/>
-            <div>
-                <div id="identifierTypeDiv" style="display:inline">
-            Ref: 	CEN Police Station <select id="identifierType" class="background-edit"> No :
-                <option value="LPT">LPT</option>
-                    <option value="FIR" selected="selected">FIR</option></select></div>
-            <div id="referenceIdentifier" style="display:inline" class="background-edit" contenteditable>256/2024
-                if FIR selected we need to mention under section U/S:</div>
+            <div>Ref: 	CEN Police Station
+                <div id="caseTypeDiv" style="display:inline">
+                <select id="caseType" class="background-edit">
+                <option value="LPT">LPT No :</option>
+                    <option value="FIR" selected="selected">FIR No :</option></select></div>
+            <div id="caseIdentifier" style="display:inline" class="background-edit" contenteditable>256/2024
+                if FIR selected mention under section U/S:</div>
             </div>
             </div>
             <br/>
             <div style="text-align:center"> * * * * * * </div>
-        <div id="letterBody" style="display:inline" class="background-edit" contenteditable>Enter Letter Content Here</div>
-
+        <div id="letterBody" style="display:inline" class="background-edit" contenteditable>
+            With reference to the above cited subject, it is to inform you that the complainant is the retired
+            police officer. In the following Facebook ID someone has uploading the photos of the victim in the uniform
+            to make fraud with the victim’s friends by impersonating the victim identity. Hence, a case has been
+            registered & being investigating in above said reference case in CEN Crime Police Station, North Division,
+            Bengaluru city. Suspected Facebook details is as follows,</div>
             <div style = "text-indent : 0px">
                 <br/>
                 <div><b>Facebook username : </b> <div id="fbUserName" style="display:inline" class="background-edit" contenteditable>UserName</div></div>
@@ -178,9 +266,13 @@
             <p><strong>North division, Bengaluru city</strong></p>
         </div>
     </div>
+    <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>ROHINI</div></div>
+    <div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
     <br/>
 </div><br/>
-<button style="display:inline; float:right" id="saveForm" onclick="save()">Save</button>
-
+<button class="save-button" id="saveForm" onclick="save()">Save</button>
+<p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
+<p style="display: none;">Form Name: <span id="formNameField"></span></p>
+<p style="display: none;">Action Type: <span id="actionType"></span></p>
 </body>
 </html>
