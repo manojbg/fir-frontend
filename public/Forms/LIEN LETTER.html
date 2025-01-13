@@ -143,8 +143,8 @@
         // Function to fetch data and populate the fields
         function fetchData() {
           const params = new URLSearchParams(window.location.search);
-          const firNumber = params.get("firNumber");
-          const formName = params.get("formName");
+          const firNumber = encodeURIComponent(params.get("firNumber"));
+          const formName = encodeURIComponent(params.get("formName"));
           const type = params.get("type");
           if(type == "edit"){
             $.ajax({
@@ -239,9 +239,9 @@
         </p>
     </div>
     <br/> <br/>
-    <p style='text-align:center;'>
-        <strong><u><span>Notice U/s 94 & 106 BNSS.</span></u></strong>
-    </p>
+    <div style='text-align:center;text-decoration: underline;font-weight:bold'>
+        <u>Notice U/s 94 & 106 BNSS.</u>
+    </div>
     <br/>
     <p style='text-align:right;'>
         <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
