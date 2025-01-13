@@ -92,24 +92,6 @@
         fetchData();        
     });
 
-<<<<<<< HEAD
-     function getQueryParams() {
-    const params = new URLSearchParams(window.location.search);
-    const firNumber = params.get("firNumber");
-    const formName = params.get("formName");
-    const type = params.get("type");
-
-    // Use the values
-    console.log("FIR Number:", firNumber);
-    console.log("formName:", formName);
-
-    // Populate your form fields if needed
-    document.getElementById("firNumberField").textContent = firNumber;
-    document.getElementById("formNameField").textContent = formName;
-  }
-
-=======
->>>>>>> 5b355dc049fc69301d204a92641767e7b9facd7e
   window.onload = getQueryParams;
 
 function save() {
@@ -161,31 +143,8 @@ function save() {
                     FirNumber: firNumber,
                     FileBytes: byteArray,
                 };
-<<<<<<< HEAD
-
-    // Send the data via AJAX
-    $.ajax({
-                    url: "http://localhost:8080/firFileArchival/api/fileOps/saveFIRSupportingDocument",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify(req),
-                    success: (response) => {
-                        console.log("Response:", response);
-                        alert("Data saved successfully!");
-                        handleCloseModal();
-                    },
-                    error: (error) => {
-                        console.error("Error saving data:", error);
-                        alert("Failed to save data. Please try again.");
-                    },
-                });
-
-
-            // You can now send the byte array to your backend or perform other operations
-=======
                 saveAPICall(req);
                // You can now send the byte array to your backend or perform other operations
->>>>>>> 5b355dc049fc69301d204a92641767e7b9facd7e
         });
 
 }
@@ -265,10 +224,6 @@ function save() {
        $('#addRowBtnAfter').hide()
        $('#saveForm').hide()
        $('.background-edit').removeClass();
-    }
-
-    function handleCloseModal(){
-      window.parent.document.getElementById("iclose").click();
     }
 </script>
 </head>
