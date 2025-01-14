@@ -231,12 +231,10 @@ const deleteTask = async (firNumber) =>{
 
 const deleteTaskDocument = async (firNumber, fileName) =>{
   try {
-    const payload = [
-      {
+    const payload = {
         FileName: fileName,
         FirNumber: firNumber,
-      },
-    ];
+      };
 
     const response = await fetch(`${API_URL}/fileOps/deleteFIRSupportDocument`, {
       method: 'DELETE',
