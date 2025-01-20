@@ -19,7 +19,7 @@
 
         @page {
             size: A4;
-            margin: 0;
+            margin: 2%;
         }
         html{
         height:297mm;
@@ -29,13 +29,14 @@
         }
 
         body{
-        padding : 5%;
-        margin-left:auto;
-        margin-right:auto;
+        margin : 2%;
         }
 
-        td{
+        td {
         border: 1pt solid windowtext;
+        }
+
+        table td div{
         padding : 1%
         }
 
@@ -60,7 +61,7 @@
         background-color: #4CAF50;
         color: white;
         font-size: 20px;
-        width: 10%;
+        width: 40%;
         height: 45px;
         }
 
@@ -68,6 +69,23 @@
         background-color: #45a049;
         }
 
+        .removeBtn, .removeColumnBtn{
+          background: rgba(211, 211, 211, 1.0);
+          width: 100%
+        }
+
+        .removeBtn:hover, .removeColumnBtn:hover{
+          background: rgba(183, 183, 183, 1.0);
+        }
+
+        #addColumnBtnAfter, #addRowBtnAfter {
+          background: #4CAF50;
+          width: 100%
+        }
+
+        #addColumnBtnAfter:hover, #addRowBtnAfter:hover {
+          background-color: #45a049;
+        }
     </style>
 <script>
     // On page load, read data from the API and populate the fields
@@ -75,56 +93,68 @@
 
         // Add a new row to the table
         $("#addRowBtnAfter").click(function () {
-            var newRow = `
-            <tr>
-                <td><div class="background-edit" contenteditable>New Bank</div></td>
-                <td><div class="background-edit" contenteditable>New Account</div></td>
-                <td><div class="background-edit" contenteditable>New IFSC</div></td>
-                <td><button class="removeBtn">Delete</button></td>
-            </tr>`;
-            $("#table1 tbody").append(newRow);
+            const numberOfCells = document.getElementById('table1').rows[0].cells.length;
+            var newRow =$('<tr></tr>');
+            for(let i = 1; i < numberOfCells; i++)
+            {
+              newRow.append("<td><div class='background-edit' contenteditable></td>");
+            }
+            newRow.append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
+            $("#table1 tbody tr:last").after(newRow);
         });
 
         // Remove a row from the table
         $(document).on("click", ".removeBtn", function () {
             $(this).closest("tr").remove();
-        });        
+        });
+
+          // Remove a column from the table
+          $(document).on("click", ".removeColumnBtn", function () {
+              var columnIndex = $(this).closest("td")[0].cellIndex + 1;
+              $('#table1 tr > *:nth-child('+columnIndex+')').remove();
+          });
         fetchData();        
     });
+    window.onload = getQueryParams;
 
-  window.onload = getQueryParams;
+          //Add a column to the table
+          function addColumn() {
+            const numberOfCells = document.getElementById('table1').rows[0].cells.length;
+            $('#table1 tr > *:last-child').remove();
+            var newColumn =$('<td></td>');
+            $("#table1 tr").each(function(){
+              var row = $(this);
+            if(row[0].id == "headers")
+             {
+               $(this).append("<td><div class='background-edit' contenteditable></td>");
+               $(this).append("<td>ACTIONS</td>");
+             }
+             else if(row[0].id == "deleteColumnBtnRow")
+             {
+               $(this).append("<td><button class='removeColumnBtn'>Delete <br> Column</button></td>");
+               $(this).append("<td><button id='addColumnBtnAfter' onclick='addColumn()'>Add <br> Column</button></td>");
+             }
+             else
+             {
+               $(this).append("<td><div class='background-edit' contenteditable></td>");
+               $(this).append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
+             }
+            })
+            $("#table1 tr > *:last-child").css("width","90px");
+          }
 
-function save() {
+function save(print) {
     // Get the content inside modal-body
     hideElementsForView();
-    const saveButton = document.getElementById("saveForm");
-    const htmlContent = saveButton.closest("html").outerHTML;
     const closebuttons = document.getElementById("iclose");
-    //console.log(htmlContent);
-
-        if (!saveButton) {
-            console.error("Save button not found");
-            return;
-        }
 
         // Traverse up to the <body> or <html> element for the content
-        const elementToConvert = saveButton.closest("body");
+         const elementToConvert = document.getElementById("bodyMain");
 
         if (!elementToConvert) {
             console.error("Element to convert not found");
             return;
         }
-
-        // Log for debugging
-        console.log("Element to Convert:", elementToConvert);
-
-        // Pass the element for PDF generation
-        convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
-            if (error) {
-                console.error("Error in convertHtmlToPdfDirectly:", error);
-                return;
-            }
-            console.log("PDF ByteArray:", byteArray);
 
             const obj = {
                     date: $("#datePicker").val(),
@@ -137,13 +167,28 @@ function save() {
 
                 const firNumber = document.getElementById("firNumberField").textContent;
                 const formName = document.getElementById("formNameField").textContent;
+                const pk = document.getElementById("pk").textContent;
+                $('paramsHolder').remove();
+
+
+        // Log for debugging
+        console.log("Element to Convert:", elementToConvert);
+
+        // Pass the element for PDF generation
+        convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
+            if (error) {
+                console.error("Error in convertHtmlToPdfDirectly:", error);
+                return;
+            }
                 const req = {
+                    Pk: pk,
                     FileContent: JSON.stringify(obj),
                     FileName: formName,
                     FirNumber: firNumber,
                     FileBytes: byteArray,
                 };
-                saveAPICall(req);
+            console.log("PDF ByteArray:", byteArray);
+            saveAPICall(req, print);
                // You can now send the byte array to your backend or perform other operations
         });
 
@@ -153,12 +198,11 @@ function save() {
     function fetchData() {
 
         const params = new URLSearchParams(window.location.search);
-    const firNumber = params.get("firNumber");
-    const formName = params.get("formName");
+          const pk = params.get("pk");
     const type = params.get("type");
     if(type == "edit"){
         $.ajax({
-            url: "http://localhost:8080/firFileArchival/api/dashboard/getSupportingDocumentData?firNumber="+firNumber+"&fileName="+formName, // Replace with your API endpoint
+            url: globalOptions.uri+"?supportingDocumentId="+pk,
             type: "GET",
             success: function (response) {
                 console.log("Fetched data:", response);
@@ -180,55 +224,23 @@ function save() {
         
     }
 
-    // Function to extract table data as an array of objects
-    function getTableData(tableId) {
-        const table = document.getElementById(tableId);
-        const rows = table.querySelectorAll("tbody tr");
-        const data = [];
-
-        rows.forEach(row => {
-            const cells = row.querySelectorAll("td div");
-            if (cells.length >= 3) {
-                data.push({
-                    bank: cells[0].innerText.trim(),
-                    accountNo: cells[1].innerText.trim(),
-                    ifscCode: cells[2].innerText.trim()
-                });
-            }
-        });
-
-        return data;
-    }
-
-    // Function to populate the table with data
-    function populateTable(tableId, data) {
-        const table = document.getElementById(tableId);
-        const tbody = table.querySelector("tbody");
-        tbody.innerHTML = ""; // Clear existing rows
-
-        data.forEach(row => {
-            const newRow = `
-            <tr>
-                <td><div class="background-edit" contenteditable>${row.bank}</div></td>
-                <td><div class="background-edit" contenteditable>${row.accountNo}</div></td>
-                <td><div class="background-edit" contenteditable>${row.ifscCode}</div></td>
-                <td><button class="removeBtn">Delete</button></td>
-            </tr>`;
-            tbody.innerHTML += newRow;
-        });
-    }
-
     function hideElementsForView()
     {
        $('#table1 tr > *:nth-child(4)').remove();
-       $('#addRowBtnAfter').hide()
-       $('#saveForm').hide()
+       $('#addRowBtnAfter').remove();
+       $('#saveForm').remove();
+       $('#printForm').remove();
        $('.background-edit').removeClass();
+       $('#deleteColumnBtnRow').remove();
+           if(document.getElementById('table1').rows.length < 2)
+           {
+             $('#table1').remove();
+           }
     }
 </script>
 </head>
-<body>
-<div>
+<body id="bodyMain">
+<div id="divMain">
     <br>
     <div style='text-align:center;'>
         <p>
@@ -277,22 +289,27 @@ function save() {
     </div>
     <br>
     <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center">
-        <thead>
-        <tr>
+        <tbody>
+        <tr id="deleteColumnBtnRow" style="font-weight: bold;">
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td style="width:90px"><button id="addColumnBtnAfter" onclick="addColumn()">Add <br/> Column</button></td>
+        </tr>
+        <tr id="headers" style="font-weight: bold;">
             <td>
-                <p><strong>BANK</strong></p>
+                <div class="background-edit" contenteditable>BANK</div>
             </td>
             <td>
-                <p><strong>ACCOUNT NO</strong></p>
+                <div class="background-edit" contenteditable>ACCOUNT NO</div>
             </td>
             <td>
-                <p><strong>IFSC CODE</strong></p>
+                <div class="background-edit" contenteditable>IFSC CODE</div>
             </td>
-            <td id="actions">
-                <p><strong>ACTIONS</strong></p>
+            <td id="actions" style="width:90px">
+                <div>ACTIONS</div>
             </td>
         </tr>
-        </thead><tbody>
         <tr>
             <td>
                 <div class="background-edit" contenteditable>RBL Bank</div>
@@ -304,13 +321,14 @@ function save() {
                 <div class="background-edit" contenteditable>RATN0000104</div>
             </td>
             <td>
-                <button class="removeBtn">Delete</button>
+                <button class="removeBtn">Delete <br> Row</button>
             </td>
         </tr>
         </tbody>
     </table>
     <button style="float:right" id="addRowBtnAfter">Add Row</button>
     <br>
+    <div class="noSplit">
     <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
     </p>
     <br><br>
@@ -321,16 +339,23 @@ function save() {
             <p><strong>North division, Bengaluru city</strong></p>
         </div>
     </div>
+    </div>
     <br>
+    <div class="noSplit">
     <div style="display: inline-block;width: 30%;">
         <p><strong>To,</strong></p>
         <textarea id="toAddress" name="toAddress" rows="5" cols="30" style="border : none;margin-left : 10%"></textarea>
     </div>
+    </div>
 </div>
 <br/>
-<button class="save-button" id="saveForm" onclick="save()">Save</button>
+<button class="save-button" id="saveForm" title="Save Document" onclick="save('false')">Save</button>
+<button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save('true')">Save & Print</button>
+<div id="paramsHolder">
 <p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
 <p style="display: none;">Form Name: <span id="formNameField"></span></p>
 <p style="display: none;">Action Type: <span id="actionType"></span></p>
+<p style="display: none;">PK: <span id="pk"></span></p>
+</div>
 </body>
 </html>

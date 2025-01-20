@@ -42,9 +42,9 @@ const Login = () => {
       const response = await apiService.login(userDetails);
 
       if (response && response.Role) {
-        localStorage.setItem('UserId' , response.UserId)
-        localStorage.setItem('role', response.Role.toLowerCase())
-        if(response.Role.toLowerCase() === "admin"){
+        localStorage.setItem('userId' , response.UserId)
+        localStorage.setItem('role', response.Role)
+        if(response.Role === "ADMIN"){
           navigate('/admin');
         }else{
           navigate('/user');
@@ -89,7 +89,7 @@ const Login = () => {
           value={credentials.password}
           onChange={handleChange}
         />
-        <button className="login-button" onClick={handleLogin}>Login</button>
+        <button className="login-button" title="Sign In" onClick={handleLogin}>Log In</button>
       </div>
     </div>
   );

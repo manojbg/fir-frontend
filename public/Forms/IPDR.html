@@ -18,7 +18,7 @@
 
         @page {
             size: A4;
-            margin: 0;
+            margin: 2%;
         }
         html{
         height:297mm;
@@ -28,13 +28,14 @@
         }
 
         body{
-        padding : 5%;
-         margin-left:auto;
-        margin-right:auto;
+        margin: 2%
         }
 
-        td{
+        td {
         border: 1pt solid windowtext;
+        }
+
+        table td div{
         padding : 1%
         }
 
@@ -59,28 +60,43 @@
         background-color: #4CAF50;
         color: white;
         font-size: 20px;
-        width: 10%;
+        width: 40%;
         height: 45px;
         }
 
         .save-button:hover {
         background-color: #45a049;
         }
+
+        .removeBtn, .removeColumnBtn{
+          background: rgba(211, 211, 211, 1.0);
+          width: 100%
+        }
+
+        .removeBtn:hover, .removeColumnBtn:hover{
+          background: rgba(183, 183, 183, 1.0);
+        }
+
+        #addColumnBtnAfter, #addRowBtnAfter {
+          background: #4CAF50;
+          width: 100%
+        }
+
+        #addColumnBtnAfter:hover, #addRowBtnAfter:hover {
+          background-color: #45a049;
+        }
     </style>
     <script>
         $(document).ready(function () {
           $("#addRowBtnAfter").click(function () {
-            var newRow =
-            "<tr>" +
-            "<td><div class='background-edit' contenteditable></td>" +
-            "<td><div class='background-edit' contenteditable></td>" +
-            "<td><div class='background-edit' contenteditable></td>" +
-            "<td><div class='background-edit' contenteditable></td>" +
-            "<td><div class='background-edit' contenteditable></td>" +
-            "<td><div class='background-edit' contenteditable></td>" +
-            "<td><button class='removeBtn'>Delete</button></td>" +
-            "</tr>";
-
+            const numberOfCells = document.getElementById('table1').rows[0].cells.length;
+            var newRow =$('<tr></tr>');
+            //one extra cell is to be considered for the colspan=2 column
+            for(let i = 1; i <= numberOfCells; i++)
+            {
+              newRow.append("<td><div class='background-edit' contenteditable></td>");
+            }
+            newRow.append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
             $("#table1 tbody tr:last").after(newRow);
           });
 
@@ -88,34 +104,56 @@
           $(document).on("click", ".removeBtn", function () {
               $(this).closest("tr").remove();
           });
+
+          // Remove a column from the table
+          $(document).on("click", ".removeColumnBtn", function () {
+              var columnIndex = $(this).closest("td")[0].cellIndex + 1;
+              $('#table1 tr > *:nth-child('+columnIndex+')').remove();
+          });
           fetchData();
         });
         window.onload = getQueryParams;
 
-        function save() {
+        //Add a column to the table
+        function addColumn() {
+          const numberOfCells = document.getElementById('table1').rows[0].cells.length;
+          $('#table1 tr > *:last-child').remove();
+          var newColumn =$('<td></td>');
+          $("#table1 tr").each(function(){
+            var row = $(this);
+            if(row[0].id == "headers")
+             {
+               $(this).append("<td rowspan='2'><div class='background-edit' contenteditable></td>");
+               $(this).append("<td rowspan='2'>ACTIONS</td>");
+             }
+             else if(row[0].id == "deleteColumnBtnRow")
+             {
+               $(this).append("<td><button class='removeColumnBtn'>Delete <br> Column</button></td>");
+               $(this).append("<td><button id='addColumnBtnAfter' onclick='addColumn()'>Add <br> Column</button></td>");
+             }
+             else if(row[0].id == "period")
+             {
+               $(this).append("<td><p>TO</p></td>");
+             }
+             else
+             {
+               $(this).append("<td><div class='background-edit' contenteditable></td>");
+               $(this).append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
+             }
+          })
+          $("#table1 tr > *:last-child").css("width","90px");
+        }
+
+        function save(print) {
           // Get the content inside modal-body
           hideElementsForView();
-          const saveButton = document.getElementById("saveForm");
-          const htmlContent = saveButton.closest("html").outerHTML;
           const closebuttons = document.getElementById("iclose");
-          //console.log(htmlContent);
-
-          if (!saveButton) {
-            console.error("Save button not found");
-            return;
-          }
+          var tableContent = getTableData("table1");
 
           // Traverse up to the <body> or <html> element for the content
-          const elementToConvert = saveButton.closest("body");
+          const elementToConvert = document.getElementById("bodyMain");
           if (!elementToConvert) {
             console.error("Element to convert not found");
-            return;
-          }
-
-        // Pass the element for PDF generation
-          convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
-          if (error) {
-            console.error("Error in convertHtmlToPdfDirectly:", error);
             return;
           }
 
@@ -124,30 +162,39 @@
             networkProvider: $('#networkProvider option:selected').text(),
             psi: $('#psi').text(),
             ioa: $('#ioa').text(),
-            table1: getTableData("table1"),
+            table1: tableContent,
           };
 
           const firNumber = document.getElementById("firNumberField").textContent;
           const formName = document.getElementById("formNameField").textContent;
-          const req = {
+          const pk = document.getElementById("pk").textContent;
+          $('paramsHolder').remove();
+
+        // Pass the element for PDF generation
+          convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
+            if (error) {
+              console.error("Error in convertHtmlToPdfDirectly:", error);
+              return;
+            }
+            const req = {
+            Pk: pk,
             FileContent: JSON.stringify(obj),
             FileName: formName,
             FirNumber: firNumber,
             FileBytes: byteArray,
           };
-          saveAPICall(req);
+            saveAPICall(req, print);
           });
         }
 
         // Function to fetch data and populate the fields
         function fetchData() {
           const params = new URLSearchParams(window.location.search);
-          const firNumber = encodeURIComponent(params.get("firNumber"));
-          const formName = encodeURIComponent(params.get("formName"));
+          const pk = params.get("pk");
           const type = params.get("type");
           if(type == "edit"){
             $.ajax({
-              url: globalOptions.uri+"?firNumber="+firNumber+"&fileName="+formName,
+              url: globalOptions.uri+"?supportingDocumentId="+pk,
               type: "GET",
               success: function (response) {
                 const jsonObject = JSON.parse(response.FileContent);
@@ -163,60 +210,24 @@
           }
         }
 
-        // Function to extract table data as an array of objects
-        function getTableData(tableId) {
-          const table = document.getElementById(tableId);
-          const rows = table.querySelectorAll("tbody tr");
-          const data = [];
-
-          rows.forEach(row => {
-            const cells = row.querySelectorAll("td div");
-            if (cells.length >= 3) {
-              data.push({
-                slNo: cells[0].innerText.trim(),
-                ipdrNumber: cells[1].innerText.trim(),
-                fromPeriod: cells[2].innerText.trim(),
-                toPeriod: cells[3].innerText.trim(),
-                firNumber: cells[4].innerText.trim(),
-                lawSection: cells[5].innerText.trim()
-              });
-            }
-        });
-          return data;
-        }
-
-        // Function to populate the table with data
-        function populateTable(tableId, data) {
-          const table = document.getElementById(tableId);
-          const tbody = table.querySelector("tbody");
-          tbody.innerHTML = ""; // Clear existing rows
-
-          data.forEach(row => {
-            const newRow = `
-            <tr>
-                <td><div class="background-edit" contenteditable>${row.slNo}</div></td>
-                <td><div class="background-edit" contenteditable>${row.ipdrNumber}</div></td>
-                <td><div class="background-edit" contenteditable>${row.fromPeriod}</div></td>
-                <td><div class="background-edit" contenteditable>${row.toPeriod}</div></td>
-                <td><div class="background-edit" contenteditable>${row.firNumber}</div></td>
-                <td><div class="background-edit" contenteditable>${row.lawSection}</div></td>
-                <td><button class="removeBtn">Delete</button></td>
-            </tr>`;
-            tbody.innerHTML += newRow;
-          });
-        }
-
         function hideElementsForView()
         {
            $('#table1 tr > *:last-child').remove();
-           $('#addRowBtnAfter').hide()
-           $('#saveForm').hide()
+           $('#addRowBtnAfter').remove();
+           $('#saveForm').remove();
+           $('#printForm').remove();
            $('.background-edit').removeClass();
            document.getElementById('networkProvideDiv').innerHTML = "<b>"+$("#networkProvide option:selected").text()+"</b>";
+           $('#deleteColumnBtnRow').remove();
+           if(document.getElementById('table1').rows.length < 2)
+           {
+             $('#table1').remove();
+           }
         }
     </script>
 </head>
-<body>
+<body id="bodyMain">
+<div id="divMain">
 <p style='text-align:center;'><strong><span >Annexure IX</span></strong></p>
 <p style='text-align:center;'><strong><span >Performa to seek Call Data/Detail Record</span></strong></p>
 <p style='text-align:center;'><strong><span >(Request Under Section 94 of the BNSS 2023)</span></strong></p>
@@ -236,37 +247,43 @@
 <div style='text-align:center'>Kindly arrange to provide the <strong>IPDR</strong> for the following</div>
 <br/>
     <table id="table1" style="border-collapse: collapse;border: none;text-align:center; table-layout : fixed">
-        <thead>
-        <tr>
-            <td rowspan="2" style="width:5%;">
-                <p><strong>SL No.</strong></p>
+        <tbody>
+        <tr id="deleteColumnBtnRow" style="font-weight: bold;">
+            <td style="color:red">Cannot Delete</td>
+            <td style="color:red">Cannot Delete</td>
+            <td colspan="2" style="color:red">Cannot Delete</td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td style="width:90px"><button id="addColumnBtnAfter" onclick="addColumn()">Add <br/> Column</button></td>
+        </tr>
+        <tr id="headers" style="font-weight: bold;">
+            <td rowspan="2" style="width:50px">
+                <div>SL No.</div>
             </td>
-            <td rowspan="2" style="width:18%;">
-                <p><strong>IPDR NUMBER</strong></p>
+            <td rowspan="2">
+                <div>IPDR NUMBER</div>
             </td>
-            <td colspan="2" style="width:28%;">
-                <p><strong>PERIOD (DD-MM-YYYY) (HH:MM:SS, IST)</strong></p>
+            <td colspan="2">
+                <div>PERIOD (DD-MM-YYYY) (HH:MM:SS, IST)</div>
             </td>
-            <td rowspan="2" style="width:15%;">
-                <p><strong>FIR / CASE NO</strong></p>
+            <td rowspan="2">
+                <div class="background-edit" contenteditable>FIR / CASE NO</div>
             </td>
-            <td rowspan="2" style="width:15%;">
-                <p><strong>PS &amp; SECTIONS OF LAW</strong></p>
+            <td rowspan="2">
+                <div class="background-edit" contenteditable>PS &amp; SECTIONS OF LAW</div>
             </td>
-            <td rowspan="2" style="width : 12%" id="actions">
-                <p><strong>ACTIONS</strong></p>
+            <td rowspan="2" id="actions" style="width:90px">
+                <div>ACTIONS</div>
             </td>
         </tr>
-        <tr>
-            <td style="width:14%;">
+        <tr id="period">
+            <td>
                 <p>FROM</p>
             </td>
-            <td style="width:14%;">
+            <td >
                 <p>TO</p>
             </td>
         </tr>
-        </thead>
-        <tbody>
         <tr>
             <td>
                 <div class="background-edit" contenteditable>01</div>
@@ -287,7 +304,7 @@
                 <div class="background-edit" contenteditable></div>
             </td>
             <td>
-                <button class="removeBtn">Delete</button>
+                <button class="removeBtn">Delete <br> Row</button>
             </td>
         </tbody>
     </table>
@@ -303,6 +320,7 @@
 <p>Place: Bengaluru</p>
 <p><strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong></p>
 <br/><br/>
+    <div class="noSplit">
 <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
 <div style="display: inline-block;width: 100%;">
     <div style="float : right; text-align:center; width : 35%">
@@ -311,14 +329,18 @@
         <p><strong>North division, Bengaluru city</strong></p>
     </div>
 </div>
-
+    </div>
 <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>RAJU</div></div>
 <div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
 <br/>
 </div><br/>
-<button class="save-button" id="saveForm" onclick="save()">Save</button>
+<button class="save-button" id="saveForm" title="Save Document" onclick="save('false')">Save</button>
+<button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save('true')">Save & Print</button>
+<div id="paramsHolder">
 <p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
 <p style="display: none;">Form Name: <span id="formNameField"></span></p>
 <p style="display: none;">Action Type: <span id="actionType"></span></p>
+<p style="display: none;">PK: <span id="pk"></span></p>
+</div>
 </body>
 </html>

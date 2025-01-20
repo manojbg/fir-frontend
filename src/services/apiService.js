@@ -32,10 +32,10 @@ const login = async (userDetails) => {
 
 const getAllTasks = async (pageNumber = 0, size = 10) => {
   try {
-    const userId = localStorage.getItem('UserId');
+    const userId = localStorage.getItem('userId');
     const role = localStorage.getItem('role');
     let response = "";
-    if(role  === "admin"){
+    if(role  === "ADMIN"){
       response = await fetch(`${API_URL}/dashboard/listAllFIRsWithDocumentDataByUserId?userId=&pageNumber=${pageNumber}&size=${size}`);
     }else{
       response = await fetch(`${API_URL}/dashboard/listAllFIRsWithDocumentDataByUserId?userId=${userId}&pageNumber=${pageNumber}&size=${size}`);
@@ -90,8 +90,25 @@ const processResponseDatanew = async (data) => {
         })()
       : null;
 
-    // Generate documentUrl for each FirSupportingDocumentList.File
-    const supportingDocuments = (task.FirSupportingDocumentList || []).map(
+    // Generate documentUrl for each ApprovedFirSupportingDocuments.File
+    const supportingDocuments = (task.ApprovedFirSupportingDocuments || []).map(
+      (supportingDocument) => ({
+        ...supportingDocument,
+        documentUrl: supportingDocument.FileBytes
+          ? (() => {
+              const byteArray = Uint8Array.from(
+                atob(supportingDocument.FileBytes),
+                (c) => c.charCodeAt(0)
+              );
+              const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming HTML
+              return URL.createObjectURL(blob);
+            })()
+          : null,
+      })
+    );
+
+    // Generate documentUrl for each ApprovedFirSupportingDocuments.File
+    const unApprovedSupportingDocuments = (task.UnApprovedFirSupportingDocuments || []).map(
       (supportingDocument) => ({
         ...supportingDocument,
         documentUrl: supportingDocument.FileBytes
@@ -110,7 +127,8 @@ const processResponseDatanew = async (data) => {
     return {
       ...task,
       documentUrl: mainDocumentUrl,
-      FirSupportingDocumentList: supportingDocuments,
+      ApprovedFirSupportingDocuments: supportingDocuments,
+      UnApprovedFirSupportingDocuments: unApprovedSupportingDocuments,
     };
   });
 
@@ -148,23 +166,15 @@ const assignTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUs
   }
 };
 
-const createTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUserId, FirDate }) => {
+const createTask = async (taskData) => {
   try {
-    const payload = {
-      FirNumber,
-      FileName,
-      AttachmentFileBytes,
-      AssigneeUserId,
-      FirDate
-    };
-
-    const response = await fetch(`${API_URL}/fileOps/saveFIRDocument`, {
+      const response = await fetch(`${API_URL}/fileOps/saveFIRDocument`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: '*/*',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(taskData),
     });
 
     if (!response.ok) {
@@ -179,9 +189,28 @@ const createTask = async ({ FirNumber, FileName, AttachmentFileBytes, AssigneeUs
 };
 
 
-const getAssignees = async () => {
+const getAllUsers = async () => {
   try {
-    const response = await fetch(`${API_URL}/user/listAllUsers?userRole=user`, {
+    const response = await fetch(`${API_URL}/user/listAllUsers`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    throw error;
+  }
+};
+
+const getAllHeaders = async () => {
+  try {
+    const response = await fetch(`${API_URL}/dashboard/listAllMajorHeaders`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -229,22 +258,14 @@ const deleteTask = async (firNumber) =>{
   }
 };
 
-const deleteTaskDocument = async (firNumber, fileName) =>{
+const deleteTaskDocument = async (pk) =>{
   try {
-    const payload = [
-      {
-        FileName: fileName,
-        FirNumber: firNumber,
-      },
-    ];
-
-    const response = await fetch(`${API_URL}/fileOps/deleteFIRSupportDocument`, {
+    const response = await fetch(`${API_URL}/fileOps/deleteFIRSupportDocument?supportingDocumentId=${pk}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
         Accept: '*/*',
       },
-      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -260,9 +281,15 @@ const deleteTaskDocument = async (firNumber, fileName) =>{
 
 const searchByIdTask = async (firNumber) => {
   var data = null;
-  const userId = localStorage.getItem('UserId');
+  const userId = localStorage.getItem('userId');
+  const role = localStorage.getItem('role');
+  let response = "";
     try {
-      const response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}&userId=${userId}`);
+      if(role  === "ADMIN"){
+        response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}&userId=`);
+      }else{
+        response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}&userId=${userId}`);
+      }
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -278,26 +305,16 @@ const searchByIdTask = async (firNumber) => {
 
 const getAllTasksByDate = async (date, pageNumber = 0, size = 10) => {
   var data = null;
-  const userId = localStorage.getItem('UserId');
-  try {
-    const response = await fetch(`${API_URL}/dashboard/listFIRsByDate?date=${date}&pageNumber=${pageNumber}&size=${size}&userId=${userId}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-      data = await response.json();
-      const tasks = await processResponseData(data);
-      return {...data, tasks };
-    } catch (error) {
-      alert('FIR not found due to an error');
-      console.error('FIR Not Found:', error);
-      return { ...data,content: []};
-  }
-};
+  const userId = localStorage.getItem('userId');
+  const role = localStorage.getItem('role');
+  let response = "";
 
-const getAllTasksByUserId = async (userId, pageNumber = 0, size = 10) => {
-  var data = null;
   try {
-    const response = await fetch(`${API_URL}/dashboard/listAllFIRsWithDocumentDataByUserId?userId=${userId}&pageNumber=${pageNumber}&size=${size}`);
+    if(role  === "ADMIN"){
+      response = await fetch(`${API_URL}/dashboard/listFIRsByDate?date=${date}&userId=&pageNumber=${pageNumber}&size=${size}`);
+    }else{
+      response = await fetch(`${API_URL}/dashboard/listFIRsByDate?date=${date}&pageNumber=${pageNumber}&size=${size}&userId=${userId}`);
+    }
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -328,21 +345,15 @@ const getAllTasksByAssignedOrUnAssigned = async (assigned, pageNumber = 0, size 
   }
 };
 
-const createTaskItemData = async ({ FirNumber, FileName, FileContent }) => {
+const createTaskItemData = async (supportingDocument) => {
   try {
-    const payload = {
-      FirNumber,
-      FileName,
-      FileContent
-    };
-
-    const response = await fetch(`${API_URL}/fileOps/saveFIRSupportingDocument`, {
+      const response = await fetch(`${API_URL}/fileOps/saveFIRSupportingDocument`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: '*/*',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(supportingDocument),
     });
 
     if (!response.ok) {
@@ -422,14 +433,15 @@ export default {
   getAllTasks,
   assignTask,
   createTask,
-  getAssignees,
+  getAllUsers,
   deleteTask,
   deleteTaskDocument,
   searchByIdTask,
   getAllTasksByDate,
   getAllTasksByAssignedOrUnAssigned,
-  getAllTasksByUserId,
   getAllNotificationForUser,
   deleteAllNotificationsForUser,
-  deleteNotification
+  deleteNotification,
+  getAllHeaders,
+  createTaskItemData
 };

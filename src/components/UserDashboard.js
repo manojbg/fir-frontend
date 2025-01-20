@@ -18,6 +18,7 @@ const UserDashboard = () => {
   const [newTask, setNewTask] = useState({ FirNumber: '', file: null, AssigneeUserId: '' });
   const [assignPopup, setAssignPopup] = useState({ visible: false, FirNumber: '', FirDate:'', AssigneeUserId: '' });
   const [createFormPopup, setCreateFormPopup] = useState({ visible: false, FirNumber: '', FileName: '' });
+  const [uploadPopup, setUploadPopup] = useState({ visible: false, FirNumber: '', FileName:'', UnApprovedFirSupportingDocuments: '', file: null});
   const searchBox = React.createRef(null);
   const searchDate = React.createRef(null);
   const searchToggle = React.createRef(null);
@@ -49,8 +50,8 @@ const UserDashboard = () => {
     };
   }, [currentPage]);
 
-  const handleShow = (firNumber, fileName, type) => {
-    if(fileName == "select" || fileName == "")
+  const handleShow = (firNumber, fileName, type, pk) => {
+    if(fileName === "select" || fileName === "")
     {
       handleAlertDisplay("Please select a valid form","danger");
       return;
@@ -58,26 +59,39 @@ const UserDashboard = () => {
     const encodedFIR = encodeURIComponent(firNumber); // Encode to safely pass in URL
     const encodedForm = encodeURIComponent(fileName);
     let form = "";
-    if(type == "edit"){
+    if(type === "edit"){
       form = fileName;
     }else{
       form = document.querySelector('.form-select').value;
     }   
 
-    const iframeSrc = `/Forms/`+form+`?firNumber=${encodedFIR}&formName=${encodedForm}&type=`+type+`&closeModal=true`;
+    const iframeSrc = `/Forms/`+form+`?firNumber=${encodedFIR}&formName=${encodedForm}&type=`+type+`&pk=`+pk+`&closeModal=true`;
     setIframeSrc(iframeSrc);// Update the iframe source dynamically
     setShowModal(true); // Show the modal
 };
 
   const fetchTasks = async () => {
-      try {
-        const response = await apiService.getAllTasks(currentPage - 1, pageSize);
-        setTasks(response.content);
-        setTotalPages(response.totalPages || 1);
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-        setTasks([]);
-        handleAlertDisplay("No FIR/s found.","danger");
+      const firNumber = searchBox.current.value;
+      const date = searchDate.current.value;
+      if(firNumber !== "")
+      {
+        handleSearchByIdTask();
+      }
+      else if(date !== "")
+      {
+        handleSearchByDateTask();
+      }
+      else
+      {
+        try {
+          const response = await apiService.getAllTasks(currentPage - 1, pageSize);
+          setTasks(response.content);
+          setTotalPages(response.totalPages || 1);
+        } catch (error) {
+          console.error('Error fetching tasks:', error);
+          handleAlertDisplay("No FIRs found/assigned.","danger");
+          setTasks([]);
+        }
       }
   };
 
@@ -89,64 +103,60 @@ const UserDashboard = () => {
     }
   };
 
-  const handleDeleteTask = async (firNumber, fileName) => {
+  const handleDeleteTask = async (firNumber) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete FIR Number: ${firNumber}?`);
     if (!confirmDelete) return;
 
-    await apiService.deleteTask(firNumber, fileName);
+    await apiService.deleteTask(firNumber);
     fetchTasks(); // Refresh the task list
   };
 
-  const handleDeleteDocument = async (firNumber, fileName) => {
+  const handleDeleteDocument = async (firNumber, fileName, pk) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete Document: ${fileName} for FIR No: ${firNumber}?`);
     if (!confirmDelete) return;
 
-    await apiService.deleteTaskDocument(firNumber, fileName);
+    await apiService.deleteTaskDocument(pk);
     fetchTasks(); // Refresh the task list
   };
 
   const handleSearchByIdTask = async () => {
-    const input = searchBox.current;
-    const firNumber = input.value;
-    try{
-     const response = await apiService.searchByIdTask(firNumber);
-     setTasks(response.content);
-     if(response.content.length == 0)
-     {
+    const firNumber = searchBox.current.value;
+    if(firNumber !== "")
+    {
+      try{
+       const response = await apiService.searchByIdTask(firNumber);
+       setTasks(response.content);
+       if(response.content.length == 0)
+       {
+         handleAlertDisplay("No FIR/s found.","danger");
+       }
+      }
+      catch (error) {
        handleAlertDisplay("No FIR/s found.","danger");
-     }
-    }
-    catch (error) {
-     console.error('Error fetching tasks:', error);
-     setTasks([]);
-     handleAlertDisplay("No FIR/s found.","danger");
+       setTasks([]);
+      }
     }
   };
 
   const handleSearchByDateTask = async () => {
-    const input = searchDate.current;
-    const date = input.value;
-
-    try{
-      const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
-      setTasks(response.content);
-      if(response.content.length == 0)
-      {
+    const date = searchDate.current.value;
+    if(date !== "")
+    {
+      try{
+        const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
+        setTasks(response.content);
+        if(response.content.length == 0)
+        {
+          handleAlertDisplay("No FIR/s found.","danger");
+        }
+      }
+      catch (error) {
+        console.error('Error fetching tasks:', error);
+        setTasks([]);
         handleAlertDisplay("No FIR/s found.","danger");
       }
     }
-    catch (error) {
-      console.error('Error fetching tasks:', error);
-      setTasks([]);
-      handleAlertDisplay("No FIR/s found.","danger");
-    }
   };
-
-  const handleReset = async () => {
-    firNumber.current.value = '';
-    firDate.current.value = '';
-    firFile.current.value = '';
-  }
 
   const handlePreviousPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
@@ -156,9 +166,56 @@ const UserDashboard = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
 
+  const handleApprovedFileUpload = (e) => {
+    setUploadPopup({ ...uploadPopup, file: e.target.files[0] });
+  };
+
   const handleFormCreationPopup = (FirNumber, FileName) => {
     setCreateFormPopup({ visible: true, FirNumber: FirNumber, FileName : FileName });
   };
+
+  const handleApprovedDocumentsUploadPopup = (FirNumber, UnApprovedFirSupportingDocuments) => {
+    setUploadPopup({ visible: true, FirNumber: FirNumber, FileName:'', UnApprovedFirSupportingDocuments: UnApprovedFirSupportingDocuments, file: null});
+  };
+
+  const handleApprovedDocumentsUpload = async () => {
+    const firNumberInput = uploadPopup.FirNumber;
+    const documentInput = uploadPopup.file;
+    const fileName = uploadPopup.FileName;
+
+    if(firNumberInput === '' || documentInput === null || fileName === '')
+    {
+       handleAlertDisplay("Mandatory Fields Are Not Populated","danger");
+    }
+    else{
+      try {
+        const fileReader = new FileReader();
+        fileReader.onload = async () => {
+          const base64File = fileReader.result.split(',')[1];
+          const taskData = {
+            FirNumber: firNumberInput,
+            FileName: fileName,
+            FileBytes: base64File,
+            FileContent: '',
+            Approved: true
+          };
+
+          await apiService.createTaskItemData(taskData);
+          handleAlertDisplay("Document uploaded successfully","success");
+          fetchTasks();
+          handleUploadPopupClose();
+        };
+        fileReader.readAsDataURL(uploadPopup.file);
+      } catch (error) {
+         console.error('Error Uploading Document:', error);
+         handleAlertDisplay("Error uploading Document FIR. Please try again.","danger");
+      }
+    }
+  };
+
+  const handleUploadPopupClose = () => {
+    setUploadPopup({ visible: false, FirNumber: '', FileName:'', UnApprovedFirSupportingDocuments: '', file: null});
+  }
 
   const handleLogout = () => {
     navigate("/");
@@ -185,6 +242,7 @@ const UserDashboard = () => {
 
   const handleCloseWithAlert = () => {
     handleClose();
+    fetchTasks();
     handleAlertDisplay("Form saved successfully","success");
   }
 
@@ -193,15 +251,15 @@ const UserDashboard = () => {
   }
 
   return (
-    <div bsClassName='UserDashboard' >
+    <div bsClassName='UserDashboard'>
         <header className="user-dashboard-header">
             <div><img className="navbar-brand" src={logo}></img></div>
             <div>
             <h1 className="navbar-brand-text"><u>Crime Report Tracking System</u></h1>
             <p><strong>Karnataka State</strong></p></div>
             <div>
-            <button className="notification-button" onClick={() => handleNotification(true)}></button>
-            <button className="logout-button" onClick={() => handleLogout()}></button>
+            <button className="notification-button" title="Notifications" onClick={() => handleNotification(true)}></button>
+            <button className="logout-button" title="Log Out" onClick={() => handleLogout()}></button>
             </div>
         </header>
         <Alert className="alert-box" show={show} key={variant} variant={variant} onClose={() => setShow(false)} dismissible>
@@ -212,19 +270,22 @@ const UserDashboard = () => {
         <div className="user-dashboard">
             <div className="user-search-section">
                 <table className="search-table"><thead><tr><td>
-                    <label>Enter FIR Number &nbsp;&nbsp;</label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" onClick={() => handleSearchByIdTask()}></button>
+                    <label>Enter FIR Number &nbsp;&nbsp;</label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" title="Search" onClick={() => handleSearchByIdTask()}></button>
                 </td><td>
-                    <label>Enter Date &nbsp;&nbsp;</label><input ref={searchDate} type = "date"></input><button className="search-buttons" onClick={() => handleSearchByDateTask()}></button>
+                    <label>Enter Date &nbsp;&nbsp;</label><input ref={searchDate} type = "date"></input><button className="search-buttons" title="Search" onClick={() => handleSearchByDateTask()}></button>
                 </td></tr></thead></table>
             </div>
         </div>
         <div className="list-section">
-            <h2 className="section-title">LIST OF FIRs<button className="refresh-button" onClick={() => fetchTasks()}></button></h2>
+            <h2 className="section-title">LIST OF FIRs<button className="refresh-button" title="Reload Table" onClick={() => fetchTasks()}></button></h2>
             <div className="task-list">
                 <div className="task-header">
-                    <table><thead><tr><td>FIR</td>
-                    <td>ASSIGNEE</td>
+                    <table><thead><tr><td className="task-header-user-td1">FIR</td>
+                    <td>MAJOR HEAD</td>
+                    <td>COMPLAINANT</td>
+                    <td>PSI</td>
                     <td>FIR DATE</td>
+                    <td>STATUS</td>
                     <td>ACTIONS</td></tr></thead></table></div>
         {tasks.length > 0 ? (
           tasks.map((task) => (
@@ -233,39 +294,41 @@ const UserDashboard = () => {
                 <div className="task-row">
                 <table><tbody><tr>
                   <td><strong>No:</strong> {task.FirDTO.FirNumber}</td>
-                  <td><strong></strong> {task.FirDTO.AssigneeUserId || 'Unassigned'}</td>
-                  <td><strong></strong> {task.FirDTO.FirDate}</td>
+                  <td>{task.FirDTO.MajorHeader}</td>
+                  <td>{task.FirDTO.ComplainantName}</td>
+                  <td>{task.FirDTO.PsiName}</td>
+                  <td>{task.FirDTO.FirDate}</td>
+                  <td>{task.FirDTO.Status}</td>
                   <td>
-                    <button className="action-buttons-mainlist add-button" onClick={() => handleFormCreationPopup(task.FirDTO.FirNumber, '')}></button>
-                    <button className="action-buttons-mainlist view-button" onClick={() => handleViewDocument(task.documentUrl)}></button>
+                    <button className="action-buttons-mainlist-user add-button" title="Add Document" onClick={() => handleFormCreationPopup(task.FirDTO.FirNumber, '')}></button>
+                    <button className="action-buttons-mainlist-user view-button" title="View FIR" onClick={() => handleViewDocument(task.documentUrl)}></button>
                   </td>
                   </tr></tbody></table>
                 </div>
               </summary>
-              <div className="task-details">
+              <div className="documents-panel">
                 <table className="task-table">
                   <thead>
                     <tr>
                       <th>Document</th>
-                    </tr>
+                     </tr>
                   </thead>
-                  <tbody>
-                  {task.FirSupportingDocumentList && task.FirSupportingDocumentList.length > 0 ? (
-  task.FirSupportingDocumentList.map((document, index) => (
+                  <tbody>{task.UnApprovedFirSupportingDocuments && task.UnApprovedFirSupportingDocuments.length > 0 ? (
+  task.UnApprovedFirSupportingDocuments.map((document, index) => (
     <tr key={index}>
-      <td>{(document.FileName && document.FileName.substring(0, document.FileName.lastIndexOf('.'))) || 'Unnamed Document'}</td>
-      <td className="task-table-column">
+      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime)) || 'Unnamed Document'}</td>
+      <td>
         <button
-          className="action-buttons-sublist edit-button"
-          onClick={() => handleShow(task.FirDTO.FirNumber, document.FileName ,"edit")}
+          className="action-buttons-sublist edit-button" title="Edit Document"
+          onClick={() => handleShow(task.FirDTO.FirNumber, document.FileName ,"edit", document.Pk)}
         ></button>
         <button
-          className="action-buttons-sublist view-button"
+          className="action-buttons-sublist view-button" title="View Document"
           onClick={() => handleViewDocument(document.documentUrl)}
         ></button>
         <button
-          className="action-buttons-sublist delete-button"
-          onClick={() => handleDeleteDocument   (task.FirDTO.FirNumber, document.FileName)}
+          className="action-buttons-sublist delete-button" title="Delete Document"
+          onClick={() => handleDeleteDocument(task.FirDTO.FirNumber, document.FileName)}
         ></button>
       </td>
     </tr>
@@ -273,7 +336,34 @@ const UserDashboard = () => {
 ) : (
   <p>No Document</p>
 )}
-
+                  </tbody>
+                </table>
+                <table className="task-table">
+                  <thead>
+                    <tr>
+                      <th>Approved Document</th>
+                      <th><button className="upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
+                    </tr>
+                  </thead>
+                  <tbody>{task.ApprovedFirSupportingDocuments && task.ApprovedFirSupportingDocuments.length > 0 ? (
+  task.ApprovedFirSupportingDocuments.map((document, index) => (
+    <tr key={index}>
+      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime)) || 'Unnamed Document'}</td>
+      <td>
+        <button
+          className="action-buttons-sublist view-button" title="View Document"
+          onClick={() => handleViewDocument(document.documentUrl)}
+        ></button>
+        <button
+          className="action-buttons-sublist delete-button" title="Delete Document"
+          onClick={() => handleDeleteDocument(task.FirDTO.FirNumber, document.FileName, document.Pk)}
+        ></button>
+      </td>
+    </tr>
+  ))
+) : (
+  <p>No Document</p>
+)}
                   </tbody>
                 </table>
               </div>
@@ -327,15 +417,43 @@ const UserDashboard = () => {
             </select>
             </div>
             <div className="popup-buttons">
-              <button onClick={() => {
-                        handleShow(createFormPopup.FirNumber,createFormPopup.FileName,"create");
+              <button title="Create Form" onClick={() => {
+                        handleShow(createFormPopup.FirNumber,createFormPopup.FileName,"create", "");
                     }}>Create</button>
-              <button onClick={() => setCreateFormPopup({ visible: false, FirNumber: '', FileName: '' })}>Cancel</button>
+              <button title="Close" onClick={() => setCreateFormPopup({ visible: false, FirNumber: '', FileName: '' })}>Cancel</button>
             </div>
           </div>
         </div>
       )}
+      {uploadPopup.visible && (
+        <div className="popup">
+          <div className="popup-content">
+            <h2 className="popup-header"><u>Upload Approved Document</u></h2><br/>
+            <div>
+            <label><b>FIR Number</b> <br/>{uploadPopup.FirNumber}</label><br/><br/>
 
+            <label className="required-field"><b>Select Approved File : </b></label><br/>
+            <select className="approved-form-select required-field"
+              value={uploadPopup.FileName}
+              onChange={(e) => setUploadPopup({ ...uploadPopup, FileName: e.target.value })}
+            >
+              <option value="">Select Document</option>
+              {uploadPopup.UnApprovedFirSupportingDocuments.map((document) => (
+                <option key={document.Pk} value={(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime)) || 'Unnamed Document'}>
+                  {(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime)) || 'Unnamed Document'}
+                </option>
+              ))}
+            </select><br/><br/>
+                <label className="required-field"><b>File Upload (pdf only: 10MB)</b></label><br/>
+                 <input ref={firFile} type="file" accept="application/pdf" onChange={handleApprovedFileUpload} />
+            </div><br/>
+            <div className="popup-buttons">
+              <button title="Upload Document" onClick={handleApprovedDocumentsUpload}>Upload</button>
+              <button title="Close" onClick={handleUploadPopupClose}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 <Modal id="formModal"
   show={showModal}
   onHide={handleClose}
@@ -367,7 +485,7 @@ const UserDashboard = () => {
   <Modal.Footer>
   <Button className="hidden-close-button" onClick={handleErrorWithAlert} id="form-error"></Button>
    <Button className="hidden-close-button" onClick={handleCloseWithAlert} id="form-close"></Button>
-    <Button variant="secondary" onClick={handleClose} id="iclose">
+    <Button variant="secondary" title="Close Window" onClick={handleClose} id="iclose">
       Close
     </Button>
   </Modal.Footer>

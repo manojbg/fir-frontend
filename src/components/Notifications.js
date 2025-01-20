@@ -42,7 +42,7 @@ function NotificationModal(props) {
   const checkForNewNotifications = async () =>
   {
     const response = await fetchNotifications();
-    if(props.userClick == "undefined" || !props.userClick)
+    if(props.userClick === "undefined" || !props.userClick)
     {
       let isNewEntryAbsent = true;
       if(response.length > 0)
@@ -70,7 +70,7 @@ function NotificationModal(props) {
              <React.Fragment>
                <div className="notification-text">
                  You have been assigned the FIR <strong>{notification.FirNumber}</strong> uploaded on <strong>{notification.FirDate}</strong>.
-                 <button className="clear-button" onClick={() => handleClearSpecificNotification(notification.FirNumber, notification.AssigneeUserId)}></button>
+                 <button className="clear-button" title="Remove Notification" onClick={() => handleClearSpecificNotification(notification.FirNumber, notification.AssigneeUserId)}></button>
                </div>
            </React.Fragment>
           ))
@@ -80,7 +80,7 @@ function NotificationModal(props) {
         </Container>
       </Modal.Body>
       <Modal.Footer>
-        <Button onClick={() => handleClearAll()}>Clear All</Button>
+        <Button title="Remove All Notifications" onClick={() => handleClearAll()}>Clear All</Button>
       </Modal.Footer>
     </Modal>
   );
