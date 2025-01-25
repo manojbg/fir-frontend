@@ -227,11 +227,11 @@ const getAllHeaders = async () => {
   }
 };
 
-const deleteTask = async (firNumber) =>{
+const deleteTask = async (firNumber, assignee) =>{
   try {
     const payload = [
       {
-        AssigneeUserId: '',
+        AssigneeUserId: assignee,
         AttachmentFileBytes: '',
         CreatedDateTime: '',
         FileName: '',
@@ -428,6 +428,25 @@ const getAllNotificationForUser = async (userId) => {
   }
 };
 
+const initiateAutoLienFormCreation = async (firNumber) => {
+    try {
+      const response = await fetch(`${API_URL}/fileOps/createLienForms?firNumber=${firNumber}`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response;
+    } catch (error) {
+      alert('Failed to initiate form creation');
+      console.error('Lien form creation failed:', error);
+      throw error;
+  }
+};
+
 export default {
   login,
   getAllTasks,
@@ -443,5 +462,6 @@ export default {
   deleteAllNotificationsForUser,
   deleteNotification,
   getAllHeaders,
-  createTaskItemData
+  createTaskItemData,
+  initiateAutoLienFormCreation
 };

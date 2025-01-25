@@ -16,7 +16,7 @@ function NotificationModal(props) {
   },[props.show]);
 
   const fetchNotifications = async () => {
-    const userId = localStorage.getItem('UserId');
+    const userId = localStorage.getItem('userId');
 
     try{
       const response = await apiService.getAllNotificationForUser(userId);
@@ -30,7 +30,7 @@ function NotificationModal(props) {
   }
 
   const handleClearAll = async () => {
-    await apiService.deleteAllNotificationsForUser(localStorage.getItem('UserId'));
+    await apiService.deleteAllNotificationsForUser(localStorage.getItem('userId'));
     fetchNotifications();
   }
 

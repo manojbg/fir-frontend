@@ -38,6 +38,15 @@
     background-size : contain;
     background-repeat : no-repeat;
   }
+
+  .create-lien-letter-button {
+    background : url("./assets/images/ai.png");
+    background-size : contain;
+    background-repeat : no-repeat;
+    padding: 14%;
+    margin-left: 60%;
+    border: none;
+  }
   
   .section-title {
     border-bottom: 4px solid black;
@@ -69,8 +78,17 @@
     font-weight: 700;
     font-size: x-large;
   }
+
+   .search-table-user {
+     width : 100%;
+     background-color: darkslategrey;
+     border: 1px solid;
+     border-radius: 25px;
+     color : white;
+     border-collapse: separate;
+   }
   
-  .search-table td{
+  .search-table-user td{
     padding : 2%;
   }
   
@@ -122,6 +140,7 @@
   
   .custom-modal {
     max-height: -webkit-fill-available;
+    min-width: 900px;
   }
 
   .hidden-close-button {

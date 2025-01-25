@@ -14,8 +14,7 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [showPopup, setShowPopup] = useState(false);
-  const [newTask, setNewTask] = useState({ FirNumber: '', file: null, AssigneeUserId: '', ComplainantName: '', MajorHeader: '', InvestigationOfficer: '', PoliceInspector: '', PsiName: '', NcrpFile: '' });
+  const [newTask, setNewTask] = useState({ FirNumber: '', file: null, AssigneeUserId: '', ComplainantName: '', MajorHeader: '', InvestigationOfficer: '', PoliceInspector: '', PsiName: '', NcrpFile: null });
   const [assignPopup, setAssignPopup] = useState({ visible: false, FirNumber: '', FirDate:'', AssigneeUserId: '' });
   const [uploadPopup, setUploadPopup] = useState({ visible: false, FirNumber: '', FileName:'', UnApprovedFirSupportingDocuments: '', file: null});
   const searchBox = React.createRef(null);
@@ -25,21 +24,24 @@ const AdminDashboard = () => {
   const ncrpFile = React.createRef(null);
   const firDate = React.createRef(null);
   const firDatePopup = React.createRef(null);
+  const [showLoader, setShowLoader] = useState(false);
 
   const navigate = useNavigate();
-  const [modalShow, setModalShow] = useState(false);
-  const [userClick, setUserClick] = useState(false);
   const [show, setShow] = useState(false);
   const [alertMessage, setAlertMessage] = useState();
   const [variant, setVariant] = useState();
-  const investigationOfficer = "PAVAN";
-  const policeInspector = "PO 123";
+  const [investigationOfficer, setInvestigationOfficer] = useState("");
+  const [policeInspector, setPoliceInspector] = useState("");
 
   useEffect(() => {
+    setShowLoader(true);
     fetchTasks();
     fetchAssigneesAndPsiNames();
     fetchMajorHeaders();
     document.querySelector("#root").classList.add('admin-dashboard-root');
+    setTimeout(() => {
+      setShowLoader(false);
+    }, 3000);
             // Cleanup by removing the class when the component unmounts
     return () => {
       document.querySelector("#root").classList.remove('admin-dashboard-root');
@@ -47,8 +49,8 @@ const AdminDashboard = () => {
   }, [currentPage]);
 
   const fetchTasks = async () => {
-      const firNumber = searchBox.current.value;
-      const date = searchDate.current.value;
+      const firNumber = searchBox.current !== null ? searchBox.current.value : "";
+      const date = searchDate.current !== null ? searchDate.current.value : "";
       if(firNumber !== "")
       {
         handleSearchByIdTask();
@@ -76,9 +78,19 @@ const AdminDashboard = () => {
       const usersMap = await apiService.getAllUsers();
       setAssignees(usersMap["USER"]);
       var psiNames = usersMap["ADMIN"].filter((user) => {
-           return user.Designation === "PSI";
-         })
+          return user.Designation === "PSI";
+      });
       setPsiNames(psiNames);
+      usersMap["ADMIN"].filter((user) => {
+        if(user.Designation === "ACP")
+        {
+          setInvestigationOfficer(user.UserName);
+        }
+        if(user.Designation === "PI")
+        {
+          setPoliceInspector(user.UserName);
+        }
+      })
     } catch (error) {
       console.error('Error fetching Assignee and PSI:', error);
       handleAlertDisplay("Error fetching Assignee and PSI.","danger");
@@ -103,30 +115,33 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDeleteTask = async (firNumber) => {
+  const handleDeleteTask = async (firNumber, assignee) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete FIR Number: ${firNumber}?`);
     if (!confirmDelete) return;
-
-    await apiService.deleteTask(firNumber);
-    fetchTasks(); // Refresh the task list
+    setShowLoader(true);
+    await apiService.deleteTask(firNumber, assignee);
+    fetchTasks();
+    setShowLoader(false);// Refresh the task list
   };
 
   const handleDeleteDocument = async (firNumber, fileName, pk) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete Document: ${fileName} for FIR No: ${firNumber}?`);
     if (!confirmDelete) return;
-
+    setShowLoader(true);
     await apiService.deleteTaskDocument(pk);
-    fetchTasks(); // Refresh the task list
+    fetchTasks();
+    setShowLoader(false);// Refresh the task list
   };
 
   const handleSearchByIdTask = async () => {
     const firNumber = searchBox.current.value;
     if(firNumber !== "")
     {
+      setShowLoader(true);
       try{
        const response = await apiService.searchByIdTask(firNumber);
        setTasks(response.content);
-       if(response.content.length == 0)
+       if(response.content.length === 0)
        {
          handleAlertDisplay("No FIR/s found.","danger");
        }
@@ -135,6 +150,10 @@ const AdminDashboard = () => {
        handleAlertDisplay("No FIR/s found.","danger");
        setTasks([]);
       }
+      setShowLoader(false);
+    }
+    else{
+      handleAlertDisplay("Please Enter a FIR Number","danger");
     }
   };
 
@@ -142,10 +161,11 @@ const AdminDashboard = () => {
     const date = searchDate.current.value;
     if(date !== "")
     {
+      setShowLoader(true);
       try{
         const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
         setTasks(response.content);
-        if(response.content.length == 0)
+        if(response.content.length === 0)
         {
           handleAlertDisplay("No FIR/s found.","danger");
         }
@@ -155,10 +175,15 @@ const AdminDashboard = () => {
         setTasks([]);
         handleAlertDisplay("No FIR/s found.","danger");
       }
+      setShowLoader(false);
+    }
+    else{
+      handleAlertDisplay("Please Enter a Date","danger");
     }
   };
 
   const handleSearchByAssignedOrUnAssignedTask = async () => {
+    setShowLoader(true);
     searchBox.current.value = '';
     searchDate.current.value = '';
     const input = searchToggle.current;
@@ -166,7 +191,7 @@ const AdminDashboard = () => {
     try{
       const response =await apiService.getAllTasksByAssignedOrUnAssigned(assigned,currentPage - 1, pageSize);
       setTasks(response.content);
-      if(response.content.length == 0)
+      if(response.content.length === 0)
       {
         handleAlertDisplay("No FIR/s found.","danger");
       }
@@ -174,10 +199,12 @@ const AdminDashboard = () => {
       console.error('Error fetching tasks:', error);
       setTasks([]);
       handleAlertDisplay("No FIR/s found.","danger");
-     }
+    }
+    setShowLoader(false);
   };
 
   const handleCreateTask = async () => {
+    setShowLoader(true);
     const firNumberInput = newTask.FirNumber;
     const firDateInput = firDate.current.value;
     const firFileInput = firFile.current.value;
@@ -186,7 +213,7 @@ const AdminDashboard = () => {
     const psiName = newTask.PsiName;
     const ncrpFileInput = ncrpFile.current.value;
 
-    if(firNumberInput == '' || firDateInput == '' || firFileInput == '' || complainantName == '' || majorHeader == '' || psiName == '')
+    if(firNumberInput === '' || firDateInput === '' || firFileInput === '' || complainantName === '' || majorHeader === '' || psiName === '')
     {
        handleAlertDisplay("Mandatory Fields Are Not Populated","danger");
     }
@@ -212,7 +239,7 @@ const AdminDashboard = () => {
           {
             const fileReader2 = new FileReader();
             fileReader2.onload = async () => {
-              const base64NcrpFile = fileReader.result.split(',')[1];
+              const base64NcrpFile = fileReader2.result.split(',')[1];
               taskData.NcrpFileBytes = base64NcrpFile;
               persistTaskToDB(taskData);
             }
@@ -228,6 +255,7 @@ const AdminDashboard = () => {
         handleAlertDisplay("Error creating FIR. Please try again.","danger");
       }
     }
+    setShowLoader(false);
   };
 
   const persistTaskToDB = async(taskData) => {
@@ -247,11 +275,13 @@ const AdminDashboard = () => {
   const handleReset = async () => {
     firDate.current.value = '';
     firFile.current.value = '';
-    setNewTask({ FirNumber: '', file: null, AssigneeUserId: '', ComplainantName: '', MajorHeader: '', InvestigationOfficer: '', PoliceInspector: '', PsiName: '' , NcrpFile: ''});
+    ncrpFile.current.value = '';
+    setNewTask({ FirNumber: '', file: null, AssigneeUserId: '', ComplainantName: '', MajorHeader: '', InvestigationOfficer: '', PoliceInspector: '', PsiName: '' , NcrpFile: null});
   }
 
   const handleSaveAssignee = async () => {
     const firDateInput = firDatePopup.current.value;
+    setShowLoader(true);
     try {
       const payload = {
         AssigneeUserId: assignPopup.AssigneeUserId,
@@ -270,6 +300,7 @@ const AdminDashboard = () => {
       console.error('Error assigning FIR:', error);
       handleAlertDisplay("Error assigning FIR. Please try again.","danger");
     }
+    setShowLoader(false);
   };
 
   const handlePreviousPage = () => {
@@ -352,8 +383,14 @@ const AdminDashboard = () => {
     }, 5000);
   }
 
+  const tableReload = () => {
+    setShowLoader(true);
+    fetchTasks();
+    setShowLoader(false);
+  }
+
   return (
-    <div bsClass='AdminDashboard' >
+    <div bsClass='AdminDashboard'>
         <header className="dashboard-header">
             <div><img className="navbar-brand" src={logo}></img></div>
             <div>
@@ -363,6 +400,7 @@ const AdminDashboard = () => {
             <button className="logout-button" title="Log Out" onClick={() => handleLogout()}></button>
             </div>
         </header>
+        <div id="loader-mask" style={{ display: showLoader ? "block" : "none" }}><div id="loader" style={{ display: showLoader ? "block" : "none" }}></div></div>
         <div className="admin-dashboard">
                <Alert className="alert-box" show={show} key={variant} variant={variant} onClose={() => setShow(false)} dismissible>
                    <b>{alertMessage}</b></Alert>
@@ -450,7 +488,7 @@ const AdminDashboard = () => {
             </div>
         </div>
         <div className="list-section">
-            <h2 className="section-title">LIST OF FIRs<button className="refresh-button" title="Reload Table" onClick={() => fetchTasks()}></button></h2>
+            <h2 className="section-title">LIST OF FIRs<button className="refresh-button" title="Reload List" onClick={() => tableReload()}></button></h2>
             <div className="task-list">
                 <div className="task-header">
                     <table><thead><tr><td className="task-header-td1">FIR</td>
@@ -477,7 +515,7 @@ const AdminDashboard = () => {
                   <td>
                     <button className="action-buttons-mainlist assign-button" title="Assign" onClick={() => handleAssignPopup(task.FirDTO.FirNumber, task.FirDTO.FirDate, task.FirDTO.AssigneeUserId || '')}></button>
                     <button className="action-buttons-mainlist view-button" title="View FIR" onClick={() => handleViewDocument(task.documentUrl)}></button>
-                    <button className="action-buttons-mainlist delete-button" title="Delete FIR" onClick={() => handleDeleteTask(task.FirDTO.FirNumber)}></button>
+                    <button className="action-buttons-mainlist delete-button" title="Delete FIR" onClick={() => handleDeleteTask(task.FirDTO.FirNumber, task.FirDTO.AssigneeUserId)}></button>
                   </td>
                   </tr></tbody></table>
                 </div>
@@ -486,15 +524,15 @@ const AdminDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Document</th>
+                      <th>Document ({task.UnApprovedFirSupportingDocuments ? task.UnApprovedFirSupportingDocuments.length : 0})</th>
                      </tr>
                   </thead>
                   <tbody>{task.UnApprovedFirSupportingDocuments && task.UnApprovedFirSupportingDocuments.length > 0 ? (
   task.UnApprovedFirSupportingDocuments.map((document, index) => (
     <tr key={index}>
-      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime)) || 'Unnamed Document'}</td>
+      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))) || 'Unnamed Document'}</td>
       <td>
-        <button
+        <button style={{ display: document.FileBytes !== null ? "inline" : "none" }}
           className="action-buttons-sublist view-button" title="View Document"
           onClick={() => handleViewDocument(document.documentUrl)}
         ></button>
@@ -513,14 +551,14 @@ const AdminDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Approved Document</th>
+                      <th>Approved Document ({task.ApprovedFirSupportingDocuments ? task.ApprovedFirSupportingDocuments.length : 0})</th>
                       <th><button className="upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
                     </tr>
                   </thead>
                   <tbody>{task.ApprovedFirSupportingDocuments && task.ApprovedFirSupportingDocuments.length > 0 ? (
   task.ApprovedFirSupportingDocuments.map((document, index) => (
     <tr key={index}>
-      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime)) || 'Unnamed Document'}</td>
+      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))) || 'Unnamed Document'}</td>
       <td>
         <button
           className="action-buttons-sublist view-button" title="View Document"

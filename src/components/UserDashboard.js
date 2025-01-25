@@ -14,18 +14,11 @@ const UserDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [showPopup, setShowPopup] = useState(false);
-  const [newTask, setNewTask] = useState({ FirNumber: '', file: null, AssigneeUserId: '' });
-  const [assignPopup, setAssignPopup] = useState({ visible: false, FirNumber: '', FirDate:'', AssigneeUserId: '' });
   const [createFormPopup, setCreateFormPopup] = useState({ visible: false, FirNumber: '', FileName: '' });
   const [uploadPopup, setUploadPopup] = useState({ visible: false, FirNumber: '', FileName:'', UnApprovedFirSupportingDocuments: '', file: null});
   const searchBox = React.createRef(null);
   const searchDate = React.createRef(null);
-  const searchToggle = React.createRef(null);
-  const firNumber = React.createRef(null);
   const firFile = React.createRef(null);
-  const firDate = React.createRef(null);
-  const firDatePopup = React.createRef(null);
   const navigate = useNavigate();
   const [modalShow, setModalShow] = useState(false);
   const [userClick, setUserClick] = useState(false);
@@ -36,14 +29,20 @@ const UserDashboard = () => {
   const [show, setShow] = useState(false);
   const [alertMessage, setAlertMessage] = useState();
   const [variant, setVariant] = useState();
+  const [showLoader, setShowLoader] = useState(false);
 
   useEffect(() => {
+    setShowLoader(true);
     fetchTasks();
-    handleNotification(false);
+    setTimeout(() => {
+      handleNotification(false);
+    }, 1000);
     document.querySelector("#root").classList.add('user-dashboard-root');
     const intervalId = setInterval(handleNotification, 60000);
-
-        // Cleanup by removing the class when the component unmounts
+    setTimeout(() => {
+      setShowLoader(false);
+    }, 3000);
+           // Cleanup by removing the class when the component unmounts
     return () => {
       document.querySelector("#root").classList.remove('user-dashboard-root');
       clearInterval(intervalId);
@@ -60,6 +59,10 @@ const UserDashboard = () => {
     const encodedForm = encodeURIComponent(fileName);
     let form = "";
     if(type === "edit"){
+      if(fileName.includes("LIEN LETTER"))
+      {
+        fileName = "LIEN LETTER.html"
+      }
       form = fileName;
     }else{
       form = document.querySelector('.form-select').value;
@@ -71,8 +74,8 @@ const UserDashboard = () => {
 };
 
   const fetchTasks = async () => {
-      const firNumber = searchBox.current.value;
-      const date = searchDate.current.value;
+      const firNumber = searchBox.current !== null ? searchBox.current.value : "";
+      const date = searchDate.current !== null ? searchDate.current.value : "";
       if(firNumber !== "")
       {
         handleSearchByIdTask();
@@ -103,30 +106,24 @@ const UserDashboard = () => {
     }
   };
 
-  const handleDeleteTask = async (firNumber) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete FIR Number: ${firNumber}?`);
-    if (!confirmDelete) return;
-
-    await apiService.deleteTask(firNumber);
-    fetchTasks(); // Refresh the task list
-  };
-
   const handleDeleteDocument = async (firNumber, fileName, pk) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete Document: ${fileName} for FIR No: ${firNumber}?`);
     if (!confirmDelete) return;
-
+    setShowLoader(true);
     await apiService.deleteTaskDocument(pk);
     fetchTasks(); // Refresh the task list
+    setShowLoader(false);
   };
 
   const handleSearchByIdTask = async () => {
     const firNumber = searchBox.current.value;
     if(firNumber !== "")
     {
+      setShowLoader(true);
       try{
        const response = await apiService.searchByIdTask(firNumber);
        setTasks(response.content);
-       if(response.content.length == 0)
+       if(response.content.length === 0)
        {
          handleAlertDisplay("No FIR/s found.","danger");
        }
@@ -135,6 +132,10 @@ const UserDashboard = () => {
        handleAlertDisplay("No FIR/s found.","danger");
        setTasks([]);
       }
+      setShowLoader(false);
+    }
+    else{
+     handleAlertDisplay("Please Enter a FIR Number","danger");
     }
   };
 
@@ -142,10 +143,11 @@ const UserDashboard = () => {
     const date = searchDate.current.value;
     if(date !== "")
     {
+      setShowLoader(true);
       try{
         const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
         setTasks(response.content);
-        if(response.content.length == 0)
+        if(response.content.length === 0)
         {
           handleAlertDisplay("No FIR/s found.","danger");
         }
@@ -155,6 +157,10 @@ const UserDashboard = () => {
         setTasks([]);
         handleAlertDisplay("No FIR/s found.","danger");
       }
+      setShowLoader(false);
+    }
+    else{
+      handleAlertDisplay("Please Enter a Date","danger");
     }
   };
 
@@ -179,6 +185,7 @@ const UserDashboard = () => {
   };
 
   const handleApprovedDocumentsUpload = async () => {
+    setShowLoader(true);
     const firNumberInput = uploadPopup.FirNumber;
     const documentInput = uploadPopup.file;
     const fileName = uploadPopup.FileName;
@@ -211,6 +218,7 @@ const UserDashboard = () => {
          handleAlertDisplay("Error uploading Document FIR. Please try again.","danger");
       }
     }
+    setShowLoader(false);
   };
 
   const handleUploadPopupClose = () => {
@@ -250,6 +258,20 @@ const UserDashboard = () => {
     handleAlertDisplay("Failed to fetch/save data. Please try again.","danger");
   }
 
+  const tableReload = () => {
+    setShowLoader(true);
+    fetchTasks();
+    setShowLoader(false);
+  }
+
+  const handleLienFormAutoCreation = async (firNumber) => {
+    setShowLoader(true);
+    const response = await apiService.initiateAutoLienFormCreation(firNumber);
+    fetchTasks(); // Refresh the task list
+    handleAlertDisplay("Lien forms creation is Initiated","success");
+    setShowLoader(false);
+  };
+
   return (
     <div bsClassName='UserDashboard'>
         <header className="user-dashboard-header">
@@ -262,6 +284,7 @@ const UserDashboard = () => {
             <button className="logout-button" title="Log Out" onClick={() => handleLogout()}></button>
             </div>
         </header>
+        <div id="loader-mask" style={{ display: showLoader ? "block" : "none" }}><div id="loader" style={{ display: showLoader ? "block" : "none" }}></div></div>
         <Alert className="alert-box" show={show} key={variant} variant={variant} onClose={() => setShow(false)} dismissible>
                          <b>{alertMessage}</b></Alert>
          {modalShow && (
@@ -269,7 +292,7 @@ const UserDashboard = () => {
               )}
         <div className="user-dashboard">
             <div className="user-search-section">
-                <table className="search-table"><thead><tr><td>
+                <table className="search-table-user"><thead><tr><td>
                     <label>Enter FIR Number &nbsp;&nbsp;</label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" title="Search" onClick={() => handleSearchByIdTask()}></button>
                 </td><td>
                     <label>Enter Date &nbsp;&nbsp;</label><input ref={searchDate} type = "date"></input><button className="search-buttons" title="Search" onClick={() => handleSearchByDateTask()}></button>
@@ -277,7 +300,7 @@ const UserDashboard = () => {
             </div>
         </div>
         <div className="list-section">
-            <h2 className="section-title">LIST OF FIRs<button className="refresh-button" title="Reload Table" onClick={() => fetchTasks()}></button></h2>
+            <h2 className="section-title">LIST OF FIRs<button className="refresh-button" title="Reload List" onClick={() => tableReload()}></button></h2>
             <div className="task-list">
                 <div className="task-header">
                     <table><thead><tr><td className="task-header-user-td1">FIR</td>
@@ -310,25 +333,26 @@ const UserDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Document</th>
+                      <th>Document ({task.UnApprovedFirSupportingDocuments ? task.UnApprovedFirSupportingDocuments.length : 0})</th>
+                      <th><button style={{ display: task.FirDTO.NcrpFileBytes !== null ? "block" : "none" }} className="create-lien-letter-button" title="Create Lien Letters Automatically" onClick={() => handleLienFormAutoCreation(task.FirDTO.FirNumber)}></button></th>
                      </tr>
                   </thead>
                   <tbody>{task.UnApprovedFirSupportingDocuments && task.UnApprovedFirSupportingDocuments.length > 0 ? (
   task.UnApprovedFirSupportingDocuments.map((document, index) => (
     <tr key={index}>
-      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime)) || 'Unnamed Document'}</td>
+      <td style={{color : document.FileBytes !== null ? "green" : "red"}}>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))) || 'Unnamed Document'}</td>
       <td>
         <button
           className="action-buttons-sublist edit-button" title="Edit Document"
           onClick={() => handleShow(task.FirDTO.FirNumber, document.FileName ,"edit", document.Pk)}
         ></button>
-        <button
+        <button style={{ display: document.FileBytes !== null ? "inline" : "none"}}
           className="action-buttons-sublist view-button" title="View Document"
           onClick={() => handleViewDocument(document.documentUrl)}
         ></button>
         <button
           className="action-buttons-sublist delete-button" title="Delete Document"
-          onClick={() => handleDeleteDocument(task.FirDTO.FirNumber, document.FileName)}
+          onClick={() => handleDeleteDocument(task.FirDTO.FirNumber, document.FileName, document.Pk)}
         ></button>
       </td>
     </tr>
@@ -341,14 +365,14 @@ const UserDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Approved Document</th>
+                      <th>Approved Document ({task.ApprovedFirSupportingDocuments ? task.ApprovedFirSupportingDocuments.length : 0})</th>
                       <th><button className="upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
                     </tr>
                   </thead>
                   <tbody>{task.ApprovedFirSupportingDocuments && task.ApprovedFirSupportingDocuments.length > 0 ? (
   task.ApprovedFirSupportingDocuments.map((document, index) => (
     <tr key={index}>
-      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime)) || 'Unnamed Document'}</td>
+      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))) || 'Unnamed Document'}</td>
       <td>
         <button
           className="action-buttons-sublist view-button" title="View Document"

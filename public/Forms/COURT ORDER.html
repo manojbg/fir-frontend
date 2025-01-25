@@ -68,21 +68,21 @@
         background-color: #45a049;
         }
 
-        .removeBtn, .removeColumnBtn1, .removeColumnBtn2{
+        .removeBtn, .removeColumnBtn{
           background: rgba(211, 211, 211, 1.0);
           width: 100%
         }
 
-        .removeBtn:hover, .removeColumnBtn1:hover, .removeColumnBtn2:hover{
+        .removeBtn:hover, .removeColumnBtn:hover{
           background: rgba(183, 183, 183, 1.0);
         }
 
-        .addColumnBtnTable1, .addColumnBtnTable2, #addRowBtnAfterTable1, #addRowBtnAfterTable2 {
+        .addColumnBtnAfter, #addRowBtnAfterTable1, #addRowBtnAfterTable2 {
           background: #4CAF50;
           width: 100%
         }
 
-        .addColumnBtnTable1:hover, .addColumnBtnTable2:hover, #addRowBtnAfterTable1:hover, #addRowBtnAfterTable2:hover {
+        .addColumnBtnAfter:hover, #addRowBtnAfterTable1:hover, #addRowBtnAfterTable2:hover {
           background-color: #45a049;
         }
 
@@ -116,42 +116,35 @@
               $(this).closest("tr").remove();
           });
 
-          //Add a column to the table1
-
-
           // Remove a column from the table
-          $(document).on("click", ".removeColumnBtn1", function () {
+          $(document).on("click", ".removeColumnBtn", function () {
               var columnIndex = $(this).closest("td")[0].cellIndex + 1;
-              $('#table1 tr > *:nth-child('+columnIndex+')').remove();
-              $("#table1 tr > *:last-child").css("width","90px");
-          });
-
-          // Remove a column from the table
-          $(document).on("click", ".removeColumnBtn2", function () {
-              var columnIndex = $(this).closest("td")[0].cellIndex + 1;
-              $('#table2 tr > *:nth-child('+columnIndex+')').remove();
-              $("#table2 tr > *:last-child").css("width","90px");
+              var tableId = $(this).closest("table")[0].id;
+              $('#'+tableId+' tr > *:nth-child('+columnIndex+')').remove();
+              $("#"+tableId+" tr > *:last-child").css("width","90px");
           });
 
           fetchData();
         });
         window.onload = getQueryParams;
 
-        function addColumn1() {
-          const numberOfCells = document.getElementById('table1').rows[0].cells.length;
-          $('#table1 tr > *:last-child').remove();
+        //Add a column to the table1
+        function addColumn() {
+          var tableId = $(this).closest("table")[0].id;
+          const numberOfCells = document.getElementById(tableId).rows[0].cells.length;
+          $('#'+tableId+' tr > *:last-child').remove();
           var newColumn =$('<td></td>');
-          $("#table1 tr").each(function(){
+          $('#'+tableId+' tr').each(function(){
             var row = $(this);
-            if(row[0].id == "headers1")
+            if(row[0].className == "headers")
              {
                $(this).append("<td><div class='background-edit' contenteditable></td>");
                $(this).append("<td>ACTIONS</td>");
              }
-             else if(row[0].id == "deleteColumnBtnRow1")
+             else if(row[0].className == "deleteColumnBtnRow")
              {
-               $(this).append("<td><button class='removeColumnBtn1'>Delete <br> Column</button></td>");
-               $(this).append("<td><button class='addColumnBtnTable1' onclick='addColumn1()'>Add <br> Column</button></td>");
+               $(this).append("<td><button class='removeColumnBtn'>Delete <br> Column</button></td>");
+               $(this).append("<td><button class='addColumnBtnAfter' onclick='addColumn()'>Add <br> Column</button></td>");
              }
              else
              {
@@ -159,36 +152,10 @@
                $(this).append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
              }
           })
-          $("#table1 tr > *:last-child").css("width","90px");
+          $("#"+tableId+" tr > *:last-child").css("width","90px");
         }
 
-        //Add a column to the table2
-        function addColumn2() {
-          const numberOfCells = document.getElementById('table2').rows[0].cells.length;
-          $('#table2 tr > *:last-child').remove();
-          var newColumn =$('<td></td>');
-          $("#table2 tr").each(function(){
-            var row = $(this);
-            if(row[0].id == "headers2")
-             {
-               $(this).append("<td><div class='background-edit' contenteditable></td>");
-               $(this).append("<td>ACTIONS</td>");
-             }
-             else if(row[0].id == "deleteColumnBtnRow2")
-             {
-               $(this).append("<td><button class='removeColumnBtn2'>Delete <br> Column</button></td>");
-               $(this).append("<td><button class='addColumnBtnTable2' onclick='addColumn2()'>Add <br> Column</button></td>");
-             }
-             else
-             {
-               $(this).append("<td><div class='background-edit' contenteditable></td>");
-               $(this).append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
-             }
-          })
-          $("#table2 tr > *:last-child").css("width","90px");
-        }
-
-        function save(print) {
+                function save(print) {
           // Get the content inside modal-body
           hideElementsForView();
           const closebuttons = document.getElementById("iclose");
@@ -272,8 +239,7 @@
            $('#saveForm').remove();
            $('#printForm').remove();
            $('.background-edit').removeClass();
-           $('#deleteColumnBtnRow1').remove();
-           $('#deleteColumnBtnRow2').remove();
+           $('.deleteColumnBtnRow').remove();
            if(document.getElementById('table2').rows.length <= 2)
            {
              $('#table1').remove();
@@ -337,14 +303,14 @@
 
     <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
         <tbody>
-        <tr id="deleteColumnBtnRow1" style="font-weight: bold;">
-            <td><button class='removeColumnBtn1'>Delete <br> Column</button></td>
-            <td><button class='removeColumnBtn1'>Delete <br> Column</button></td>
-            <td><button class='removeColumnBtn1'>Delete <br> Column</button></td>
-            <td><button class='removeColumnBtn1'>Delete <br> Column</button></td>
-            <td style="width:90px"><button class="addColumnBtnTable1" onclick="addColumn1()">Add <br> Column</button></td>
+        <tr class="deleteColumnBtnRow" style="font-weight: bold;">
+            <td><button class='removeColumnBtn'>Delete <br> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br> Column</button></td>
+            <td style="width:90px"><button class="addColumnBtnAfter" onclick="addColumn1()">Add <br> Column</button></td>
         </tr>
-        <tr id="headers1" style="font-weight: bold;">
+        <tr class="headers" style="font-weight: bold;">
             <td>
                 <div class="background-edit" contenteditable>COMPLAINANT /
                     PETITIONER NAME</div>
@@ -385,16 +351,16 @@
     <br/><br/>
 <table id="table2" style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
     <tbody>
-    <tr id="deleteColumnBtnRow2" style="font-weight: bold;">
-        <td style="width:50px"><button class='removeColumnBtn2'>Delete <br> Column</button></td>
-        <td><button class='removeColumnBtn2'>Delete <br> Column</button></td>
-        <td><button class='removeColumnBtn2'>Delete <br> Column</button></td>
-        <td><button class='removeColumnBtn2'>Delete <br> Column</button></td>
-        <td><button class='removeColumnBtn2'>Delete <br> Column</button></td>
-        <td><button class='removeColumnBtn2'>Delete <br> Column</button></td>
-        <td style="width:90px"><button class="addColumnBtnTable2" onclick="addColumn2()">Add <br> Column</button></td>
+    <tr class="deleteColumnBtnRow" style="font-weight: bold;">
+        <td style="width:50px"><button class='removeColumnBtn'>Delete <br> Column</button></td>
+        <td><button class='removeColumnBtn'>Delete <br> Column</button></td>
+        <td><button class='removeColumnBtn'>Delete <br> Column</button></td>
+        <td><button class='removeColumnBtn'>Delete <br> Column</button></td>
+        <td><button class='removeColumnBtn'>Delete <br> Column</button></td>
+        <td><button class='removeColumnBtn'>Delete <br> Column</button></td>
+        <td style="width:90px"><button class="addColumnBtnAfter" onclick="addColumn2()">Add <br> Column</button></td>
     </tr>
-    <tr id="headers2" style="font-weight: bold;">
+    <tr class="headers" style="font-weight: bold;">
         <td style="width:50px">
             <div class="background-edit" contenteditable>Sl No.</div>
         </td>
@@ -466,8 +432,8 @@
     <div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
     <br/>
 </div><br/>
-<button class="save-button" id="saveForm" title="Save Document" onclick="save('false')">Save</button>
-<button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save('true')">Save & Print</button>
+<button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
+<button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>
 <div id="paramsHolder">
 <p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
 <p style="display: none;">Form Name: <span id="formNameField"></span></p>

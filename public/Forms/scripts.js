@@ -42,7 +42,7 @@ function convertHtmlToPdfDirectlySinglePage(element, callback) {
        const pdfBlob = pdf.output('blob');
 
        // Log Blob for debugging
-       console.log('Generated PDF Blob:', pdfBlob);
+       //console.log('Generated PDF Blob:', pdfBlob);
 
        // Convert the Blob to a Base64 string
        const reader = new FileReader();
@@ -100,7 +100,7 @@ var pdf = new jsPDF('p', 'mm', 'a4');
        const pdfBlob = pdf.output('blob');
 
        // Log Blob for debugging
-       console.log('Generated PDF Blob:', pdfBlob);
+       //console.log('Generated PDF Blob:', pdfBlob);
 
        // Convert the Blob to a Base64 string
        const reader = new FileReader();
@@ -149,13 +149,13 @@ function convertHtmlToPdfDirectly(element, callback) {
       const pdfBlob = pdf.output('blob');
 
       // Log Blob for debugging
-      console.log('Generated PDF Blob:', pdfBlob);
+      //console.log('Generated PDF Blob:', pdfBlob);
 
       // Convert the Blob to a Base64 string
       const reader = new FileReader();
       reader.onload = function () {
         const base64String = reader.result.split(',')[1]; // Extract the Base64 part
-        console.log("bytearray for pdf", base64String);
+        //console.log("bytearray for pdf", base64String);
         callback(null, base64String); // Pass the Base64 string to the callback
       };
       reader.onerror = function (error) {
@@ -178,7 +178,7 @@ function saveAPICall(requestPayload, print) {
      contentType: "application/json",
      data: JSON.stringify(requestPayload),
      success: (response) => {
-         console.log("Response:", response);
+         //console.log("Response:", response);
          if(print)
          {
             js:window.print();
@@ -306,51 +306,59 @@ function splitIntoPages(element)
   return partitionedElements;
 }
 
-function populateTable(tableId, data) {
-  const table = document.getElementById(tableId);
-  const tbody = table.querySelector("tbody");
-  tbody.innerHTML = ""; // Clear existing rows
+function populateTable(tableId, data)
+{
+  if(data !== null)
+  {
+    const table = document.getElementById(tableId);
+    const tbody = table.querySelector("tbody");
+    tbody.innerHTML = ""; // Clear existing rows
 
-  data.forEach(row => {
-    const newRow = $('<tr></tr>');
-    Object.keys(row).forEach(function(key,index) {
-      if(table.rows.length == 0)
+    const deleteColumnBtnRow = $('<tr class="deleteColumnBtnRow"></tr>');
+    for(let i=0; i < Object.keys(data[0]).length; i++)
+    {
+      deleteColumnBtnRow.append("<td><button class='removeColumnBtn'>Delete <br/> Column</button></td>");
+    }
+    deleteColumnBtnRow.append("<td><button class='addColumnBtnAfter' onclick='addColumn()'>Add <br/> Column</button></td>");
+    $("#"+tableId+" tbody").append(deleteColumnBtnRow);
+    data.forEach(row => {
+      const newRow = $('<tr></tr>');
+      Object.keys(row).forEach(function(key,index) {
+          newRow.append("<td><div class='background-edit' contenteditable>"+row[key]+"</div></td>");
+      });
+      if(table.rows.length == 1)
       {
-         newRow.append("<td><button class='removeColumnBtn'>Delete Column</button><div class='background-edit' contenteditable>"+row[key]+"</div></td>");
+        newRow.append("<td>ACTIONS</td>");
       }
       else
       {
-        newRow.append('<td><div class="background-edit" contenteditable>'+row[key]+'</div></td>');
+        newRow.append('<td><button class="removeBtn">Delete <br> Row</button></td>');
       }
+      $("#"+tableId+" tbody").append(newRow);
     });
-    if(table.rows.length == 0)
-    {
-      newRow.append("<td>ACTIONS</td>");
-    }
-    else
-    {
-      newRow.append('<td><button class="removeBtn">Delete Row</button></td>');
-    }
-    $("#"+tableId+" tbody").append(newRow);
-  });
-  $("#"+tableId+" tr:first").css({ "font-weight": "bold" });
-  $("#"+tableId+" tr:first").attr("id","headers");
+    $("#"+tableId+" tr:first").attr("class","deleteColumnBtnRow");
+    $("#"+tableId+" tr:nth-child(2)").css({ "font-weight": "bold" });
+    $("#"+tableId+" tr:nth-child(2)").attr("class","headers");
+    $("#"+tableId+" tr > *:last-child").css("width","90px");
+  }
 }
 
 // Function to extract table data as an array of objects
 function getTableData(tableId) {
-  const table = document.getElementById(tableId);
-  const rows = table.querySelectorAll("tbody tr");
   const data = [];
-
-  rows.forEach(row => {
-    const cells = row.querySelectorAll("td");
-    if (cells.length > 1) {
-      var rowData = {};
-      cells.forEach(cell => rowData[cell.cellIndex] = cell.innerText.trim());
-      data.push(rowData);
-   }
-});
+  const table = document.getElementById(tableId);
+  if(table !== null)
+  {
+    const rows = table.querySelectorAll("tbody tr");
+    rows.forEach(row => {
+      const cells = row.querySelectorAll("td");
+      if (cells.length > 1) {
+        var rowData = {};
+        cells.forEach(cell => rowData[cell.cellIndex] = cell.innerText.trim());
+        data.push(rowData);
+     }
+    });
+  }
   return data;
 }
 

@@ -76,12 +76,12 @@
           background: rgba(183, 183, 183, 1.0);
         }
 
-        #addColumnBtnAfter, #addRowBtnAfter {
+        .addColumnBtnAfter, #addRowBtnAfter {
           background: #4CAF50;
           width: 100%
         }
 
-        #addColumnBtnAfter:hover, #addRowBtnAfter:hover {
+        .addColumnBtnAfter:hover, #addRowBtnAfter:hover {
           background-color: #45a049;
         }
     </style>
@@ -119,15 +119,15 @@
           $('#table1 tr > *:last-child').remove();
           $("#table1 tr").each(function(){
             var row = $(this);
-            if(row[0].id == "headers")
+            if(row[0].className == "headers")
              {
                $(this).append("<td><div class='background-edit' contenteditable></td>");
                $(this).append("<td>ACTIONS</td>");
              }
-             else if(row[0].id == "deleteColumnBtnRow")
+             else if(row[0].className == "deleteColumnBtnRow")
              {
                $(this).append("<td><button class='removeColumnBtn'>Delete <br> Column</button></td>");
-               $(this).append("<td><button id='addColumnBtnAfter' onclick='addColumn()'>Add <br> Column</button></td>");
+               $(this).append("<td><button class='addColumnBtnAfter' onclick='addColumn()'>Add <br> Column</button></td>");
              }
              else
              {
@@ -215,7 +215,7 @@
            $('#saveForm').remove();
            $('#printForm').remove();
            $('.background-edit').removeClass();
-           $('#deleteColumnBtnRow').remove();
+           $('.deleteColumnBtnRow').remove();
            if(document.getElementById('table1').rows.length < 2)
            {
              $('#table1').remove();
@@ -272,13 +272,13 @@
     <br/>
     <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
         <tbody>
-        <tr id="deleteColumnBtnRow" style="font-weight: bold;">
+        <tr class="deleteColumnBtnRow" style="font-weight: bold;">
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
-            <td style="width:90px"><button id="addColumnBtnAfter" onclick="addColumn()">Add <br/> Column</button></td>
+            <td style="width:90px"><button class="addColumnBtnAfter" onclick="addColumn()">Add <br/> Column</button></td>
         </tr>
-        <tr id="headers" style="font-weight: bold;">
+        <tr class="headers" style="font-weight: bold;">
             <td>
                 <div class="background-edit" contenteditable>BANK</div>
             </td>
@@ -328,8 +328,8 @@
     </div>
 </div>
 <br/>
-<button class="save-button" id="saveForm" title="Save Document" onclick="save('false')">Save</button>
-<button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save('true')">Save & Print</button>
+<button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
+<button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>
 <div id="paramsHolder">
 <p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
 <p style="display: none;">Form Name: <span id="formNameField"></span></p>
