@@ -11,13 +11,13 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family:Tahoma;
+            font-family:"Times New Roman",sans-serif;
             font-size:17px;
         }
 
         @page {
             size: A4;
-            margin: 2%;
+            margin: 25;
         }
         html{
         height:297mm;
@@ -98,41 +98,43 @@
             $("#table1 tbody tr:last").after(newRow);
           });
 
+          // Remove a row from the table
           $(document).on("click", ".removeBtn", function () {
-            $(this).closest("tr").remove();
+              $(this).closest("tr").remove();
           });
 
           // Remove a column from the table
           $(document).on("click", ".removeColumnBtn", function () {
               var columnIndex = $(this).closest("td")[0].cellIndex + 1;
               $('#table1 tr > *:nth-child('+columnIndex+')').remove();
+              $("#table1 tr > *:last-child").css("width","90px");
           });
           fetchData();
         });
         window.onload = getQueryParams;
 
         //Add a column to the table
-        function addColumn() {
+        function addColumn () {
           const numberOfCells = document.getElementById('table1').rows[0].cells.length;
           $('#table1 tr > *:last-child').remove();
           var newColumn =$('<td></td>');
           $("#table1 tr").each(function(){
             var row = $(this);
-          if(row[0].className == "headers")
-           {
-             $(this).append("<td><div class='background-edit' contenteditable></td>");
-             $(this).append("<td>ACTIONS</td>");
-           }
-           else if(row[0].className == "deleteColumnBtnRow")
-           {
-             $(this).append("<td><button class='removeColumnBtn'>Delete <br> Column</button></td>");
-             $(this).append("<td><button class='addColumnBtnAfter' onclick='addColumn()'>Add <br> Column</button></td>");
-           }
-           else
-           {
-             $(this).append("<td><div class='background-edit' contenteditable></td>");
-             $(this).append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
-           }
+            if(row[0].className == "headers")
+             {
+               $(this).append("<td><div class='background-edit' contenteditable></td>");
+               $(this).append("<td>ACTIONS</td>");
+             }
+             else if(row[0].className == "deleteColumnBtnRow")
+             {
+               $(this).append("<td><button class='removeColumnBtn'>Delete <br> Column</button></td>");
+               $(this).append("<td><button class='addColumnBtnAfter' onclick='addColumn()'>Add <br> Column</button></td>");
+             }
+             else
+             {
+               $(this).append("<td><div class='background-edit' contenteditable></td>");
+               $(this).append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
+             }
           })
           $("#table1 tr > *:last-child").css("width","90px");
         }
@@ -152,6 +154,11 @@
 
           const obj = {
             date: $("#datePicker").val(),
+            crNumber: $("#crNumber").text(),
+            ncrpNumber: $("#ncrpNumber").text(),
+            toAddress: $("#toAddress").val(),
+            accountNumber: $("#accountNumber").text(),
+            ifscCode: $("#ifscCode").text(),
             table1: tableContent,
             psi: $('#psi').text(),
             ioa: $('#ioa').text(),
@@ -162,6 +169,7 @@
           const pk = document.getElementById("pk").textContent;
           $('paramsHolder').remove();
 
+
         // Pass the element for PDF generation
           convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
             if (error) {
@@ -169,13 +177,13 @@
               return;
             }
             const req = {
-            Pk: pk,
-            FileContent: JSON.stringify(obj),
-            FileName: formName,
-            FirNumber: firNumber,
-            FileBytes: byteArray,
-          };
-          saveAPICall(req, print);
+              Pk: pk,
+              FileContent: JSON.stringify(obj),
+              FileName: formName,
+              FirNumber: firNumber,
+              FileBytes: byteArray,
+            };
+            saveAPICall(req, print);
           });
         }
 
@@ -191,9 +199,14 @@
               success: function (response) {
                 const jsonObject = JSON.parse(response.FileContent);
                 $("#datePicker").val(jsonObject.date || "");
-                populateTable("table1", jsonObject.table1 || []);
+                $("#toAddress").val(jsonObject.toAddress || "");
+                $("#crNumber").text(jsonObject.crNumber || "ENTER CR NUMBER");
+                $("#ncrpNumber").text(jsonObject.ncrpNumber || "ENTER NCRP NUMBER");
+                $("#accountNumber").text(jsonObject.accountNumber || "");
+                $("#ifscCode").text(jsonObject.ifscCode || "");
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
+                populateTable("table1", jsonObject.table1 || []);
                 },
                 error: function (error) {
                     console.error("Error fetching data:", error);
@@ -205,19 +218,17 @@
 
         function hideElementsForView()
         {
-          $('#table1 tr > *:last-child').remove();
-          $('#addRowBtnAfter').remove();
-          $('#saveForm').remove();
-          $('#printForm').remove();
-          $('.background-edit').removeClass();
-          $('.deleteColumnBtnRow').remove();
-          if(document.getElementById('table1').rows.length < 2)
-          {
-            $('#table1').remove();
-          }
+           $('#table1 tr > *:last-child').remove();
+           $('#addRowBtnAfter').remove();
+           $('#saveForm').remove();
+           $('#printForm').remove();
+           $('.background-edit').removeClass();
+           $('.deleteColumnBtnRow').remove();
+           if(document.getElementById('table1').rows.length < 2)
+           {
+             $('#table1').remove();
+           }
         }
-
-
     </script>
 </head>
 <body id="bodyMain">
@@ -232,95 +243,94 @@
             <strong>CEN Police Station, North Division, Bengaluru City</strong>
         </p>
         <p>
-            <span>2<sup>nd</sup> Floor, DCP Office Building, North Division, Yeswanthapura, Bengaluru city -560022</span>
+            <span >2<sup>nd</sup> Floor, DCP Office Building, North Division, Yeswanthapura, Bengaluru city -560022</span>
         </p>
         <p>
-            <u><span>E-mail ID:-</span></u><a
+            <u><span >E-mail ID:-</span></u><a
                 href="mailto:cenpsnorthbcp@ksp.gov.in"><span >cenpsnorthbcp@ksp.gov.in</span></a><span
                 >&nbsp;; Phone No-080-22942302; Mob No-8277945187/9480801066</span>
         </p>
     </div>
     <br/> <br/>
     <div style='text-align:center;font-weight:bold;text-decoration:underline'>
-        <u>To the Honorable 45TH  ACMM Court, Bengaluru City.</u>
+        <u>Police Notice U/s 94 Bharatiya Nagarik Suraksha Sanhita, 2023 and
+            U/s 2A Bankers Book of Evidence Act
+        </u>
     </div>
     <br/>
     <p style='text-align:right;'>
         <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
     </p>
+    <div style="display: inline-block;width: 30%;">
+        <p><strong>To,</strong></p>
+        <textarea id="toAddress" class="background-edit" name="toAddress" rows="5" cols="30" style="border : none;margin-left: 10%;">The Manager,</textarea>
+    </div>
+    <br/><br/>
+    Sir/Madam, <br/>
+    <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
+        <div>
+            Sub:	 Provide ATM CCTV footage details of mentioned transaction/s.
+            <br/>
+            <div>Ref: 	<b>Cr.No:</b>  <div id="crNumber" style="display:inline" class="background-edit" contenteditable>518/2023 U/S 66(C) 66(D) IT ACT</div></div>
+                   <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>NCRP:</b>  <div id="ncrpNumber" style="display:inline" class="background-edit" contenteditable> NIL</div></div>
+            </div>
+            </div>
+            <br/>
+            <div style="text-align:center"> * * * * * * </div>
+    <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
+        With reference to the above subject, an online financial fraud case has been registered with mentioned
+        Cr. No. in CEN Police Station, North Division, Bengaluru city. Provide the ATM CCTV footage details of the
+        below mentioned transaction/s.</div>
+            <div style = "text-indent : 0px;     text-align: center;">
+                <br/>
+                <div>
+                    <b>A/C No : </b> <div id="accountNumber" style="display:inline; font-weight: bold;" class="background-edit" contenteditable>50100343514861</div>
+                </div>
+            </div>
+        </div>
     <br/>
-    <h4 style="text-align: center;">Intimation regarding Lien Mark bank accounts.</h4><br/>
-
-    <table style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
-        <tbody>
-        <tr>
-            <td style="width : 5%">1.</td>
-            <td style="width : 45%">Name of the Police station</td>
-            <td style="width : 45%">C.E.N Police station, North Division, Bengaluru city.</td>
-        </tr>
-        <tr>
-            <td>2.</td>
-            <td>Cr. No & Section of law</td>
-            <td>590/2022 U/s 66(D) IT Act</td>
-        </tr>
-        <tr>
-            <td>3.</td>
-            <td>Name of the officer, Designation on whose requisition account/s Lien marked.</td>
-            <td>PAVAN N/ Shivarathna S<br/>
-                ACP/ Police Inspector<br/>
-                C.E.N Police Station,<br/>
-                North Division, Bengaluru City
-            </td>
-        </tr>
-        </tbody>
-    </table>
-<br/>
-    <h4 style="text-align: center;">Lien marked account/s & amount details</h4><br/>
     <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
         <tbody>
         <tr class="deleteColumnBtnRow" style="font-weight: bold;">
-            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
-            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td style="width:50px"><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td style="width:90px"><button class="addColumnBtnAfter" onclick="addColumn()">Add <br/> Column</button></td>
         </tr>
         <tr class="headers" style="font-weight: bold;">
-          <td>
-              <div class="background-edit" contenteditable>Name of the BANK/s</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>ACCOUNT No/s</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>IFSC CODE</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>LIEN MARKED AMOUNT</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>NCRP LAYER</div>
-          </td>
-          <td id="actions" style="width:90px">
-              <div>ACTIONS</div>
-          </td>
+            <td style="width:50px">
+                <div class="background-edit" contenteditable>SL No.</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>TRANSACTION
+                    DATE & TIME
+                </div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>AMOUNT</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>ATM LOCATION</div>
+            </td>
+            <td id="actions">
+                <div>ACTIONS</div>
+            </td>
         </tr>
         <tr>
             <td>
-                <div class="background-edit" contenteditable>YES Bank</div>
+                <div class="background-edit" contenteditable>01</div>
             </td>
             <td>
-                <div class="background-edit" contenteditable>048863400002512</div>
+                <div class="background-edit" contenteditable>27-05-2023
+                    01:29:00 PM
+                </div>
             </td>
             <td>
-                <div class="background-edit" contenteditable></div>
+                <div class="background-edit" contenteditable>10000</div>
             </td>
             <td>
-                <div class="background-edit" contenteditable>60,000/-</div>
-            </td>
-            <td>
-                <div class="background-edit" contenteditable></div>
+                <div class="background-edit" contenteditable>ATM-CASH/BHAGALPUR HANSDIHA/BANKA/270523</div>
             </td>
             <td>
                 <button class="removeBtn">Delete <br> Row</button>
@@ -329,24 +339,23 @@
         </tbody>
     </table>
     <button style="float:right" id="addRowBtnAfter">Add Row</button>
-
+    <br/>
+<div class="noSplit">
+    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
     <br/><br/>
-    <div class="noSplit">
     <div style="display: inline-block;width: 100%;">
         <div style="float : right; text-align:center; width : 35%">
-            <p><b>Investigation Officer</b></p><br/>
             <p>Assistant commissioner of police,</p>
             <p><strong>CEN police station,</strong></p>
             <p><strong>North division, Bengaluru city</strong></p>
         </div>
     </div>
-    </div>
-    <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>ROHINI</div></div>
+</div>
+    <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>RAJU</div></div>
     <div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
     <br/>
-    <br/>
-</div>
-<button class="save-button" id="saveForm" title="Save Documentt" onclick="save(false)">Save</button>
+</div><br/>
+<button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
 <button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>
 <div id="paramsHolder">
 <p style="display: none;">FIR Number: <span id="firNumberField"></span></p>

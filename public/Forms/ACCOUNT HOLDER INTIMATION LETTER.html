@@ -11,13 +11,13 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family:Tahoma;
+            font-family:"Times New Roman",sans-serif;
             font-size:17px;
         }
 
         @page {
             size: A4;
-            margin: 2%;
+            margin: 2%  ;
         }
         html{
         height:297mm;
@@ -53,8 +53,7 @@
         background-color : yellow;
         }
 
-        .save-button {
-        display: inline;
+        .save-button{
         border-radius: 15px;
         background-color: #4CAF50;
         color: white;
@@ -63,7 +62,7 @@
         height: 45px;
         }
 
-        .save-button:hover {
+        .save-button:hover{
         background-color: #45a049;
         }
 
@@ -90,22 +89,36 @@
           $("#addRowBtnAfter").click(function () {
             const numberOfCells = document.getElementById('table1').rows[0].cells.length;
             var newRow =$('<tr></tr>');
+            var caseDetailsColumnExists = false;
+            if(document.getElementById('table1').rows.length > 1 && document.getElementById('table1').rows[1].cells.length > 1)
+            {
+              caseDetailsColumnExists = document.getElementById('table1').rows[1].cells[1].innerText == "CASE DETAILS"
+            }
             for(let i = 1; i < numberOfCells; i++)
             {
-              newRow.append("<td><div class='background-edit' contenteditable></td>");
+              if(caseDetailsColumnExists && i == 2)
+              {
+                newRow.append("<td style='text-align:left'><div class='background-edit' contenteditable></td>");
+              }
+              else
+              {
+                newRow.append("<td><div class='background-edit' contenteditable></td>");
+              }
             }
             newRow.append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
             $("#table1 tbody tr:last").after(newRow);
           });
 
+          // Remove a row from the table
           $(document).on("click", ".removeBtn", function () {
-            $(this).closest("tr").remove();
+              $(this).closest("tr").remove();
           });
 
           // Remove a column from the table
           $(document).on("click", ".removeColumnBtn", function () {
               var columnIndex = $(this).closest("td")[0].cellIndex + 1;
               $('#table1 tr > *:nth-child('+columnIndex+')').remove();
+              $("#table1 tr > *:last-child").css("width","90px");
           });
           fetchData();
         });
@@ -115,24 +128,23 @@
         function addColumn() {
           const numberOfCells = document.getElementById('table1').rows[0].cells.length;
           $('#table1 tr > *:last-child').remove();
-          var newColumn =$('<td></td>');
           $("#table1 tr").each(function(){
             var row = $(this);
-          if(row[0].className == "headers")
-           {
-             $(this).append("<td><div class='background-edit' contenteditable></td>");
-             $(this).append("<td>ACTIONS</td>");
-           }
-           else if(row[0].className == "deleteColumnBtnRow")
-           {
-             $(this).append("<td><button class='removeColumnBtn'>Delete <br> Column</button></td>");
-             $(this).append("<td><button class='addColumnBtnAfter' onclick='addColumn()'>Add <br> Column</button></td>");
-           }
-           else
-           {
-             $(this).append("<td><div class='background-edit' contenteditable></td>");
-             $(this).append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
-           }
+            if(row[0].className == "headers")
+             {
+               $(this).append("<td><div class='background-edit' contenteditable></td>");
+               $(this).append("<td>ACTIONS</td>");
+             }
+             else if(row[0].className == "deleteColumnBtnRow")
+             {
+               $(this).append("<td><button class='removeColumnBtn'>Delete <br> Column</button></td>");
+               $(this).append("<td><button class='addColumnBtnAfter' onclick='addColumn()'>Add <br> Column</button></td>");
+             }
+             else
+             {
+               $(this).append("<td><div class='background-edit' contenteditable></td>");
+               $(this).append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
+             }
           })
           $("#table1 tr > *:last-child").css("width","90px");
         }
@@ -142,6 +154,8 @@
           hideElementsForView();
           const closebuttons = document.getElementById("iclose");
           var tableContent = getTableData("table1");
+          $('.headers').remove();
+
 
           // Traverse up to the <body> or <html> element for the content
           const elementToConvert = document.getElementById("bodyMain");
@@ -152,6 +166,10 @@
 
           const obj = {
             date: $("#datePicker").val(),
+            caseIdentifier: $("#caseIdentifier").text(),
+            crNumber: $("#crNumber").text(),
+            ncrpNumber: $("#ncrpNumber").text(),
+            toAddress: $("#toAddress").val(),
             table1: tableContent,
             psi: $('#psi').text(),
             ioa: $('#ioa').text(),
@@ -175,7 +193,7 @@
             FirNumber: firNumber,
             FileBytes: byteArray,
           };
-          saveAPICall(req, print);
+            saveAPICall(req, print);
           });
         }
 
@@ -191,6 +209,10 @@
               success: function (response) {
                 const jsonObject = JSON.parse(response.FileContent);
                 $("#datePicker").val(jsonObject.date || "");
+                $("#caseIdentifier").text(jsonObject.caseIdentifier || "ENTER FIR NUMBER");
+                $("#crNumber").text(jsonObject.crNumber || "ENTER CR NUMBER");
+                $("#ncrpNumber").text(jsonObject.ncrpNumber || "ENTER NCRP ACK NUMBER");
+                $("#toAddress").val(jsonObject.toAddress || "");
                 populateTable("table1", jsonObject.table1 || []);
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
@@ -205,24 +227,22 @@
 
         function hideElementsForView()
         {
-          $('#table1 tr > *:last-child').remove();
-          $('#addRowBtnAfter').remove();
-          $('#saveForm').remove();
-          $('#printForm').remove();
-          $('.background-edit').removeClass();
-          $('.deleteColumnBtnRow').remove();
-          if(document.getElementById('table1').rows.length < 2)
-          {
-            $('#table1').remove();
-          }
+           $('#table1 tr > *:last-child').remove();
+           $('#addRowBtnAfter').remove();
+           $('#saveForm').remove();
+           $('#printForm').remove();
+           $('.background-edit').removeClass();
+           $('.deleteColumnBtnRow').remove();
+           if(document.getElementById('table1').rows.length < 2)
+           {
+             $('#table1').remove();
+           }
         }
-
-
     </script>
 </head>
 <body id="bodyMain">
 <div id="divMain">
-    <br/>
+<br/>
     <div style='text-align:center;'>
         <p>
 <span><img
@@ -242,111 +262,233 @@
     </div>
     <br/> <br/>
     <div style='text-align:center;font-weight:bold;text-decoration:underline'>
-        <u>To the Honorable 45TH  ACMM Court, Bengaluru City.</u>
+        <u>Intimation letter</u>
     </div>
     <br/>
     <p style='text-align:right;'>
         <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
     </p>
     <br/>
-    <h4 style="text-align: center;">Intimation regarding Lien Mark bank accounts.</h4><br/>
-
-    <table style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
-        <tbody>
-        <tr>
-            <td style="width : 5%">1.</td>
-            <td style="width : 45%">Name of the Police station</td>
-            <td style="width : 45%">C.E.N Police station, North Division, Bengaluru city.</td>
-        </tr>
-        <tr>
-            <td>2.</td>
-            <td>Cr. No & Section of law</td>
-            <td>590/2022 U/s 66(D) IT Act</td>
-        </tr>
-        <tr>
-            <td>3.</td>
-            <td>Name of the officer, Designation on whose requisition account/s Lien marked.</td>
-            <td>PAVAN N/ Shivarathna S<br/>
-                ACP/ Police Inspector<br/>
-                C.E.N Police Station,<br/>
-                North Division, Bengaluru City
-            </td>
-        </tr>
-        </tbody>
-    </table>
-<br/>
-    <h4 style="text-align: center;">Lien marked account/s & amount details</h4><br/>
+    Sir/Madam, <br/>
+    <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
+        <div>
+            Sub:	Intimation letter for court appearance
+            <br/>
+            <div>Ref: 	CEN Police Station <b>Cr.No -</b><div id="caseIdentifier" style="display:inline" class="background-edit" contenteditable>211/2024 U/s 66(C), 66(D) of IT ACT & 318(4) BNS</div></div>
+        </div>
+        <br/>
+        <div style="text-align:center"> * * * * * * </div>
+        <div>
+            A victim lodged a case at CEN PS North Division, Bengaluru City, and our investigation revealed that they
+            were trapped into cybercrime and transferred an amount. The money was redistributed into various accounts.
+        </div>
+        <div>
+            We have frozen/lien marked your account and sent a 35(3) BNSS notice to you. The victim has approached the
+            45th Additional Judicial Magistrate Metropolitan (AJMM) Bengaluru court for release of the said amount.
+            The next court date for argument is mentioned below. If you have any objections you are requested to appear
+            before the Honorable Court on the same date.
+        </div>
+    </div>
+    <br/>
+    <div style = "text-indent : 0px;     text-align: center;">
+        <br/>
+        <div><b>Cr No : </b> <div id="crNumber" style="display:inline; font-weight: bold;" class="background-edit" contenteditable>211/2024</div>
+            <b> & NCRP Acknowledgement Number : </b> <div id="ncrpNumber" style="display:inline; font-weight: bold;" class="background-edit" contenteditable>31606240041717</div></div>
+    </div>
+    <br/>
     <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
         <tbody>
         <tr class="deleteColumnBtnRow" style="font-weight: bold;">
-            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
-            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
-            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td style="width:50px"><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td style="width:90px"><button class="addColumnBtnAfter" onclick="addColumn()">Add <br/> Column</button></td>
         </tr>
         <tr class="headers" style="font-weight: bold;">
-          <td>
-              <div class="background-edit" contenteditable>Name of the BANK/s</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>ACCOUNT No/s</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>IFSC CODE</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>LIEN MARKED AMOUNT</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>NCRP LAYER</div>
-          </td>
-          <td id="actions" style="width:90px">
-              <div>ACTIONS</div>
-          </td>
+            <td style="width:50px">
+                <div class="background-edit" contenteditable>SL No.</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>CASE DETAILS</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>VALUES</div>
+            </td>
+            <td id="actions" style="width:90px">
+                <div>ACTIONS</div>
+            </td>
+        </tr>
+         <tr>
+            <td>
+                <div class="background-edit" contenteditable>1.</div>
+            </td>
+            <td style="text-align:left">
+                <div class="background-edit" contenteditable>Victim's account number</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete <br/> Row</button>
+            </td>
         </tr>
         <tr>
             <td>
-                <div class="background-edit" contenteditable>YES Bank</div>
+                <div class="background-edit" contenteditable>2.</div>
             </td>
-            <td>
-                <div class="background-edit" contenteditable>048863400002512</div>
-            </td>
-            <td>
-                <div class="background-edit" contenteditable></div>
-            </td>
-            <td>
-                <div class="background-edit" contenteditable>60,000/-</div>
+            <td style="text-align:left">
+                <div class="background-edit" contenteditable>Total loss amount</div>
             </td>
             <td>
                 <div class="background-edit" contenteditable></div>
             </td>
             <td>
-                <button class="removeBtn">Delete <br> Row</button>
+                <button class="removeBtn">Delete <br/> Row</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="background-edit" contenteditable>3.</div>
+            </td>
+            <td style="text-align:left">
+                <div class="background-edit" contenteditable>Amount transferred by victim</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete <br/> Row</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="background-edit" contenteditable>4.</div>
+            </td>
+            <td style="text-align:left">
+                <div class="background-edit" contenteditable>Amount received by beneficiary</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete <br/> Row</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="background-edit" contenteditable>5.</div>
+            </td>
+            <td style="text-align:left">
+                <div class="background-edit" contenteditable>Beneficiary Account Lien marked
+                    Amount
+                </div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete <br/> Row</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="background-edit" contenteditable>6.</div>
+            </td>
+            <td style="text-align:left">
+                <div class="background-edit" contenteditable>Beneficiary's account number</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete <br/> Row</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="background-edit" contenteditable>7.</div>
+            </td>
+            <td style="text-align:left">
+                <div class="background-edit" contenteditable>Beneficiary Account Holder Name &
+                    Address
+                </div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete <br/> Row</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="background-edit" contenteditable>8.</div>
+            </td>
+            <td style="text-align:left">
+                <div class="background-edit" contenteditable>Beneficiary Account Closing Balance</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete <br/> Row</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="background-edit" contenteditable>9.</div>
+            </td>
+            <td style="text-align:left">
+                <div class="background-edit" contenteditable>Date of 35(3) BNSS notice sent</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete <br/> Row</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="background-edit" contenteditable>10.</div>
+            </td>
+            <td style="text-align:left">
+                <div class="background-edit" contenteditable>Next court date</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete <br/> Row</button>
             </td>
         </tr>
         </tbody>
     </table>
     <button style="float:right" id="addRowBtnAfter">Add Row</button>
-
-    <br/><br/>
+    <br/>
     <div class="noSplit">
+    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
+    <br/><br/>
     <div style="display: inline-block;width: 100%;">
         <div style="float : right; text-align:center; width : 35%">
-            <p><b>Investigation Officer</b></p><br/>
             <p>Assistant commissioner of police,</p>
             <p><strong>CEN police station,</strong></p>
             <p><strong>North division, Bengaluru city</strong></p>
         </div>
     </div>
     </div>
+    <br/>
+    <div class="noSplit" style="display: inline-block;width: 30%;">
+        <p><strong>To,</strong></p>
+        <textarea id="toAddress" class="background-edit" name="toAddress" rows="5" cols="30" style="border : none;margin-left : 10%"></textarea>
+    </div>
+    <br/>
     <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>ROHINI</div></div>
     <div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
     <br/>
-    <br/>
 </div>
-<button class="save-button" id="saveForm" title="Save Documentt" onclick="save(false)">Save</button>
+<br/>
+<button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
 <button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>
 <div id="paramsHolder">
 <p style="display: none;">FIR Number: <span id="firNumberField"></span></p>

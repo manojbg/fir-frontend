@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
-    <script src="./scripts.js"></script>
+    <script src="./js/jspdf.umd.min.js"></script>
+    <script src="./js/html2canvas.min.js"></script>
+    <script src="./js/jquery-3.6.0.min.js"></script>
+    <script src="./js/scripts.js"></script>
     <style>
         /* Set A4 size */
         * {
@@ -91,9 +90,8 @@
             caseIdentifier: $("#caseIdentifier").text(),
             caseType: $('#caseType option:selected').text(),
             letterBody: $("#letterBody").text(),
-            deActivate: $('#deActivate option:selected').text(),
             duration: $('#duration').text(),
-            accusedNumber: $('#accusedNumber').text(),
+            accusedNumber: $('#accussedNumber').html(),
             psi: $('#psi').text(),
             ioa: $('#ioa').text(),
           };
@@ -135,9 +133,8 @@
                 $("#caseIdentifier").text(jsonObject.caseIdentifier || "ENTER FIR NUMBER");
                 $("#caseType option:selected").text(jsonObject.caseType || "FIR No :");
                 $("#letterBody").text(jsonObject.letterBody || "");
-                $('#deActivate option:selected').text(jsonObject.deActivate || "none");
                 $('#duration').text(jsonObject.duration || "");
-                $('#accusedNumber').text(jsonObject.accusedNumber || "");
+                $('#accusedNumber').html(jsonObject.accusedNumber || "");
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
                 },
@@ -153,12 +150,6 @@
         {
           $('.background-edit').removeClass();
           $('#saveForm').remove();
-          if($("#deActivate").val() == "none"){
-            document.getElementById('deActivateDiv').innerHTML='';
-          }
-          else{
-            document.getElementById('deActivateDiv').innerHTML = $('#deActivate option:selected').text()
-          }
           document.getElementById('caseTypeDiv').innerHTML = "<b>"+$("#caseType option:selected").text()+"</b>";
         }
     </script>
@@ -175,12 +166,12 @@
             <strong>CEN Police Station, North Division, Bengaluru City</strong>
         </p>
         <p>
-            <span >2<sup>nd</sup> Floor, Deputy Commissioner Office Building, North Division, Bengaluru city -560022</span>
+            <span >2<sup>nd</sup> Floor, DCP Office Building, North Division, Yeswanthapura, Bengaluru city -560022</span>
         </p>
         <p>
             <u><span >E-mail ID:-</span></u><a
                 href="mailto:cenpsnorthbcp@ksp.gov.in"><span >cenpsnorthbcp@ksp.gov.in</span></a><span
-                >&nbsp;; Phone No-080-22942302; Mob No-9449295758</span>
+                >&nbsp;; Phone No-080-22942302; Mob No-8277945187/9480801066</span>
         </p>
     </div>
     <br/> <br/>
@@ -203,48 +194,43 @@
     Sir/Madam, <br/>
     <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
         <div>
-            Sub:	Request to provide the details of below mentioned Whats app no.
+            Sub:	Request to provide the details of below mentioned WhatsApp number/s.
             <br/>
             <div>Ref: 	CEN Police Station
                 <div id="caseTypeDiv" style="display:inline">
                 <select id="caseType" class="background-edit">
                 <option value="LPT">LPT No :</option>
                     <option value="FIR" selected="selected">FIR No :</option></select></div>
-            <div id="caseIdentifier" style="display:inline" class="background-edit" contenteditable>256/2024
-                if FIR selected mention under section U/S:</div>
+            <div id="caseIdentifier" style="display:inline" class="background-edit" contenteditable>943/2023 U/S 66(C), 66(D) IT ACT & 318(4) BNS</div>
             </div>
             </div>
             <br/>
             <div style="text-align:center"> * * * * * * </div>
         <div id="letterBody" style="display:inline" class="background-edit" contenteditable>
             It is hereby brought to the notice of WhatsApp that using the below mentioned WhatsApp number user someone
-            has harassing the complainant by sending the sexually morphed photos of the victim, and demanding money.
-            Hence, a case has been registered and is being investigating at North CEN Police station Bengaluru.
+            has harassed the complainant by sending the sexually morphed photos of the victim, and demanding money.
+            Hence, a case has been registered and is being investigated at North CEN Police station Bengaluru.
             So kindly, provide the requested details.</div>
             <div style = "text-indent : 0px">
                 <br/>
-                <div><b>Accused Whatsapp Number : </b> <div id="accussedNumber" style="display:inline" class="background-edit" contenteditable>Mobile Number</div></div>
+                <div id="accusedNumber" style="display:inline" class="background-edit" contenteditable>1. Mobile Number</div>
             </div>
         <br/>
-            <p style="display: inline;">Period of activity from <div id="duration" style="display:inline" class="background-edit" contenteditable>1ST JUNE 2023 to till date.</div></p>
+            <p style="display: inline;">Please search and provide the following details for the period of activity <div id="duration" style="display:inline" class="background-edit" contenteditable>1ST JUNE 2023 to till date.</div></p>
 <br/>
-        <p style = "text-indent : 0px">Please search and provide below details : </p>
         <div>
-            <div>1.	I.P Address used during the use of WhatsApp and other browsing.</div>
+            <div>1.	IP Address used during the use of WhatsApp and other browsing.</div>
             <div>2.	Details of external devices connected to those number if any such as wifi etc.</div>
             <div>3.	Mobile IMEI number.</div>
             <div>4.	Linked mobile numbers.</div>
             <div>5.	WhatsApp logs.</div>
+            <div>6.	Linked Mail ID/s.</div>
         </div>
         </div>
     <br/>
     <div>
-    Hence we are hereby requesting WhatsApp  to provide above sought details for the investigation of the case
-    <div id="deActivateDiv" style="display:contents">
-    <select id="deActivate" class="background-edit">
-        <option value="none" selected="selected">None</option>
-        <option value="deActivate">and deactivate the account</option></select></div>.
-    Co-operate in bringing the accused to the books of law in the interest of Justice.
+        Hence we hereby request WhatsApp to provide the above details for the investigation of the case.
+        Kindly Co-operate in bringing the accused to the books of law in the interest of Justice.
         </div>
     <br/>
     <div class="noSplit">

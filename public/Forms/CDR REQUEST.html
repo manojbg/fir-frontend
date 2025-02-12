@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <script src="./js/jspdf.umd.min.js"></script>
+    <script src="./js/html2canvas.min.js"></script>
+    <script src="./js/jquery-3.6.0.min.js"></script>
+    <script src="./js/scripts.js"></script>
+    <style>
+        /* Set A4 size */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family:"Times New Roman",sans-serif;
+            font-size:17px;
+        }
+
+        @page {
+            size: A4;
+            margin: 2%;
+        }
+        html{
+        height:297mm;
+        width:210mm;
+        margin-left:auto;
+        margin-right:auto;
+        }
+
+        body{
+        margin: 2%
+        }
+
+        td {
+        border: 1pt solid windowtext;
+        }
+
+        table td div{
+        padding : 1%
+        }
+
+        input{
+        border : none
+        }
+
+        span[placeholder]:empty:before {
+        content: attr(placeholder);
+        color: #555;
+        }
+
+        span { cursor:pointer; }
+
+        .background-edit {
+        background-color : yellow;
+        }
+
+        .save-button {
+        display: inline;
+        border-radius: 15px;
+        background-color: #4CAF50;
+        color: white;
+        font-size: 20px;
+        width: 40%;
+        height: 45px;
+        }
+
+        .save-button:hover {
+        background-color: #45a049;
+        }
+
+        .removeBtn, .removeColumnBtn{
+          background: rgba(211, 211, 211, 1.0);
+          width: 100%
+        }
+
+        .removeBtn:hover, .removeColumnBtn:hover{
+          background: rgba(183, 183, 183, 1.0);
+        }
+
+        .addColumnBtnAfter, #addRowBtnAfter {
+          background: #4CAF50;
+          width: 100%
+        }
+
+        .addColumnBtnAfter:hover, #addRowBtnAfter:hover {
+          background-color: #45a049;
+        }
+    </style>
+    <script>
+        $(document).ready(function () {
+          $("#addRowBtnAfter").click(function () {
+            const numberOfCells = document.getElementById('table1').rows[0].cells.length;
+            var newRow =$('<tr></tr>');
+            for(let i = 1; i < numberOfCells; i++)
+            {
+              newRow.append("<td><div class='background-edit' contenteditable></td>");
+            }
+            newRow.append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
+            $("#table1 tbody tr:last").after(newRow);
+          });
+
+          // Remove a row from the table
+          $(document).on("click", ".removeBtn", function () {
+              $(this).closest("tr").remove();
+          });
+
+          // Remove a column from the table
+          $(document).on("click", ".removeColumnBtn", function () {
+              var columnIndex = $(this).closest("td")[0].cellIndex + 1;
+              $('#table1 tr > *:nth-child('+columnIndex+')').remove();
+              $("#table1 tr > *:last-child").css("width","90px");
+          });
+          fetchData();
+        });
+        window.onload = getQueryParams;
+
+        //Add a column to the table
+        function addColumn() {
+          const numberOfCells = document.getElementById('table1').rows[0].cells.length;
+          $('#table1 tr > *:last-child').remove();
+          $("#table1 tr").each(function(){
+            var row = $(this);
+            if(row[0].className == "headers")
+             {
+               $(this).append("<td><div class='background-edit' contenteditable></td>");
+               $(this).append("<td>ACTIONS</td>");
+             }
+             else if(row[0].className == "deleteColumnBtnRow")
+             {
+               $(this).append("<td><button class='removeColumnBtn'>Delete <br> Column</button></td>");
+               $(this).append("<td><button class='addColumnBtnAfter' onclick='addColumn()'>Add <br> Column</button></td>");
+             }
+             else
+             {
+               $(this).append("<td><div class='background-edit' contenteditable></td>");
+               $(this).append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
+             }
+          })
+          $("#table1 tr > *:last-child").css("width","90px");
+        }
+
+        function save(print) {
+          // Get the content inside modal-body
+          hideElementsForView();
+          const closebuttons = document.getElementById("iclose");
+          var tableContent = getTableData("table1");
+
+          // Traverse up to the <body> or <html> element for the content
+          const elementToConvert = document.getElementById("bodyMain");
+          if (!elementToConvert) {
+            console.error("Element to convert not found");
+            return;
+          }
+
+          const obj = {
+            date: $("#datePicker").val(),
+            stationIdentifier: $("#stationIdentifier").text(),
+            senderAddress: $('#senderAddress').val(),
+            psi: $('#psi').text(),
+            ioa: $('#ioa').text(),
+            table1: tableContent,
+          };
+
+          const firNumber = document.getElementById("firNumberField").textContent;
+          const formName = document.getElementById("formNameField").textContent;
+          const pk = document.getElementById("pk").textContent;
+          $('paramsHolder').remove();
+
+        // Pass the element for PDF generation
+          convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
+            if (error) {
+              console.error("Error in convertHtmlToPdfDirectly:", error);
+              return;
+            }
+            const req = {
+            Pk: pk,
+            FileContent: JSON.stringify(obj),
+            FileName: formName,
+            FirNumber: firNumber,
+            FileBytes: byteArray,
+          };
+            saveAPICall(req, print);
+          });
+        }
+
+        // Function to fetch data and populate the fields
+        function fetchData() {
+          const params = new URLSearchParams(window.location.search);
+          const pk = params.get("pk");
+          const type = params.get("type");
+          if(type == "edit"){
+            $.ajax({
+              url: globalOptions.uri+"?supportingDocumentId="+pk,
+              type: "GET",
+              success: function (response) {
+                const jsonObject = JSON.parse(response.FileContent);
+                $("#datePicker").val(jsonObject.date || "");
+                $("#stationIdentifier").text(jsonObject.stationIdentifier || "/  /2025");
+                $("#senderAddress").val(jsonObject.senderAddress || "");
+                $('#psi').text(jsonObject.psi || "");
+                $('#ioa').text(jsonObject.ioa || "");
+                populateIPDRTable("table1", jsonObject.table1 || []);
+                },
+                error: function (error) {
+                    console.error("Error fetching data:", error);
+                    handleModalError();
+                }
+            });
+          }
+        }
+
+        function hideElementsForView()
+        {
+          $('#table1 tr > *:last-child').remove();
+          $('#addRowBtnAfter').remove();
+          $('#saveForm').remove();
+          $('#printForm').remove();
+          $('.background-edit').removeClass();
+          $('.deleteColumnBtnRow').remove();
+          if(document.getElementById('table1').rows.length < 2)
+          {
+            $('#table1').remove();
+          }
+        }
+    </script>
+</head>
+<body id="bodyMain">
+<div id="divMain">
+    <br/>
+    <div>
+        No: NORTH CEN PS/CDR<div id="stationIdentifier" style="display:inline" class="background-edit" contenteditable>/    /2025</div>
+    </div>
+    <div style='text-align:center;font-weight:bold;text-decoration:underline'>
+        Annexure IX<br/>
+        Performa to seek Call Data/Detail Record<br/>
+        (Request under Section 94 of the BNSS-2023)
+    </div>
+    <br/>
+<div style="display: inline-block;width: 30%;">
+    <p><strong>To,</strong></p>
+    <div style="text-indent:18.0pt">The Nodal Officer,<br/>
+        Deputy Commissioner of police<br/>
+        North Division, Bangalore city.</div>
+</div>
+<br/><br/>
+<div style='text-align:center'>Please provide the call detail Records (CDR/SDR/IMEI/IPDR/ILD/TDR etc.) of the following.</div>
+<br/>
+    <table id="table1" style="border-collapse: collapse;border: none;text-align:center; table-layout : fixed">
+        <tbody>
+        <tr class="deleteColumnBtnRow" style="font-weight: bold;">
+            <td style="width:50px"><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td style="width:90px"><button class="addColumnBtnAfter" onclick="addColumn()">Add <br/> Column</button></td>
+        </tr>
+        <tr class="headers" style="font-weight: bold;">
+            <td style="width:50px">
+                <div class="background-edit">SL No.</div>
+            </td>
+            <td>
+                <div class="background-edit">MOBILE NUMBER/s</div>
+            </td>
+            <td>
+                <div class="background-edit">MNP</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>CDR/SDR/CAF
+                    /IMEI/IPDR</div>
+            </td>
+            <td>
+                <div class="background-edit">PERIOD FROM</div>
+            </td>
+            <td>
+                <div class="background-edit">PERIOD TO</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>FIR/NCR/PET/DP/LPT NO. etc.,</div>
+            </td>
+            <td id="actions" style="width:90px">
+                <div>ACTIONS</div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="background-edit" contenteditable>1.</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>CDR</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>Till today</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable></div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete <br> Row</button>
+            </td>
+        </tbody>
+    </table>
+<button style="float:right" id="addRowBtnAfter">Add Row</button>
+    <div class="background-edit" style="border:1px solid black">
+        <b>Brief Facts:</b><div id="briefFacts" style="display:inline;" class="background-edit" contenteditable></div>
+    </div>
+<br/><br/>
+<ol style="margin-left: 2%">
+    <li>The subscriber identity has been ascertained and it is ensured that person in question is not someone whose call details are of a sensitive nature.</li>
+    <li>The number is not subscribed in the name of a sitting MP/MLA/MLC & Governor.</li>
+</ol>
+<br/><br/>
+<p>Place: Bengaluru</p>
+<p><span>Date: <input type="date" id="datePicker" class="background-edit"></span></p>
+<br/><br/>
+    <div class="noSplit">
+<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Regards</span>
+<div style="display: inline-block;width: 100%;">
+    <div style="float : right; text-align:center; width : 35%">
+        <p>Assistant commissioner of police,</p>
+        <p><strong>CEN police station,</strong></p>
+        <p><strong>North division, Bengaluru city</strong></p>
+    </div>
+</div>
+    </div>
+    <div class="noSplit">
+        <div style="display: inline-block;width: 30%;">
+            <p><strong>Sender,</strong></p>
+            <textarea id="senderAddress" class="background-edit" name="toAddress" rows="5" cols="30" style="border : none">Officer Name:
+Designation: Police Sub inspector
+Mobile no:
+E-mail id: cenpsnorthbcp@ksp.gov.in
+</textarea>
+        </div>
+    </div>
+<div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>RAJU</div></div>
+<div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
+<br/>
+</div><br/>
+<button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
+<button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>
+<div id="paramsHolder">
+<p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
+<p style="display: none;">Form Name: <span id="formNameField"></span></p>
+<p style="display: none;">Action Type: <span id="actionType"></span></p>
+<p style="display: none;">PK: <span id="pk"></span></p>
+</div>
+</body>
+</html>

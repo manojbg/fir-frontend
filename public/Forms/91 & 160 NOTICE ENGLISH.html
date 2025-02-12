@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
-    <script src="./scripts.js"></script>
+    <script src="./js/jspdf.umd.min.js"></script>
+    <script src="./js/html2canvas.min.js"></script>
+    <script src="./js/jquery-3.6.0.min.js"></script>
+    <script src="./js/scripts.js"></script>
     <style>
         /* Set A4 size */
         * {
@@ -18,7 +17,7 @@
 
         @page {
             size: A4;
-            margin: 2%;
+            margin: 2%  ;
         }
         html{
         height:297mm;
@@ -54,8 +53,7 @@
         background-color : yellow;
         }
 
-        .save-button {
-        display: inline;
+        .save-button{
         border-radius: 15px;
         background-color: #4CAF50;
         color: white;
@@ -64,7 +62,7 @@
         height: 45px;
         }
 
-        .save-button:hover {
+        .save-button:hover{
         background-color: #45a049;
         }
 
@@ -108,6 +106,7 @@
           $(document).on("click", ".removeColumnBtn", function () {
               var columnIndex = $(this).closest("td")[0].cellIndex + 1;
               $('#table1 tr > *:nth-child('+columnIndex+')').remove();
+              $("#table1 tr > *:last-child").css("width","90px");
           });
           fetchData();
         });
@@ -117,7 +116,6 @@
         function addColumn() {
           const numberOfCells = document.getElementById('table1').rows[0].cells.length;
           $('#table1 tr > *:last-child').remove();
-          var newColumn =$('<td></td>');
           $("#table1 tr").each(function(){
             var row = $(this);
             if(row[0].className == "headers")
@@ -154,11 +152,12 @@
 
           const obj = {
             date: $("#datePicker").val(),
-            crNumber: $("#crNumber").text(),
-            duration: $("#duration").text(),
+            caseIdentifier: $("#caseIdentifier").text(),
+            reportingDuration: $("#reportingDuration").text(),
+            toAddress: $("#toAddress").val(),
+            table1: tableContent,
             psi: $('#psi').text(),
             ioa: $('#ioa').text(),
-            table1: tableContent,
           };
 
           const firNumber = document.getElementById("firNumberField").textContent;
@@ -195,11 +194,12 @@
               success: function (response) {
                 const jsonObject = JSON.parse(response.FileContent);
                 $("#datePicker").val(jsonObject.date || "");
-                $("#crNumber").text(jsonObject.crNumber || "ENTER CR NUMBER");
-                $("#duration").text(jsonObject.duration || "dd.mm.yyyy");
+                $("#caseIdentifier").text(jsonObject.caseIdentifier || "ENTER FIR NUMBER");
+                $("#reportingDuration").text(jsonObject.reportingDuration || "dd.mm.yyyy");
+                $("#toAddress").val(jsonObject.toAddress || "");
+                populateTable("table1", jsonObject.table1 || []);
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
-                populateTable("table1", jsonObject.table1 || []);
                 },
                 error: function (error) {
                     console.error("Error fetching data:", error);
@@ -226,7 +226,7 @@
 </head>
 <body id="bodyMain">
 <div id="divMain">
-    <br/>
+<br/>
     <div style='text-align:center;'>
         <p>
 <span><img
@@ -236,102 +236,84 @@
             <strong>CEN Police Station, North Division, Bengaluru City</strong>
         </p>
         <p>
-            <span >2<sup>nd</sup> Floor, Deputy Commissioner Office Building, North Division, Bengaluru city -560022</span>
+            <span>2<sup>nd</sup> Floor, DCP Office Building, North Division, Yeswanthapura, Bengaluru city -560022</span>
         </p>
         <p>
-            <u><span >E-mail ID:-</span></u><a
+            <u><span>E-mail ID:-</span></u><a
                 href="mailto:cenpsnorthbcp@ksp.gov.in"><span >cenpsnorthbcp@ksp.gov.in</span></a><span
-                >&nbsp;; Phone No-080-22942302; Mob No-9449295758</span>
+                >&nbsp;; Phone No-080-22942302; Mob No-8277945187/9480801066</span>
         </p>
     </div>
     <br/> <br/>
-    <p style='text-align:center;font-weight:bold;text-decoration:underline'>
-        <u>Police Notice U/s 94 Bharatiya Nagarik Suraksha Sanhita, 2023</u>
-    </p>
+    <div style='text-align:center;font-weight:bold;text-decoration:underline'>
+        <u>Police Notice-01 <br/>
+            U/s 91 & 160 Criminal Procedure Code-1973
+        </u>
+    </div>
     <br/>
     <p style='text-align:right;'>
         <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
     </p>
-    <div style="display: inline-block;width: 40%;">
-        <p><strong>To,</strong></p>
-        <div style="margin-left:10%">Legal Manager, Google LLC<br/>
-            1600 Amphitheatre Parkway,<br/>
-            Mountain View California<br/>
-            USA 94043.
+    <br/>
+    <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
+        <div style="display:inline">
+            In Exercise of the powers conferred U/s 91 of CrPC, I hereby inform you that during the investigation of <b>FIR No</b>
+        </div>
+        <div id="caseIdentifier" style="display:inline" class="background-edit" contenteditable>ENTER FIR NUMBER</div>
+        <div style="display:inline"> registered in CEN Police Station, North Division Bengaluru. During the course of
+            investigation, it is revealed that there are reasonable grounds to question you to ascertain/ circumstances
+            the facts and circumstance from you.&nbsp;
+        </div>
+        <div>
+            Hence you are directed to appear
+            <div id="reportingDuration" style="display:inline" class="background-edit" contenteditable>within 7 days</div>
+            of receipt this notice before me at North CEN Police Station, North Division, Yeswanthapura, Bengaluru city
+            for enquiry along with relevant documents.
         </div>
     </div>
-    <br/><br/>
-    Sir/Madam, <br/>
-    <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
-            Sub:	Request to provide the requested details of below mentioned Gmail ID.
-            <br/>
-            <div>Ref: 	North CEN Police Station <b>Cr.No:</b>  <div id="crNumber" style="display:inline" class="background-edit" contenteditable>518/2023 U/S 66(C) 66(D) IT ACT</div></div>
-        </div>
-            <br/>
-            <div style="text-align:center"> * * * * * * </div>
-    <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
-        With reference to the above cited subject, it is to inform you that using the following Gmail ID someone
-        had accessing the victim’s social media accounts and communicating to with his contacts to make fraud without
-        consent of the victim. Hence, in above said reference a case at CEN Police Station, North Division,
-        Bengaluru city. Hence for further investigation please provide the below requested details.</div>
-    <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>The suspected <b>Gmail</b> of the accused are as follows,</div>
     <br/>
     <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
         <tbody>
         <tr class="deleteColumnBtnRow" style="font-weight: bold;">
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td style="width:90px"><button class="addColumnBtnAfter" onclick="addColumn()">Add <br/> Column</button></td>
         </tr>
         <tr class="headers" style="font-weight: bold;">
             <td>
-                <div class="background-edit" contenteditable>SL No.</div>
+                <div class="background-edit" contenteditable>BANK</div>
             </td>
             <td>
-                <div class="background-edit" contenteditable>EMAIl ID</div>
+                <div class="background-edit" contenteditable>ACCOUNT NO</div>
+            </td>
+            <td>
+                <div class="background-edit" contenteditable>IFSC CODE</div>
             </td>
             <td id="actions" style="width:90px">
                 <div>ACTIONS</div>
             </td>
         </tr>
-        <tr>
+         <tr>
             <td>
-                <div class="background-edit" contenteditable>01</div>
+                <div class="background-edit" contenteditable>RBL Bank</div>
             </td>
             <td>
-                <div class="background-edit" contenteditable></div>
+                <div class="background-edit" contenteditable>409000546479</div>
             </td>
             <td>
-                <button class="removeBtn">Delete <br> Row</button>
+                <div class="background-edit" contenteditable>RATN0000104</div>
+            </td>
+            <td>
+                <button class="removeBtn">Delete <br/> Row</button>
             </td>
         </tr>
         </tbody>
     </table>
     <button style="float:right" id="addRowBtnAfter">Add Row</button>
     <br/>
-    <p style="display: inline;line-height:150%">Period of activity from <div id="duration" style="display:inline" class="background-edit" contenteditable>1ST JUNE 2023 to till date.</div>search and provide below
-    requested details,
-    </p>
-    <div style='margin-left:3%;line-height:150%'>
-    <ul>
-        <li>The Registration Gmail details.</li>
-        <li>Linked phone numbers with the Gmail ID.</li>
-        <li>Login IP Details.</li>
-        <li>Device Details.</li>
-        <li>Recovery Email ID/ID’s.</li>
-        <li>Subscription to any other Google services.</li>
-        <li>Any other information available with the Gmail ID.</li>
-    </ul>
-    </div>
-    <br/>
-    <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
-        Hence we request Google to provide the above sought details for the investigation of the case and co-operate in
-        bringing the accused to the books of law in the interest of Justice.
-    </div>
-    <br/>
     <div class="noSplit">
     <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
-    </p>
     <br/><br/>
     <div style="display: inline-block;width: 100%;">
         <div style="float : right; text-align:center; width : 35%">
@@ -341,10 +323,17 @@
         </div>
     </div>
     </div>
+    <br/>
+    <div class="noSplit" style="display: inline-block;width: 30%;">
+        <p><strong>To,</strong></p>
+        <textarea id="toAddress" class="background-edit" name="toAddress" rows="5" cols="30" style="border : none;margin-left : 10%"></textarea>
+    </div>
+    <br/>
     <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>ROHINI</div></div>
     <div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
     <br/>
-</div><br/>
+</div>
+<br/>
 <button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
 <button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>
 <div id="paramsHolder">

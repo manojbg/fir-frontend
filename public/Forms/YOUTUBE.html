@@ -11,13 +11,17 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family:Tahoma;
-            font-size:17px;
+            font-family:"Times New Roman",sans-serif;
+            font-size:18px;
+        }
+
+        @media print {
+        div { break-inside: avoid; }
         }
 
         @page {
             size: A4;
-            margin: 2%;
+            margin: 0;
         }
         html{
         height:297mm;
@@ -27,7 +31,7 @@
         }
 
         body{
-        margin: 2%
+        margin: 5%
         }
 
         td {
@@ -66,82 +70,17 @@
         .save-button:hover {
         background-color: #45a049;
         }
-
-        .removeBtn, .removeColumnBtn{
-          background: rgba(211, 211, 211, 1.0);
-          width: 100%
-        }
-
-        .removeBtn:hover, .removeColumnBtn:hover{
-          background: rgba(183, 183, 183, 1.0);
-        }
-
-        .addColumnBtnAfter, #addRowBtnAfter {
-          background: #4CAF50;
-          width: 100%
-        }
-
-        .addColumnBtnAfter:hover, #addRowBtnAfter:hover {
-          background-color: #45a049;
-        }
     </style>
     <script>
         $(document).ready(function () {
-          $("#addRowBtnAfter").click(function () {
-            const numberOfCells = document.getElementById('table1').rows[0].cells.length;
-            var newRow =$('<tr></tr>');
-            for(let i = 1; i < numberOfCells; i++)
-            {
-              newRow.append("<td><div class='background-edit' contenteditable></td>");
-            }
-            newRow.append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
-            $("#table1 tbody tr:last").after(newRow);
-          });
-
-          $(document).on("click", ".removeBtn", function () {
-            $(this).closest("tr").remove();
-          });
-
-          // Remove a column from the table
-          $(document).on("click", ".removeColumnBtn", function () {
-              var columnIndex = $(this).closest("td")[0].cellIndex + 1;
-              $('#table1 tr > *:nth-child('+columnIndex+')').remove();
-          });
           fetchData();
         });
         window.onload = getQueryParams;
-
-        //Add a column to the table
-        function addColumn() {
-          const numberOfCells = document.getElementById('table1').rows[0].cells.length;
-          $('#table1 tr > *:last-child').remove();
-          var newColumn =$('<td></td>');
-          $("#table1 tr").each(function(){
-            var row = $(this);
-          if(row[0].className == "headers")
-           {
-             $(this).append("<td><div class='background-edit' contenteditable></td>");
-             $(this).append("<td>ACTIONS</td>");
-           }
-           else if(row[0].className == "deleteColumnBtnRow")
-           {
-             $(this).append("<td><button class='removeColumnBtn'>Delete <br> Column</button></td>");
-             $(this).append("<td><button class='addColumnBtnAfter' onclick='addColumn()'>Add <br> Column</button></td>");
-           }
-           else
-           {
-             $(this).append("<td><div class='background-edit' contenteditable></td>");
-             $(this).append("<td><button class='removeBtn'>Delete <br> Row</button></td>");
-           }
-          })
-          $("#table1 tr > *:last-child").css("width","90px");
-        }
 
         function save(print) {
           // Get the content inside modal-body
           hideElementsForView();
           const closebuttons = document.getElementById("iclose");
-          var tableContent = getTableData("table1");
 
           // Traverse up to the <body> or <html> element for the content
           const elementToConvert = document.getElementById("bodyMain");
@@ -151,8 +90,12 @@
           }
 
           const obj = {
-            date: $("#datePicker").val(),
-            table1: tableContent,
+            date: $('#datePicker').val(),
+            caseIdentifier: $("#caseIdentifier").text(),
+            caseType: $('#caseType option:selected').text(),
+            letterBody: $("#letterBody").text(),
+            duration: $('#duration').text(),
+            ytURL: $('#ytURL').text(),
             psi: $('#psi').text(),
             ioa: $('#ioa').text(),
           };
@@ -175,7 +118,7 @@
             FirNumber: firNumber,
             FileBytes: byteArray,
           };
-          saveAPICall(req, print);
+            saveAPICall(req, print);
           });
         }
 
@@ -191,7 +134,11 @@
               success: function (response) {
                 const jsonObject = JSON.parse(response.FileContent);
                 $("#datePicker").val(jsonObject.date || "");
-                populateTable("table1", jsonObject.table1 || []);
+                $("#caseIdentifier").text(jsonObject.caseIdentifier || "ENTER FIR NUMBER");
+                $("#caseType option:selected").text(jsonObject.caseType || "FIR No :");
+                $("#letterBody").text(jsonObject.letterBody || "");
+                $('#duration').text(jsonObject.duration || "");
+                $('#ytURL').text(jsonObject.ytURL || "");
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
                 },
@@ -205,24 +152,15 @@
 
         function hideElementsForView()
         {
-          $('#table1 tr > *:last-child').remove();
-          $('#addRowBtnAfter').remove();
+          $('.background-edit').removeClass();
           $('#saveForm').remove();
           $('#printForm').remove();
-          $('.background-edit').removeClass();
-          $('.deleteColumnBtnRow').remove();
-          if(document.getElementById('table1').rows.length < 2)
-          {
-            $('#table1').remove();
-          }
+          document.getElementById('caseTypeDiv').innerHTML = "<b>"+$("#caseType option:selected").text()+"</b>";
         }
-
-
     </script>
 </head>
 <body id="bodyMain">
 <div id="divMain">
-    <br/>
     <div style='text-align:center;'>
         <p>
 <span><img
@@ -232,109 +170,73 @@
             <strong>CEN Police Station, North Division, Bengaluru City</strong>
         </p>
         <p>
-            <span>2<sup>nd</sup> Floor, DCP Office Building, North Division, Yeswanthapura, Bengaluru city -560022</span>
+            <span >2<sup>nd</sup> Floor, DCP Office Building, North Division, Yeswanthapura, Bengaluru city -560022</span>
         </p>
         <p>
-            <u><span>E-mail ID:-</span></u><a
+            <u><span >E-mail ID:-</span></u><a
                 href="mailto:cenpsnorthbcp@ksp.gov.in"><span >cenpsnorthbcp@ksp.gov.in</span></a><span
                 >&nbsp;; Phone No-080-22942302; Mob No-8277945187/9480801066</span>
         </p>
     </div>
     <br/> <br/>
     <div style='text-align:center;font-weight:bold;text-decoration:underline'>
-        <u>To the Honorable 45TH  ACMM Court, Bengaluru City.</u>
+        <u>Police Notice U/s 94 Bharatiya Nagarik Suraksha Sanhita, 2023</u>
     </div>
     <br/>
     <p style='text-align:right;'>
         <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
     </p>
-    <br/>
-    <h4 style="text-align: center;">Intimation regarding Lien Mark bank accounts.</h4><br/>
-
-    <table style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
-        <tbody>
-        <tr>
-            <td style="width : 5%">1.</td>
-            <td style="width : 45%">Name of the Police station</td>
-            <td style="width : 45%">C.E.N Police station, North Division, Bengaluru city.</td>
-        </tr>
-        <tr>
-            <td>2.</td>
-            <td>Cr. No & Section of law</td>
-            <td>590/2022 U/s 66(D) IT Act</td>
-        </tr>
-        <tr>
-            <td>3.</td>
-            <td>Name of the officer, Designation on whose requisition account/s Lien marked.</td>
-            <td>PAVAN N/ Shivarathna S<br/>
-                ACP/ Police Inspector<br/>
-                C.E.N Police Station,<br/>
-                North Division, Bengaluru City
-            </td>
-        </tr>
-        </tbody>
-    </table>
-<br/>
-    <h4 style="text-align: center;">Lien marked account/s & amount details</h4><br/>
-    <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
-        <tbody>
-        <tr class="deleteColumnBtnRow" style="font-weight: bold;">
-            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
-            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
-            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
-            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
-            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
-            <td style="width:90px"><button class="addColumnBtnAfter" onclick="addColumn()">Add <br/> Column</button></td>
-        </tr>
-        <tr class="headers" style="font-weight: bold;">
-          <td>
-              <div class="background-edit" contenteditable>Name of the BANK/s</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>ACCOUNT No/s</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>IFSC CODE</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>LIEN MARKED AMOUNT</div>
-          </td>
-          <td>
-              <div class="background-edit" contenteditable>NCRP LAYER</div>
-          </td>
-          <td id="actions" style="width:90px">
-              <div>ACTIONS</div>
-          </td>
-        </tr>
-        <tr>
-            <td>
-                <div class="background-edit" contenteditable>YES Bank</div>
-            </td>
-            <td>
-                <div class="background-edit" contenteditable>048863400002512</div>
-            </td>
-            <td>
-                <div class="background-edit" contenteditable></div>
-            </td>
-            <td>
-                <div class="background-edit" contenteditable>60,000/-</div>
-            </td>
-            <td>
-                <div class="background-edit" contenteditable></div>
-            </td>
-            <td>
-                <button class="removeBtn">Delete <br> Row</button>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    <button style="float:right" id="addRowBtnAfter">Add Row</button>
-
+    <div style="display: inline-block;width: 30%;">
+        <p><strong>To,</strong></p>
+        <div style="margin-left:10%">Legal Support<br/>
+            YouTube (Google LLC)<br/>
+            901 Cherry Ave.<br/>
+            San Bruno, CA 94066, USA
+        </div>
+    </div>
     <br/><br/>
+    Sir/Madam, <br/>
+    <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
+        <div>
+            Sub:	Request to provide the details of below mentioned youtube link.
+            <br/>
+            <div>Ref: 	CEN Police Station <b>Cr. No.</b>
+            <div id="caseIdentifier" style="display:inline" class="background-edit" contenteditable>256/2024 U/s 66(C), 66 (D) IT Act & 318(4) BNS.</div>
+            </div>
+            </div>
+            <br/>
+            <div style="text-align:center"> * * * * * * </div>
+        <div id="letterBody" style="display:inline" class="background-edit" contenteditable>
+            With reference to the above-cited subject, it is to inform you that a movie was uploaded to the following
+            YouTube link without the movie maker permission, resulting in financial losses for the movie-making team.
+            A case has been registered at CEN Police Station, North Division, Bengaluru city, in connection with this
+            incident, and the suspected YouTube video link is as follows.</div>
+            <div style = "text-indent : 0px">
+                <br/>
+                <div><b>YouTube  URL : </b> <div id="ytURL" style="display:inline" class="background-edit" contenteditable>URL</div></div>
+            </div>
+        <br/>
+            <p style="display: inline;">Please search and provide the following details for the period of activity <div id="duration" style="display:inline" class="background-edit" contenteditable>1ST JUNE 2023 to till date.</div></p>
+<br/>
+        <div>
+            <div>1.	Channel registration details</div>
+            <div>2.	Linked mobile number/s with Channel</div>
+            <div>3.	Linked mail ID/s</div>
+            <div>4.	IP address of the channel registration and uploading the content</div>
+        </div>
+        </div>
+    <br/>
+    <div>
+        Hence we are hereby requesting YouTube to provide above sought details for the investigation.
+        Co-operate in bringing the accused to the books of law in the interest of Justice.
+    </div>
+    <br/>
     <div class="noSplit">
+    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
+    </p>
+    <br/><br/>
     <div style="display: inline-block;width: 100%;">
         <div style="float : right; text-align:center; width : 35%">
-            <p><b>Investigation Officer</b></p><br/>
             <p>Assistant commissioner of police,</p>
             <p><strong>CEN police station,</strong></p>
             <p><strong>North division, Bengaluru city</strong></p>
@@ -344,9 +246,8 @@
     <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>ROHINI</div></div>
     <div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
     <br/>
-    <br/>
-</div>
-<button class="save-button" id="saveForm" title="Save Documentt" onclick="save(false)">Save</button>
+</div><br/>
+<button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
 <button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>
 <div id="paramsHolder">
 <p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
