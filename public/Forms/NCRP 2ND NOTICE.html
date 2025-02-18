@@ -27,7 +27,8 @@
         }
 
         body{
-        margin: 5%
+        margin: 2%;
+        margin-top: 4%
         }
 
         td {
@@ -96,7 +97,7 @@
             ackNumberCopy: $("#ackNumberCopy").text(),
             noticeDate: $("#noticeDate").text(),
             noticeDeliveryDate: $("#noticeDeliveryDate").text(),
-            toAddress: $("#toAddress").val(),
+            toAddress: $("#toAddress").html(),
             psi: $('#psi').text(),
             ioa: $('#ioa').text(),
           };
@@ -104,7 +105,13 @@
           const firNumber = document.getElementById("firNumberField").textContent;
           const formName = document.getElementById("formNameField").textContent;
           const pk = document.getElementById("pk").textContent;
+          const cdt = document.getElementById("cdt").textContent;
           $('paramsHolder').remove();
+
+          if(print)
+          {
+            js:window.print();
+          }
 
         // Pass the element for PDF generation
           convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
@@ -118,8 +125,9 @@
             FileName: formName,
             FirNumber: firNumber,
             FileBytes: byteArray,
+            CreatedDateTime: cdt
           };
-            saveAPICall(req, print);
+            saveAPICall(req);
           });
         }
 
@@ -143,7 +151,7 @@
                 $("#ackNumberCopy").text(jsonObject.ackNumberCopy || "ENTER ACKNOWLEDGEMENT NUMBER");
                 $("#noticeDate").text(jsonObject.noticeDate || "dd.mm.yyyy");
                 $("#noticeDeliveryDate").text(jsonObject.noticeDeliveryDate || "dd.mm.yyyy");
-                $("#toAddress").val(jsonObject.toAddress || "");
+                $("#toAddress").html(jsonObject.toAddress || "");
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
                 },
@@ -220,12 +228,12 @@
     </div>
     <br/>
     <div class="noSplit">
-    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
+    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Regards,</span>
     </p>
     <br/><br/>
     <div style="display: inline-block;width: 100%;">
         <div style="float : right; text-align:center; width : 35%">
-            <p>Assistant commissioner of police,</p>
+            <p><b>Investigation Officer</b></p>
             <p><strong>CEN police station,</strong></p>
             <p><strong>North division, Bengaluru city</strong></p>
         </div>
@@ -233,9 +241,9 @@
     </div>
     <br/>
     <div class="noSplit">
-    <div style="display: inline-block;width: 30%;">
+    <div style="display: inline-block;width: 40%;">
         <p><strong>To,</strong></p>
-        <textarea id="toAddress" class="background-edit" name="toAddress" rows="5" cols="30" style="border : none;margin-left : 10%"></textarea>
+        <div id="toAddress" class="background-edit" style="border : none;margin-left: 10%;" contenteditable>The Manager,</div>
     </div>
     </div>
     <br/>
@@ -246,10 +254,11 @@
 <button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
 <button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>
 <div id="paramsHolder">
-<p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
+    <p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
 <p style="display: none;">Form Name: <span id="formNameField"></span></p>
 <p style="display: none;">Action Type: <span id="actionType"></span></p>
 <p style="display: none;">PK: <span id="pk"></span></p>
+    <p style="display: none;">CDT: <span id="cdt"></span></p>
 </div>
 </body>
 </html>

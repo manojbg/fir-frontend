@@ -27,7 +27,8 @@
         }
 
         body{
-        margin: 2%
+        margin: 2%;
+        margin-top: 4%
         }
 
         td {
@@ -153,7 +154,7 @@
 
           const obj = {
             date: $("#datePicker").val(),
-            crNumber: $("#crNumber").text(),
+            caseIdentifier: $("#caseIdentifier").text(),
             duration: $("#duration").text(),
             psi: $('#psi').text(),
             ioa: $('#ioa').text(),
@@ -163,7 +164,13 @@
           const firNumber = document.getElementById("firNumberField").textContent;
           const formName = document.getElementById("formNameField").textContent;
           const pk = document.getElementById("pk").textContent;
+          const cdt = document.getElementById("cdt").textContent;
           $('paramsHolder').remove();
+
+          if(print)
+          {
+            js:window.print();
+          }
 
         // Pass the element for PDF generation
           convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
@@ -177,8 +184,9 @@
             FileName: formName,
             FirNumber: firNumber,
             FileBytes: byteArray,
+            CreatedDateTime: cdt
           };
-            saveAPICall(req, print);
+            saveAPICall(req);
           });
         }
 
@@ -194,7 +202,7 @@
               success: function (response) {
                 const jsonObject = JSON.parse(response.FileContent);
                 $("#datePicker").val(jsonObject.date || "");
-                $("#crNumber").text(jsonObject.crNumber || "ENTER CR NUMBER");
+                $("#caseIdentifier").text(jsonObject.caseIdentifier || "ENTER CR NUMBER");
                 $("#duration").text(jsonObject.duration || "dd.mm.yyyy");
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
@@ -262,7 +270,7 @@
     <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
             Sub:	 Request to provide the requested details of below mentioned Proton ID.
             <br/>
-            <div>Ref: 	North CEN Police Station <b>FIR No:</b>  <div id="crNumber" style="display:inline" class="background-edit"
+            <div>Ref: 	North CEN Police Station <b>FIR No:</b>  <div id="caseIdentifier" style="display:inline" class="background-edit"
                                                                        contenteditable>2881/2024 U/s 66(C), 66 (D) IT Act & 318(4) BNS.</div></div>
         </div>
             <br/>
@@ -324,12 +332,12 @@
     </div>
     <br/>
     <div class="noSplit">
-    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
+    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Regards,</span>
     </p>
     <br/><br/>
     <div style="display: inline-block;width: 100%;">
         <div style="float : right; text-align:center; width : 35%">
-            <p>Assistant commissioner of police,</p>
+            <p><b>Investigation Officer</b></p>
             <p><strong>CEN police station,</strong></p>
             <p><strong>North division, Bengaluru city</strong></p>
         </div>
@@ -342,10 +350,11 @@
 <button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
 <button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>
 <div id="paramsHolder">
-<p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
+    <p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
 <p style="display: none;">Form Name: <span id="formNameField"></span></p>
 <p style="display: none;">Action Type: <span id="actionType"></span></p>
 <p style="display: none;">PK: <span id="pk"></span></p>
+    <p style="display: none;">CDT: <span id="cdt"></span></p>
 </div>
 </body>
 </html>

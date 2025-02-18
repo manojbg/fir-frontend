@@ -1,19 +1,18 @@
 var globalOptions = {
-	uri: 'http://localhost:8080/firFileArchival/api/dashboard/getSupportingDocumentData',
+	uri: 'http://localhost:8080/firFileArchival/api/dashboard/getSupportingDocumentData'
 }
 
 function getQueryParams() {
   const params = new URLSearchParams(window.location.search);
-  const firNumber = params.get("firNumber");
-  const formName = params.get("formName");
-  const type = params.get("type");
-  const pk = params.get("pk");
 
-  // Populate your form fields if needed
-  document.getElementById("firNumberField").textContent = firNumber;
-  document.getElementById("formNameField").textContent = formName;
-  document.getElementById("actionType").textContent = type;
-  document.getElementById("pk").textContent = pk;
+  document.getElementById("caseIdentifier").textContent = params.get("firNumber");
+  document.getElementById("firNumberField").textContent = params.get("firNumber");
+  document.getElementById("formNameField").textContent = params.get("formName");
+  document.getElementById("actionType").textContent = params.get("type");
+  document.getElementById("pk").textContent = params.get("pk");
+  document.getElementById("psi").textContent = params.get("psi");
+  document.getElementById("ioa").textContent = params.get("ioa");
+  document.getElementById("cdt").textContent = params.get("cdt");
 }
 
 function handleCloseModal(){
@@ -140,7 +139,7 @@ function convertHtmlToPdfDirectly(element, callback) {
         // Add the image to the PDF
         pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
         iteration += 1;
-        if(iteration < elements.length)
+        if(iteration < pages.length)
          {
          pdf.addPage();
          }
@@ -170,7 +169,7 @@ function convertHtmlToPdfDirectly(element, callback) {
     });
 }
 
-function saveAPICall(requestPayload, print) {
+function saveAPICall(requestPayload) {
   // Send the data via AJAX
   $.ajax({
      url: "http://localhost:8080/firFileArchival/api/fileOps/saveFIRSupportingDocument",
@@ -179,10 +178,6 @@ function saveAPICall(requestPayload, print) {
      data: JSON.stringify(requestPayload),
      success: (response) => {
          //console.log("Response:", response);
-         if(print)
-         {
-            js:window.print();
-         }
          handleCloseModal();
      },
      error: (error) => {
@@ -193,11 +188,17 @@ function saveAPICall(requestPayload, print) {
 
 }
 
+
 function splitIntoPages(element)
 {
+    //let fullTemplate = mainDivElement.cloneNode(true);
+  //let fullTemplate = clone(mainDivElement);
+  //let fullTemplate = JSON.parse(JSON.stringify(mainDivElement));
+  //var fullTemplate = jQuery.extend(true, {}, mainDivElement)
   const totalHeight = element.clientHeight;
-  var childrenArray = element.children;
-  var a4Height = 840;
+  let childrenArray = element.children;
+  //a4 size page in points(po) 595 x 842
+  const a4Height = 980;
   var elements = [];
   var partitionedElements = [];
   var height = 0;
@@ -208,10 +209,11 @@ function splitIntoPages(element)
       elements.push(childrenArray[i]);
     }
     partitionedElements.push(elements);
-    return partitionedElements;
   }
-  for(var i=0; i < childrenArray.length; i++)
+  else
   {
+    for(var i=0; i < childrenArray.length; i++)
+    {
      tempHeight = height + childrenArray[i].clientHeight;
      if(tempHeight <= a4Height)
      {
@@ -219,10 +221,12 @@ function splitIntoPages(element)
        height = tempHeight;
        if(i == childrenArray.length-1)
        {
+         //fullTemplate.children[0].replaceChildren(...elements);
+         //const page = html2canvas(fullTemplate);
          partitionedElements.push(elements);
        }
      }
-     else if (childrenArray[i].className != "noSplit" && (a4Height - height > (.2 * childrenArray[i].clientHeight)))
+     else if (childrenArray[i].className != "noSplit" && (a4Height - height > (.2 * a4Height)))
      {
         var elementToSplit = childrenArray[i];
         var heightToFill = a4Height - height;
@@ -234,7 +238,7 @@ function splitIntoPages(element)
        {
          if(elementToSplit.children > 1)
          {
-         var splitElementChildren = elementToSplit.children;
+           var splitElementChildren = elementToSplitClone.children;
            for(var j=0;j < splitElementChildren.length; j++)
            {
              heightToFill = heightToFill - splitElementChildren[j].clientHeight;
@@ -247,61 +251,98 @@ function splitIntoPages(element)
               splitElementToNextPage.push(elementToSplit.children[j]);
              }
            }
-           elementToSplit.children = splitElementToCurrentPage;
+           elementToSplit.children.replaceChildren(...splitElementToCurrentPage);
            elements.push(elementToSplit);
+           //fullTemplate.children[0].replaceChildren(...elements);
+           //const page = html2canvas(fullTemplate);
            partitionedElements.push(elements);
 
            //create new page element and push
            elements = [];
            height = 0;
-           elementToSplit.children = splitElementToNextPage;
+           elementToSplit.children.replaceChildren(...splitElementToNextPage);
            elements.push(elementToSplit);
          }
-       else
-       {
-          var divInnerContent = elementToSplit.innerText;
-          var characterLength = divInnerContent.length;
-          var newSection = $('<div id="splitDiv"></div>');
-          newSection.append(divInnerContent.substring(0,characterLength * heightToFillPercentage));
-          splitElementToCurrentPage.push(newSection);
-           elementToSplit.children = splitElementToCurrentPage;
+         else
+         {
+           var divInnerContent = elementToSplit.innerText;
+           var characterLength = divInnerContent.length;
+           var newSection = $('<div id="splitDiv"></div>');
+           newSection.append(divInnerContent.substring(0,characterLength * heightToFillPercentage));
+           splitElementToCurrentPage.push(newSection);
+           elementToSplit.children.replaceChildren(...splitElementToCurrentPage);
            elements.push(newSection);
-           partitionedElements.push(elements);
+           fullTemplate.children[0].replaceChildren(...elements);
+           //const page = html2canvas(fullTemplate);
+           partitionedElements.push(fullTemplate);
 
            //create new page element and push
            var newSection = $('<div id="splitDiv"></div>');
-          newSection.append(divInnerContent.substring((characterLength * heightToFillPercentage)+1,characterLength));
-          splitElementToNextPage.push(newSection);
+           newSection.append(divInnerContent.substring((characterLength * heightToFillPercentage)+1,characterLength));
+           splitElementToNextPage.push(newSection);
            elements = [];
            height = 0;
-           elementToSplit.children = splitElementToNextPage;
+           elementToSplit.children.replaceChildren(...splitElementToNextPage);
            elements.push(elementToSplit);
-       }
+         }
        }
        else if (elementToSplit.localName == "table")
        {
-         var splitElementChildren = elementToSplit.children;
-         for(var k=0;k < splitElementChildren[0].length; k++)
+         var tbody = elementToSplit.children[0];
+
+         for(var k=0;k < tbody.children.length; k++)
          {
-             heightToFill = heightToFill - splitElementChildren.children[k].clientHeight;
-             if(heightToFill >= 0)
-             {
-              splitElementToCurrentPage.push(splitElementChildren.children[k]);
+           heightToFill = heightToFill - tbody.children[k].clientHeight;
+           if(heightToFill >= 0)
+           {
+             height = height + tbody.children[k].clientHeight;
+             splitElementToCurrentPage.push(tbody.children[k]);
+           }
+           else
+           {
+             let elementToSplitInternalClone = elementToSplit.cloneNode(true);
+             //let tbodySplitClone = elementToSplit.children[0].cloneNode(true);
+             //elementToSplitInternalClone.replaceChildren(tbodySplitClone);
+             elementToSplitInternalClone.children[0].replaceChildren(...splitElementToCurrentPage);
+             elements.push(elementToSplitInternalClone);
+             //fullTemplate.children[0].replaceChildren(...elements);
+             //const page = html2canvas(fullTemplate);
+             partitionedElements.push(elements);
+
+             var allChildren = [];
+             splitElementToCurrentPage.forEach(ele =>{ allChildren.push(ele)});
+             for (var l = 0; l < tbody.children.length; l++) {
+             allChildren.push(tbody.children[l])
              }
-             else
-             {
-              splitElementToNextPage.push(splitElementChildren.children[k]);
-             }
+             //tbody.replaceChildren(...allChildren);
+
+             //reset page height and array
+             splitElementToCurrentPage = [];
+             k=0;
+             heightToFill = a4Height - tbody.children[k].clientHeight;
+             splitElementToCurrentPage.push(tbody.children[k]);
+             elements = [];
+             height = 0;
+           }
          }
+         let elementToSplitClone = elementToSplit.cloneNode(true);
+        // var tbodyClone = elementToSplit.children[0].cloneNode(true);
+         //elementToSplitClone.replaceChildren(tbodyClone);
+         elementToSplitClone.children[0].replaceChildren(...splitElementToCurrentPage);
+         elements.push(elementToSplitClone);
        }
      }
      else
      {
+       //fullTemplate.children[0].replaceChildren(...elements);
+       //const page = html2canvas(fullTemplate);
        partitionedElements.push(elements);
        elements = [];
        elements.push(childrenArray[i]);
        height = 0;
+       //i = 0;
      }
+    }
   }
   return partitionedElements;
 }

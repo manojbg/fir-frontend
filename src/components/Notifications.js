@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Fragment } from 'react';
 import Button from 'react-bootstrap/Button';
 import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container';
@@ -31,7 +31,7 @@ function NotificationModal(props) {
 
   const handleClearAll = async () => {
     await apiService.deleteAllNotificationsForUser(localStorage.getItem('userId'));
-    fetchNotifications();
+    props.onHide();
   }
 
   const handleClearSpecificNotification = async (firNumber, assignee) => {
@@ -69,7 +69,7 @@ function NotificationModal(props) {
            notifications.map((notification) => (
              <React.Fragment>
                <div className="notification-text">
-                 You have been assigned the FIR <strong>{notification.FirNumber}</strong> uploaded on <strong>{notification.FirDate}</strong>.
+               <div style={{ display:"inline"}} dangerouslySetInnerHTML={{ __html: notification.Message }} />
                  <button className="clear-button" title="Remove Notification" onClick={() => handleClearSpecificNotification(notification.FirNumber, notification.AssigneeUserId)}></button>
                </div>
            </React.Fragment>

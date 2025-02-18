@@ -27,7 +27,8 @@
         }
 
         body{
-        margin: 2%
+        margin: 2%;
+        margin-top: 4%
         }
 
         td {
@@ -154,16 +155,23 @@
             date: $("#datePicker").val(),
             caseIdentifier: $("#caseIdentifier").text(),
             reportingDuration: $("#reportingDuration").text(),
-            toAddress: $("#toAddress").val(),
+            toAddress: $("#toAddress").html(),
             table1: tableContent,
             psi: $('#psi').text(),
             ioa: $('#ioa').text(),
           };
 
           const firNumber = document.getElementById("firNumberField").textContent;
-          const formName = document.getElementById("formNameField").textContent;
+          let formName = document.getElementById("formNameField").textContent;
+          formName = formName+' - '+$("#toAddress").html().split("<div>")[0];
           const pk = document.getElementById("pk").textContent;
+          const cdt = document.getElementById("cdt").textContent;
           $('paramsHolder').remove();
+
+          if(print)
+          {
+            js:window.print();
+          }
 
         // Pass the element for PDF generation
           convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
@@ -177,8 +185,9 @@
             FileName: formName,
             FirNumber: firNumber,
             FileBytes: byteArray,
+            CreatedDateTime: cdt
           };
-            saveAPICall(req, print);
+            saveAPICall(req);
           });
         }
 
@@ -196,7 +205,7 @@
                 $("#datePicker").val(jsonObject.date || "");
                 $("#caseIdentifier").text(jsonObject.caseIdentifier || "ENTER FIR NUMBER");
                 $("#reportingDuration").text(jsonObject.reportingDuration || "dd.mm.yyyy");
-                $("#toAddress").val(jsonObject.toAddress || "");
+                $("#toAddress").html(jsonObject.toAddress || "");
                 populateTable("table1", jsonObject.table1 || []);
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
@@ -313,20 +322,20 @@
     <button style="float:right" id="addRowBtnAfter">Add Row</button>
     <br/>
     <div class="noSplit">
-    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
+    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Regards,</span>
     <br/><br/>
     <div style="display: inline-block;width: 100%;">
         <div style="float : right; text-align:center; width : 35%">
-            <p>Assistant commissioner of police,</p>
+            <p><b>Investigation Officer</b></p>
             <p><strong>CEN police station,</strong></p>
             <p><strong>North division, Bengaluru city</strong></p>
         </div>
     </div>
     </div>
     <br/>
-    <div class="noSplit" style="display: inline-block;width: 30%;">
+    <div class="noSplit" style="display: inline-block;width: 40%;">
         <p><strong>To,</strong></p>
-        <textarea id="toAddress" class="background-edit" name="toAddress" rows="5" cols="30" style="border : none;margin-left : 10%"></textarea>
+        <div id="toAddress" class="background-edit" style="border : none;margin-left: 10%;" contenteditable></div>
     </div>
     <br/>
     <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>ROHINI</div></div>
@@ -337,10 +346,11 @@
 <button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
 <button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>
 <div id="paramsHolder">
-<p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
+    <p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
 <p style="display: none;">Form Name: <span id="formNameField"></span></p>
 <p style="display: none;">Action Type: <span id="actionType"></span></p>
 <p style="display: none;">PK: <span id="pk"></span></p>
+    <p style="display: none;">CDT: <span id="cdt"></span></p>
 </div>
 </body>
 </html>

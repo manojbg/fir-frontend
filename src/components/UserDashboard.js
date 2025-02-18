@@ -14,8 +14,9 @@ const UserDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [createFormPopup, setCreateFormPopup] = useState({ visible: false, FirNumber: '', FileName: '' });
+  const [createFormPopup, setCreateFormPopup] = useState({ visible: false, FirNumber: '', FileName: '', IO: '', PSI: ''});
   const [uploadPopup, setUploadPopup] = useState({ visible: false, FirNumber: '', FileName:'', UnApprovedFirSupportingDocuments: '', file: null});
+  const [uploadNCRPPopup, setUploadNCRPPopup] = useState({ visible: false, FirNumber: '',CreatedDateTime:'', file: null});
   const searchBox = React.createRef(null);
   const searchDate = React.createRef(null);
   const firFile = React.createRef(null);
@@ -49,7 +50,13 @@ const UserDashboard = () => {
     };
   }, [currentPage]);
 
-  const handleShow = (firNumber, fileName, type, pk) => {
+  const handleShow = (firNumber, fileName, type, pk, psi, createdDateTime) => {
+    if(fileName.includes(" - "))
+    {
+      fileName = fileName.split(" - ")[0];
+    }
+
+    const userName = localStorage.getItem('userName');
     if(fileName === "select" || fileName === "")
     {
       handleAlertDisplay("Please select a valid form","danger");
@@ -57,18 +64,19 @@ const UserDashboard = () => {
     }
     const encodedFIR = encodeURIComponent(firNumber); // Encode to safely pass in URL
     const encodedForm = encodeURIComponent(fileName);
+    const encodedDateTime = encodeURIComponent(createdDateTime);
     let form = "";
     if(type === "edit"){
       if(fileName.includes("LIEN LETTER"))
       {
-        fileName = "LIEN LETTER.html"
+        fileName = "LIEN LETTER"
       }
       form = fileName;
     }else{
       form = document.querySelector('.form-select').value;
     }   
-
-    const iframeSrc = `/Forms/`+form+`?firNumber=${encodedFIR}&formName=${encodedForm}&type=`+type+`&pk=`+pk+`&closeModal=true`;
+    form = form+".html";
+    const iframeSrc = `/Forms/`+form+`?firNumber=${encodedFIR}&formName=${encodedForm}&type=`+type+`&pk=`+pk+`&psi=`+psi+`&ioa=`+userName+`&cdt=`+createdDateTime+`&closeModal=true`;
     setIframeSrc(iframeSrc);// Update the iframe source dynamically
     setShowModal(true); // Show the modal
 };
@@ -176,12 +184,20 @@ const UserDashboard = () => {
     setUploadPopup({ ...uploadPopup, file: e.target.files[0] });
   };
 
-  const handleFormCreationPopup = (FirNumber, FileName) => {
-    setCreateFormPopup({ visible: true, FirNumber: FirNumber, FileName : FileName });
+  const handleNCRPFileUpload = (e) => {
+    setUploadNCRPPopup({ ...uploadNCRPPopup, file: e.target.files[0] });
   };
 
-  const handleApprovedDocumentsUploadPopup = (FirNumber, UnApprovedFirSupportingDocuments) => {
-    setUploadPopup({ visible: true, FirNumber: FirNumber, FileName:'', UnApprovedFirSupportingDocuments: UnApprovedFirSupportingDocuments, file: null});
+  const handleFormCreationPopup = (firNumber, fileName, io, psi) => {
+    setCreateFormPopup({ visible: true, FirNumber: firNumber, FileName : fileName, IO : io, PSI: psi});
+  };
+
+  const handleApprovedDocumentsUploadPopup = (firNumber, unApprovedFirSupportingDocuments) => {
+    setUploadPopup({ visible: true, FirNumber: firNumber, FileName:'', UnApprovedFirSupportingDocuments: unApprovedFirSupportingDocuments, file: null});
+  };
+
+  const handleNCRPUploadPopup = (firNumber, createdDateTime) => {
+    setUploadNCRPPopup({ visible: true, FirNumber: firNumber, CreatedDateTime: createdDateTime, file: null});
   };
 
   const handleApprovedDocumentsUpload = async () => {
@@ -221,8 +237,54 @@ const UserDashboard = () => {
     setShowLoader(false);
   };
 
+  const handleNCRPUpload = async () => {
+    setShowLoader(true);
+    const documentInput = uploadNCRPPopup.file;
+    const userId = localStorage.getItem('userId');
+    if(documentInput === null)
+    {
+       handleAlertDisplay("Mandatory Fields Are Not Populated","danger");
+    }
+    else if((uploadNCRPPopup.file.size / Math.pow(10,6)) > 15)
+    {
+       handleAlertDisplay("File is over the allowed size","danger");
+    }
+    else if(uploadNCRPPopup.file.name.substring(uploadNCRPPopup.file.name.lastIndexOf(".")) !== ".pdf")
+    {
+       handleAlertDisplay("File format is not PDF","danger");
+    }
+    else{
+      try {
+        const fileReader = new FileReader();
+        fileReader.onload = async () => {
+          const base64File = fileReader.result.split(',')[1];
+          const taskData = {
+            FirNumber: uploadNCRPPopup.FirNumber,
+            CreatedDateTime: uploadNCRPPopup.CreatedDateTime,
+            NcrpFileBytes: base64File,
+            AssigneeUserId: userId
+          };
+
+          await apiService.updateNCRPToFIR(taskData);
+          handleAlertDisplay("Document uploaded successfully","success");
+          fetchTasks();
+          handleUploadNCRPPopupClose();
+        };
+        fileReader.readAsDataURL(uploadNCRPPopup.file);
+      } catch (error) {
+         console.error('Error Uploading Document:', error);
+         handleAlertDisplay("Error uploading Document FIR. Please try again.","danger");
+      }
+    }
+    setShowLoader(false);
+  };
+
   const handleUploadPopupClose = () => {
     setUploadPopup({ visible: false, FirNumber: '', FileName:'', UnApprovedFirSupportingDocuments: '', file: null});
+  }
+
+  const handleUploadNCRPPopupClose = () => {
+    setUploadNCRPPopup({ visible: false, FirNumber: '', CreatedDateTime: '', file: null});
   }
 
   const handleLogout = () => {
@@ -264,12 +326,19 @@ const UserDashboard = () => {
     setShowLoader(false);
   }
 
-  const handleLienFormAutoCreation = async (firNumber) => {
-    setShowLoader(true);
-    const response = await apiService.initiateAutoLienFormCreation(firNumber);
-    fetchTasks(); // Refresh the task list
-    handleAlertDisplay("Lien forms creation is Initiated","success");
-    setShowLoader(false);
+  const handleLienFormAutoCreation = async (firNumber, status) => {
+    if(status !== "UI")
+    {
+      handleAlertDisplay("FIR is in an invalid status. Please refresh/retry after sometime","danger");
+    }
+    else
+    {
+      setShowLoader(true);
+      const response = await apiService.initiateAutoLienFormCreation(firNumber);
+      fetchTasks(); // Refresh the task list
+      handleAlertDisplay("Lien forms creation is Initiated","success");
+      setShowLoader(false);
+    }
   };
 
   return (
@@ -277,8 +346,8 @@ const UserDashboard = () => {
         <header className="user-dashboard-header">
             <div><img className="navbar-brand" src={logo}></img></div>
             <div>
-            <h1 className="navbar-brand-text"><u>Crime Report Tracking System</u></h1>
-            <p><strong>Karnataka State</strong></p></div>
+            <h1 className="navbar-brand-text"><u>Notices And Record Management System</u></h1>
+            <p><strong>CEN, North Division, Bangalore</strong></p></div>
             <div>
             <button className="notification-button" title="Notifications" onClick={() => handleNotification(true)}></button>
             <button className="logout-button" title="Log Out" onClick={() => handleLogout()}></button>
@@ -292,18 +361,22 @@ const UserDashboard = () => {
               )}
         <div className="user-dashboard">
             <div className="user-search-section">
-                <table className="search-table-user"><thead><tr><td>
+                <table className="search-table-user">
+                <thead>
+                <tr><td colSpan="2" className="search-table-header"><b><u>FILTERS</u></b></td></tr>
+                </thead>
+                <tbody><tr><td>
                     <label>Enter FIR Number &nbsp;&nbsp;</label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" title="Search" onClick={() => handleSearchByIdTask()}></button>
                 </td><td>
                     <label>Enter Date &nbsp;&nbsp;</label><input ref={searchDate} type = "date"></input><button className="search-buttons" title="Search" onClick={() => handleSearchByDateTask()}></button>
-                </td></tr></thead></table>
+                </td></tr></tbody></table>
             </div>
         </div>
         <div className="list-section">
             <h2 className="section-title">LIST OF FIRs<button className="refresh-button" title="Reload List" onClick={() => tableReload()}></button></h2>
             <div className="task-list">
-                <div className="task-header">
-                    <table><thead><tr><td className="task-header-user-td1">FIR</td>
+                <div className="task-header-user">
+                    <table><thead><tr><td>FIR</td>
                     <td>MAJOR HEAD</td>
                     <td>COMPLAINANT</td>
                     <td>PSI</td>
@@ -312,19 +385,20 @@ const UserDashboard = () => {
                     <td>ACTIONS</td></tr></thead></table></div>
         {tasks.length > 0 ? (
           tasks.map((task) => (
-            <details key={task.FirNumber} className="task-item">
+            <details key={task.FirDTO.FirNumber} className="task-item">
               <summary className="task-summary">
-                <div className="task-row">
+                <div className="task-row-user">
                 <table><tbody><tr>
-                  <td><strong>No:</strong> {task.FirDTO.FirNumber}</td>
+                  <td><strong>No:</strong> {task.FirDTO.FirNumber.length > 25 ? task.FirDTO.FirNumber.substring(0,25)+"..." : task.FirDTO.FirNumber}</td>
                   <td>{task.FirDTO.MajorHeader}</td>
                   <td>{task.FirDTO.ComplainantName}</td>
                   <td>{task.FirDTO.PsiName}</td>
                   <td>{task.FirDTO.FirDate}</td>
                   <td>{task.FirDTO.Status}</td>
                   <td>
-                    <button className="action-buttons-mainlist-user add-button" title="Add Document" onClick={() => handleFormCreationPopup(task.FirDTO.FirNumber, '')}></button>
-                    <button className="action-buttons-mainlist-user view-button" title="View FIR" onClick={() => handleViewDocument(task.documentUrl)}></button>
+                    <button className="action-buttons-mainlist-user add-button" title="Add Document" onClick={() => handleFormCreationPopup(task.FirDTO.FirNumber, '', task.FirDTO.InvestigationOfficer, task.FirDTO.PsiName)}></button>
+                    <button style={{ display: task.FirDTO.AttachmentFileBytes !== null ? "inline" : "none" }} className="action-buttons-mainlist-user view-button" title="View FIR" onClick={() => handleViewDocument(task.documentUrl)}></button>
+                    <button className="action-buttons-mainlist-user upload-form-button" title="Upload NCRP Document" onClick={() => handleNCRPUploadPopup(task.FirDTO.FirNumber, task.FirDTO.CreatedDateTime)}></button>
                   </td>
                   </tr></tbody></table>
                 </div>
@@ -333,18 +407,24 @@ const UserDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Document ({task.UnApprovedFirSupportingDocuments ? task.UnApprovedFirSupportingDocuments.length : 0})</th>
-                      <th><button style={{ display: task.FirDTO.NcrpFileBytes !== null ? "block" : "none" }} className="create-lien-letter-button" title="Create Lien Letters Automatically" onClick={() => handleLienFormAutoCreation(task.FirDTO.FirNumber)}></button></th>
+                      <th>Document ({task.UnApprovedFirSupportingDocumentsCount})</th>
+                      <th><button style={{ display: task.FirDTO.NcrpFileBytes !== null ? "block" : "none" }} className="create-lien-letter-button" title="Create Lien Letters Automatically" onClick={() => handleLienFormAutoCreation(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
                      </tr>
                   </thead>
                   <tbody>{task.UnApprovedFirSupportingDocuments && task.UnApprovedFirSupportingDocuments.length > 0 ? (
-  task.UnApprovedFirSupportingDocuments.map((document, index) => (
+  task.UnApprovedFirSupportingDocuments.map((document, index) =>
+       document.FirNumber === "BLANK" ? (
     <tr key={index}>
-      <td style={{color : document.FileBytes !== null ? "green" : "red"}}>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))) || 'Unnamed Document'}</td>
+    <td className="document-date-line-splitter"></td>
+    <td className="document-date-line-splitter"></td>
+    </tr>
+     ) : (
+     <tr key={index}>
+      <td style={{color : document.FileBytes !== null ? "green" : "red"}}>{(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))) || 'Unnamed Document'}</td>
       <td>
         <button
           className="action-buttons-sublist edit-button" title="Edit Document"
-          onClick={() => handleShow(task.FirDTO.FirNumber, document.FileName ,"edit", document.Pk)}
+          onClick={() => handleShow(task.FirDTO.FirNumber, document.FileName ,"edit", document.Pk, task.FirDTO.PsiName, document.CreatedDateTime)}
         ></button>
         <button style={{ display: document.FileBytes !== null ? "inline" : "none"}}
           className="action-buttons-sublist view-button" title="View Document"
@@ -365,14 +445,20 @@ const UserDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Approved Document ({task.ApprovedFirSupportingDocuments ? task.ApprovedFirSupportingDocuments.length : 0})</th>
-                      <th><button className="upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
+                      <th>Approved Document ({task.ApprovedFirSupportingDocumentsCount})</th>
+                      <th><button className="upload-button approved-document-upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
                     </tr>
                   </thead>
                   <tbody>{task.ApprovedFirSupportingDocuments && task.ApprovedFirSupportingDocuments.length > 0 ? (
-  task.ApprovedFirSupportingDocuments.map((document, index) => (
+  task.ApprovedFirSupportingDocuments.map((document, index) =>
+           document.FirNumber === "BLANK" ? (
+        <tr key={index}>
+        <td className="document-date-line-splitter"></td>
+        <td className="document-date-line-splitter"></td>
+        </tr>
+         ) : (
     <tr key={index}>
-      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))) || 'Unnamed Document'}</td>
+      <td>{(document.FileName) || 'Unnamed Document'}</td>
       <td>
         <button
           className="action-buttons-sublist view-button" title="View Document"
@@ -426,56 +512,56 @@ const UserDashboard = () => {
               onChange={(e) => setCreateFormPopup({ ...createFormPopup, FileName: e.target.value })}
             >
               <option value="select">Select Form</option>
-              <option value="35 (3) Notice.html">35 (3) NOTICE</option>
-              <option value="41(A) Notice.html">41(A) NOTICE</option>
-              <option value="91 & 160 NOTICE ENGLISH.html">91 & 160 NOTICE ENGLISH</option>
-              <option value="94 & 179 NOTICE ENGLISH.html">94 & 179 NOTICE ENGLISH</option>
-              <option value="ACCOUNT HOLDER INTIMATION LETTER.html">ACCOUNT HOLDER INTIMATION LETTER</option>
-              <option value="AMAZON.html">AMAZON</option>
-              <option value="ATM CCTV LETTER.html">ATM CCTV LETTER</option>
-              <option value="BENEFICIARY DETAILS REQUEST.html">BENEFICIARY DETAILS REQUEST</option>
-              <option value="BINANCE LETTER.html">BINANCE LETTER</option>
-              <option value="CCTV LETTER.html">CCTV LETTER</option>
-              <option value="CDR REQUEST.html">CDR REQUEST</option>
-              <option value="COURT ORDER.html">COURT ORDER</option>
-              <option value="DEBIT FREEZE.html">DEBIT FREEZE</option>
-              <option value="DELETATION LETTER.html">DELETATION LETTER</option>
-              <option value="DOMAIN LETTER.html">DOMAIN LETTER</option>
-              <option value="FB LETTER.html">FB LETTER</option>
-              <option value="FLIPKART LETTER.html">FLIPKART LETTER</option>
-              <option value="FREEZE INTIMATION TO COURT.html">FREEZE INTIMATION TO COURT</option>
-              <option value="GMAIL LETTER.html">GMAIL LETTER</option>
-              <option value="HOTMAIL LETTER.html">HOTMAIL LETTER</option>
-              <option value="INSTA LETTER.html">INSTA LETTER</option>
-              <option value="IPDR.html">IPDR</option>
-              <option value="KYC AND STATEMENT.html">KYC AND STATEMENT</option>
-              <option value="LIEN LETTER.html">LIEN LETTER</option>
-              <option value="MATRIMONIAL.html">MATRIMONIAL</option>
-              <option value="MERCHANT LETTER.html">MERCHENT LETTER</option>
-              <option value="NCRP 1ST NOTICE.html">NCRP 1ST NOTICE</option>
-              <option value="NCRP 2ND NOTICE.html">NCRP 2ND NOTICE</option>
-              <option value="NPCI FORMAT.html">NPCI FORMAT</option>
-              <option value="OUTLOOK LETTER.html">OUTLOOK LETTER</option>
-              <option value="PAN LINKED LETTER.html">PAN LINKED LETTER</option>
-              <option value="PHONEPE WALLET.html">PHONEPE WALLET</option>
-              <option value="PROTON LETTER.html">PROTON LETTER</option>
-              <option value="RECHARGE DETAILS FORMAT.html">RECHARGE DETAILS FORMAT</option>
-              <option value="REDIFF LETTER.html">REDIFF LETTER</option>
-              <option value="ROC.html">ROC</option>
-              <option value="SWIGGY.html">SWIGGY</option>
-              <option value="TELEGRAM.html">TELEGRAM</option>
-              <option value="TWITTER.html">TWITTER</option>
-              <option value="UNFREEZE LETTER.html">UNFREEZE LETTER</option>
-              <option value="WHATSAPP.html">WHATSAPP</option>
-              <option value="YOUTUBE.html">YOUTUBE</option>
-              <option value="ZOMATO.html">ZOMATO</option>
+              <option value="35 (3) Notice">35 (3) NOTICE</option>
+              <option value="41(A) Notice">41(A) NOTICE</option>
+              <option value="91 & 160 NOTICE ENGLISH">91 & 160 NOTICE ENGLISH</option>
+              <option value="94 & 179 NOTICE ENGLISH">94 & 179 NOTICE ENGLISH</option>
+              <option value="ACCOUNT HOLDER INTIMATION LETTER">ACCOUNT HOLDER INTIMATION LETTER</option>
+              <option value="AMAZON">AMAZON</option>
+              <option value="ATM CCTV LETTER">ATM CCTV LETTER</option>
+              <option value="BENEFICIARY DETAILS REQUEST">BENEFICIARY DETAILS REQUEST</option>
+              <option value="BINANCE LETTER">BINANCE LETTER</option>
+              <option value="CCTV LETTER">CCTV LETTER</option>
+              <option value="CDR REQUEST">CDR REQUEST</option>
+              <option value="COURT ORDER">COURT ORDER</option>
+              <option value="DEBIT FREEZE">DEBIT FREEZE</option>
+              <option value="DELETATION LETTER">DELETATION LETTER</option>
+              <option value="DOMAIN LETTER">DOMAIN LETTER</option>
+              <option value="FB LETTER">FB LETTER</option>
+              <option value="FLIPKART LETTER">FLIPKART LETTER</option>
+              <option value="FREEZE INTIMATION TO COURT">FREEZE INTIMATION TO COURT</option>
+              <option value="GMAIL LETTER">GMAIL LETTER</option>
+              <option value="HOTMAIL LETTER">HOTMAIL LETTER</option>
+              <option value="INSTA LETTER">INSTA LETTER</option>
+              <option value="IPDR">IPDR</option>
+              <option value="KYC AND STATEMENT">KYC AND STATEMENT</option>
+              <option value="LIEN LETTER">LIEN LETTER</option>
+              <option value="MATRIMONIAL">MATRIMONIAL</option>
+              <option value="MERCHANT LETTER">MERCHENT LETTER</option>
+              <option value="NCRP 1ST NOTICE">NCRP 1ST NOTICE</option>
+              <option value="NCRP 2ND NOTICE">NCRP 2ND NOTICE</option>
+              <option value="NPCI FORMAT">NPCI FORMAT</option>
+              <option value="OUTLOOK LETTER">OUTLOOK LETTER</option>
+              <option value="PAN LINKED LETTER">PAN LINKED LETTER</option>
+              <option value="PHONEPE WALLET">PHONEPE WALLET</option>
+              <option value="PROTON LETTER">PROTON LETTER</option>
+              <option value="RECHARGE DETAILS FORMAT">RECHARGE DETAILS FORMAT</option>
+              <option value="REDIFF LETTER">REDIFF LETTER</option>
+              <option value="ROC">ROC</option>
+              <option value="SWIGGY">SWIGGY</option>
+              <option value="TELEGRAM">TELEGRAM</option>
+              <option value="TWITTER">TWITTER</option>
+              <option value="UNFREEZE LETTER">UNFREEZE LETTER</option>
+              <option value="WHATSAPP">WHATSAPP</option>
+              <option value="YOUTUBE">YOUTUBE</option>
+              <option value="ZOMATO">ZOMATO</option>
             </select>
             </div>
             <div className="popup-buttons">
               <button title="Create Form" onClick={() => {
-                        handleShow(createFormPopup.FirNumber,createFormPopup.FileName,"create", "");
+                        handleShow(createFormPopup.FirNumber,createFormPopup.FileName,"create", "", createFormPopup.IO, createFormPopup.PSI,"");
                     }}>Create</button>
-              <button title="Close" onClick={() => setCreateFormPopup({ visible: false, FirNumber: '', FileName: '' })}>Cancel</button>
+              <button title="Close" onClick={() => setCreateFormPopup({ visible: false, FirNumber: '', FileName: '', IO: '', PSI: '' })}>Cancel</button>
             </div>
           </div>
         </div>
@@ -494,12 +580,12 @@ const UserDashboard = () => {
             >
               <option value="">Select Document</option>
               {uploadPopup.UnApprovedFirSupportingDocuments.map((document) => (
-                <option key={document.Pk} value={(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime)) || 'Unnamed Document'}>
-                  {(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime)) || 'Unnamed Document'}
+                <option key={document.Pk} value={(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime)) || 'Unnamed Document'}>
+                  {(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime)) || 'Unnamed Document'}
                 </option>
               ))}
             </select><br/><br/>
-                <label className="required-field"><b>File Upload (pdf only: 10MB)</b></label><br/>
+                <label className="required-field"><b>Select File To Upload (pdf only: 15MB)</b></label><br/>
                  <input ref={firFile} type="file" accept="application/pdf" onChange={handleApprovedFileUpload} />
             </div><br/>
             <div className="popup-buttons">
@@ -509,6 +595,22 @@ const UserDashboard = () => {
           </div>
         </div>
       )}
+      {uploadNCRPPopup.visible && (
+              <div className="popup">
+                <div className="popup-content">
+                  <h2 className="popup-header"><u>Upload NCRP Document</u></h2><br/>
+                  <div>
+                  <label><b>FIR Number</b> <br/>{uploadNCRPPopup.FirNumber}</label><br/><br/>
+                  <label className="required-field"><b>Select File To Upload (pdf only: 15MB)</b></label><br/>
+                  <input ref={firFile} type="file" accept="application/pdf" onChange={handleNCRPFileUpload} />
+                  </div><br/>
+                  <div className="popup-buttons">
+                    <button title="Upload Document" onClick={handleNCRPUpload}>Upload</button>
+                    <button title="Close" onClick={handleUploadNCRPPopupClose}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            )}
 <Modal id="formModal"
   show={showModal}
   onHide={handleClose}

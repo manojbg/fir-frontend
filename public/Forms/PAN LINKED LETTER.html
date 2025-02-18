@@ -27,7 +27,8 @@
         }
 
         body{
-        margin: 2%
+        margin: 2%;
+        margin-top: 4%
         }
 
         td {
@@ -153,8 +154,8 @@
 
           const obj = {
             date: $("#datePicker").val(),
-            toAddress: $("#toAddress").val(),
-            crNumber: $("#crNumber").text(),
+            toAddress: $("#toAddress").html(),
+            caseIdentifier: $("#caseIdentifier").text(),
             ncrpNumber: $("#ncrpNumber").text(),
             psi: $('#psi').text(),
             ioa: $('#ioa').text(),
@@ -164,7 +165,13 @@
           const firNumber = document.getElementById("firNumberField").textContent;
           const formName = document.getElementById("formNameField").textContent;
           const pk = document.getElementById("pk").textContent;
+          const cdt = document.getElementById("cdt").textContent;
           $('paramsHolder').remove();
+
+          if(print)
+          {
+            js:window.print();
+          }
 
         // Pass the element for PDF generation
           convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
@@ -178,8 +185,9 @@
             FileName: formName,
             FirNumber: firNumber,
             FileBytes: byteArray,
+            CreatedDateTime: cdt
           };
-            saveAPICall(req, print);
+            saveAPICall(req);
           });
         }
 
@@ -195,8 +203,8 @@
               success: function (response) {
                 const jsonObject = JSON.parse(response.FileContent);
                 $("#datePicker").val(jsonObject.date || "");
-                $("#toAddress").val(jsonObject.toAddress || "");
-                $("#crNumber").text(jsonObject.crNumber || "ENTER CR NUMBER");
+                $("#toAddress").html(jsonObject.toAddress || "");
+                $("#caseIdentifier").text(jsonObject.caseIdentifier || "ENTER CR NUMBER");
                 $("#ncrpNumber").text(jsonObject.ncrpNumber || "ENTER NCRP NUMBER");
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
@@ -253,9 +261,9 @@
     <p style='text-align:right;'>
         <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
     </p>
-    <div style="display: inline-block;width: 30%;">
+    <div style="display: inline-block;width: 40%;">
         <p><strong>To,</strong></p>
-        <textarea id="toAddress" class="background-edit" name="toAddress" rows="5" cols="10" style="border : none;margin-left: 10%;">The Manager,</textarea>
+        <div id="toAddress" class="background-edit" style="border : none;margin-left: 10%;" contenteditable>The Manager,</div>
     </div>
     <br/><br/>
     Sir/Madam, <br/>
@@ -263,7 +271,7 @@
         <div>
             Sub:	Provide the Pan Card linked bank account Details.
             <br/>
-            <div>Ref: 	<b>Cr.No:</b>  <div id="crNumber" style="display:inline" class="background-edit" contenteditable>518/2023 U/S 66(C) 66(D) IT ACT</div></div>
+            <div>Ref: 	<b>Cr.No:</b>  <div id="caseIdentifier" style="display:inline" class="background-edit" contenteditable>518/2023 U/S 66(C) 66(D) IT ACT</div></div>
                    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>NCRP:</b>  <div id="ncrpNumber" style="display:inline" class="background-edit" contenteditable> NIL</div></div>
             </div>
             </div>
@@ -280,7 +288,6 @@
                 <li>Provide the past & present linked mobile number/s, address and E-mail ID/s.</li>
                 <li>Details of online banking logins in case of multiple account users.</li>
             </ol>
-        </div>
     <br/>
     <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
         <tbody>
@@ -316,11 +323,11 @@
     <button style="float:right" id="addRowBtnAfter">Add Row</button>
     <br/>
 <div class="noSplit">
-    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Regards</span>
+    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Regards,</span>
     <br/><br/>
     <div style="display: inline-block;width: 100%;">
         <div style="float : right; text-align:center; width : 35%">
-            <p>Assistant commissioner of police,</p>
+            <p><b>Investigation Officer</b></p>
             <p><strong>CEN police station,</strong></p>
             <p><strong>North division, Bengaluru city</strong></p>
         </div>
@@ -333,10 +340,11 @@
 <button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
 <button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>
 <div id="paramsHolder">
-<p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
+    <p style="display: none;">FIR Number: <span id="firNumberField"></span></p>
 <p style="display: none;">Form Name: <span id="formNameField"></span></p>
 <p style="display: none;">Action Type: <span id="actionType"></span></p>
 <p style="display: none;">PK: <span id="pk"></span></p>
+    <p style="display: none;">CDT: <span id="cdt"></span></p>
 </div>
 </body>
 </html>
