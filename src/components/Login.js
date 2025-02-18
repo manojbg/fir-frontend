@@ -42,8 +42,9 @@ const Login = () => {
       const response = await apiService.login(userDetails);
 
       if (response && response.Role) {
-        localStorage.setItem('userId' , response.UserId)
-        localStorage.setItem('role', response.Role)
+        localStorage.setItem('userId' , response.UserId);
+        localStorage.setItem('role', response.Role);
+        localStorage.setItem('userName', response.UserName);
         if(response.Role === "ADMIN"){
           navigate('/admin');
         }else{

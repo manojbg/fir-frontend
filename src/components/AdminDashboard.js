@@ -14,7 +14,7 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [newTask, setNewTask] = useState({ FirNumber: '', file: null, AssigneeUserId: '', ComplainantName: '', MajorHeader: '', InvestigationOfficer: '', PoliceInspector: '', PsiName: '', NcrpFile: null });
+  const [newTask, setNewTask] = useState({ FirNumber: '', file: null, AssigneeUserId: '', ComplainantName: '', MajorHeader: '', InvestigationOfficer: '', PsiName: '', NcrpFile: null });
   const [assignPopup, setAssignPopup] = useState({ visible: false, FirNumber: '', FirDate:'', AssigneeUserId: '' });
   const [uploadPopup, setUploadPopup] = useState({ visible: false, FirNumber: '', FileName:'', UnApprovedFirSupportingDocuments: '', file: null});
   const searchBox = React.createRef(null);
@@ -30,8 +30,6 @@ const AdminDashboard = () => {
   const [show, setShow] = useState(false);
   const [alertMessage, setAlertMessage] = useState();
   const [variant, setVariant] = useState();
-  const [investigationOfficer, setInvestigationOfficer] = useState("");
-  const [policeInspector, setPoliceInspector] = useState("");
 
   useEffect(() => {
     setShowLoader(true);
@@ -81,16 +79,6 @@ const AdminDashboard = () => {
           return user.Designation === "PSI";
       });
       setPsiNames(psiNames);
-      usersMap["ADMIN"].filter((user) => {
-        if(user.Designation === "ACP")
-        {
-          setInvestigationOfficer(user.UserName);
-        }
-        if(user.Designation === "PI")
-        {
-          setPoliceInspector(user.UserName);
-        }
-      })
     } catch (error) {
       console.error('Error fetching Assignee and PSI:', error);
       handleAlertDisplay("Error fetching Assignee and PSI.","danger");
@@ -213,43 +201,60 @@ const AdminDashboard = () => {
     const psiName = newTask.PsiName;
     const ncrpFileInput = ncrpFile.current.value;
 
-    if(firNumberInput === '' || firDateInput === '' || firFileInput === '' || complainantName === '' || majorHeader === '' || psiName === '')
+    if(firNumberInput === '' || firDateInput === '' || complainantName === '' || majorHeader === '' || psiName === '')
     {
        handleAlertDisplay("Mandatory Fields Are Not Populated","danger");
     }
     else{
       try {
-        const fileReader = new FileReader();
-        fileReader.onload = async () => {
-          const base64FirFile = fileReader.result.split(',')[1];
-          const taskData = {
+        const taskData = {
                 FirNumber: firNumberInput,
-                FileName: newTask.file.name,
-                AttachmentFileBytes: base64FirFile,
+                FileName: null,
+                AttachmentFileBytes: null,
                 AssigneeUserId: newTask.AssigneeUserId,
                 FirDate : firDateInput,
                 ComplainantName : complainantName,
                 MajorHeader : majorHeader,
-                InvestigationOfficer : investigationOfficer,
-                PoliceInspector : policeInspector,
+                InvestigationOfficer : newTask.InvestigationOfficer,
                 PsiName : psiName,
                 NcrpFileBytes : null
               };
-          if(ncrpFileInput !== "")
-          {
-            const fileReader2 = new FileReader();
-            fileReader2.onload = async () => {
-              const base64NcrpFile = fileReader2.result.split(',')[1];
-              taskData.NcrpFileBytes = base64NcrpFile;
+        if(firFileInput !== "")   {
+          taskData.FileName = newTask.file.name;
+          const fileReader = new FileReader();
+          fileReader.onload = async () => {
+            const base64FirFile = fileReader.result.split(',')[1];
+            taskData.AttachmentFileBytes = base64FirFile;
+            if(ncrpFileInput === null)
+            {
               persistTaskToDB(taskData);
             }
-            fileReader2.readAsDataURL(newTask.NcrpFile);
+            else if(ncrpFileInput !== "")
+            {
+              const fileReader2 = new FileReader();
+              fileReader2.onload = async () => {
+                const base64NcrpFile = fileReader2.result.split(',')[1];
+                taskData.NcrpFileBytes = base64NcrpFile;
+                persistTaskToDB(taskData);
+              }
+              fileReader2.readAsDataURL(newTask.NcrpFile);
+            }
           }
-          else{
+          fileReader.readAsDataURL(newTask.file);
+        }
+        else if(ncrpFileInput !== "")
+        {
+          const fileReader2 = new FileReader();
+          fileReader2.onload = async () => {
+            const base64NcrpFile = fileReader2.result.split(',')[1];
+            taskData.NcrpFileBytes = base64NcrpFile;
             persistTaskToDB(taskData);
           }
-        };
-        fileReader.readAsDataURL(newTask.file);
+          fileReader2.readAsDataURL(newTask.NcrpFile);
+        }
+        else{
+          persistTaskToDB(taskData);
+        }
       } catch (error) {
         console.error('Error creating FIR:', error);
         handleAlertDisplay("Error creating FIR. Please try again.","danger");
@@ -276,7 +281,7 @@ const AdminDashboard = () => {
     firDate.current.value = '';
     firFile.current.value = '';
     ncrpFile.current.value = '';
-    setNewTask({ FirNumber: '', file: null, AssigneeUserId: '', ComplainantName: '', MajorHeader: '', InvestigationOfficer: '', PoliceInspector: '', PsiName: '' , NcrpFile: null});
+    setNewTask({ FirNumber: '', file: null, AssigneeUserId: '', ComplainantName: '', MajorHeader: '', InvestigationOfficer: '', PsiName: '' , NcrpFile: null});
   }
 
   const handleSaveAssignee = async () => {
@@ -394,8 +399,8 @@ const AdminDashboard = () => {
         <header className="dashboard-header">
             <div><img className="navbar-brand" src={logo}></img></div>
             <div>
-            <h1 className="navbar-brand-text"><u>Crime Report Tracking System</u></h1>
-            <p><strong>Karnataka State</strong></p></div>
+            <h1 className="navbar-brand-text"><u>Notices And Record Management System</u></h1>
+            <p><strong>North CEN Division, Bangalore</strong></p></div>
             <div>
             <button className="logout-button" title="Log Out" onClick={() => handleLogout()}></button>
             </div>
@@ -407,7 +412,7 @@ const AdminDashboard = () => {
             <div className="create-section">
                 <div className="create-header">Upload FIR</div>
                 <table class="create-table"><tbody><tr><td>
-                <label className="required-field">FIR Number </label><br/>
+                <label className="required-field">FIR Number & Section</label><br/>
                     <input type="text" value={newTask.FirNumber}
                             onChange={(e) => setNewTask({ ...newTask, FirNumber: e.target.value })}
                     /></td><td>
@@ -415,12 +420,14 @@ const AdminDashboard = () => {
                     <input value={newTask.ComplainantName} type="text"
                     onChange={(e) => setNewTask({ ...newTask, ComplainantName: e.target.value })}/>
                     </td><td>
-                    <label>Investigation Officer : &nbsp;</label>
-                    <span>{investigationOfficer}</span><br/>
-                    <label>Police Inspector : &nbsp;</label>
-                    <span>{policeInspector}</span>
+                    <label className="required-field">Investigation Officer</label>
+                    <select
+                             value={newTask.InvestigationOfficer}
+                             onChange={(e) => setNewTask({ ...newTask, InvestigationOfficer: e.target.value })}>
+                     <option value="Assistant Commissioner Of Police">Assistant Commissioner Of Police</option>
+                     <option value="Police Inspector">Police Inspector</option></select>
                    </td></tr><tr><td>
-                <label className="required-field">FIR File Upload (pdf only: 10MB)</label><br/>
+                <label>FIR File Upload (pdf only: 10MB)</label><br/>
                  <input ref={firFile} type="file" accept="application/pdf" onChange={handleFileUpload} />
                 </td><td>
                     <label className="required-field">FIR / NCRP Date </label><br/>
@@ -478,20 +485,24 @@ const AdminDashboard = () => {
             </div>
 
             <div className="search-section">
-                <table className="search-table"><thead><tr><td>
+                <table className="search-table">
+                <thead>
+                <tr><td colspan="3" className="search-table-header"><b><u>FILTERS</u></b></td></tr>
+                </thead>
+                <tbody><tr><td>
                     <label>Enter FIR Number &nbsp;&nbsp;</label><input ref={searchBox} type = "text" name="firNumber"></input><button className="search-buttons" title="Search" onClick={() => handleSearchByIdTask()}></button>
                 </td><td>
                     <label>Enter Date &nbsp;&nbsp;</label><input ref={searchDate} type = "date"></input><button className="search-buttons" title="Search" onClick={() => handleSearchByDateTask()}></button>
                 </td><td>
                     <label>Un-Assigned &nbsp;&nbsp;</label><label class="switch"><input id="toggle-switch" ref={searchToggle} type="checkbox"></input><span class="slider round"></span></label><label>&nbsp;&nbsp;Assigned</label><button className="search-buttons" title="Search" onClick={() => handleSearchByAssignedOrUnAssignedTask()}></button>
-                </td></tr></thead></table>
+                </td></tr></tbody></table>
             </div>
         </div>
         <div className="list-section">
             <h2 className="section-title">LIST OF FIRs<button className="refresh-button" title="Reload List" onClick={() => tableReload()}></button></h2>
             <div className="task-list">
                 <div className="task-header">
-                    <table><thead><tr><td className="task-header-td1">FIR</td>
+                    <table><thead><tr><td>FIR</td>
                     <td>MAJOR HEAD</td>
                     <td>COMPLAINANT</td>
                     <td>PSI</td>
@@ -501,11 +512,11 @@ const AdminDashboard = () => {
                     <td>ACTIONS</td></tr></thead></table></div>
         {tasks.length > 0 ? (
           tasks.map((task) => (
-            <details key={task.FirNumber} className="task-item">
+            <details key={task.FirDTO.FirNumber} className="task-item">
               <summary className="task-summary">
                 <div className="task-row">
                 <table><tbody><tr>
-                  <td><strong>No:</strong> {task.FirDTO.FirNumber}</td>
+                  <td><strong>No:</strong> {task.FirDTO.FirNumber.length > 25 ? task.FirDTO.FirNumber.substring(0,25)+"..." : task.FirDTO.FirNumber}</td>
                   <td>{task.FirDTO.MajorHeader}</td>
                   <td>{task.FirDTO.ComplainantName}</td>
                   <td>{task.FirDTO.PsiName}</td>
@@ -514,7 +525,7 @@ const AdminDashboard = () => {
                   <td>{task.FirDTO.Status}</td>
                   <td>
                     <button className="action-buttons-mainlist assign-button" title="Assign" onClick={() => handleAssignPopup(task.FirDTO.FirNumber, task.FirDTO.FirDate, task.FirDTO.AssigneeUserId || '')}></button>
-                    <button className="action-buttons-mainlist view-button" title="View FIR" onClick={() => handleViewDocument(task.documentUrl)}></button>
+                    <button style={{ display: task.FirDTO.AttachmentFileBytes !== null ? "inline" : "none" }} className="action-buttons-mainlist view-button" title="View FIR" onClick={() => handleViewDocument(task.documentUrl)}></button>
                     <button className="action-buttons-mainlist delete-button" title="Delete FIR" onClick={() => handleDeleteTask(task.FirDTO.FirNumber, task.FirDTO.AssigneeUserId)}></button>
                   </td>
                   </tr></tbody></table>
@@ -528,9 +539,15 @@ const AdminDashboard = () => {
                      </tr>
                   </thead>
                   <tbody>{task.UnApprovedFirSupportingDocuments && task.UnApprovedFirSupportingDocuments.length > 0 ? (
-  task.UnApprovedFirSupportingDocuments.map((document, index) => (
+  task.UnApprovedFirSupportingDocuments.map((document, index) =>
+         document.FirNumber === "BLANK" ? (
+      <tr key={index}>
+      <td className="document-date-line-splitter"></td>
+      <td className="document-date-line-splitter"></td>
+      </tr>
+       ) : (
     <tr key={index}>
-      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))) || 'Unnamed Document'}</td>
+      <td>{(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))) || 'Unnamed Document'}</td>
       <td>
         <button style={{ display: document.FileBytes !== null ? "inline" : "none" }}
           className="action-buttons-sublist view-button" title="View Document"
@@ -556,9 +573,15 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>{task.ApprovedFirSupportingDocuments && task.ApprovedFirSupportingDocuments.length > 0 ? (
-  task.ApprovedFirSupportingDocuments.map((document, index) => (
+  task.ApprovedFirSupportingDocuments.map((document, index) =>
+           document.FirNumber === "BLANK" ? (
+        <tr key={index}>
+        <td className="document-date-line-splitter"></td>
+        <td className="document-date-line-splitter"></td>
+        </tr>
+         ) : (
     <tr key={index}>
-      <td>{(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))) || 'Unnamed Document'}</td>
+      <td>{(document.FileName) || 'Unnamed Document'}</td>
       <td>
         <button
           className="action-buttons-sublist view-button" title="View Document"
@@ -644,7 +667,7 @@ const AdminDashboard = () => {
               <option value="">Select Document</option>
               {uploadPopup.UnApprovedFirSupportingDocuments.map((document) => (
                 <option key={document.Pk} value={document.FileName}>
-                  {(document.FileName && document.CreatedDateTime && document.FileName.substring(0, document.FileName.lastIndexOf('.'))+' '+(document.CreatedDateTime)) || 'Unnamed Document'}
+                  {(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime)) || 'Unnamed Document'}
                 </option>
               ))}
             </select><br/><br/>

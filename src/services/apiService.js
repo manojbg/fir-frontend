@@ -44,7 +44,7 @@ const getAllTasks = async (pageNumber = 0, size = 10) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    const tasks = await processResponseDatanew(data);
+    const tasks = await processResponseData(data);
     return {
       ...data,
       content: tasks,
@@ -56,26 +56,6 @@ const getAllTasks = async (pageNumber = 0, size = 10) => {
 };
 
 const processResponseData = async (data) => {
-// Process tasks and create document URLs
-    const tasks = (data.content || []).map((task) => {
-      const documentUrl = task.FirDTO.AttachmentFileBytes
-        ? (() => {
-            const byteArray = Uint8Array.from(atob(task.FirDTO.AttachmentFileBytes), (c) => c.charCodeAt(0));
-            const blob = new Blob([byteArray], { type: 'application/pdf' }); // Assuming PDFs
-            return URL.createObjectURL(blob);
-          })()
-        : null;
-
-      return{
-        ...task,
-        documentUrl,
-      };
-      });
-
-      return await tasks;
-};
-
-const processResponseDatanew = async (data) => {
   // Process tasks and create document URLs
   const tasks = (data.content || []).map((task) => {
     // Generate documentUrl for FirDTO.AttachmentFileBytes
@@ -107,7 +87,7 @@ const processResponseDatanew = async (data) => {
       })
     );
 
-    // Generate documentUrl for each ApprovedFirSupportingDocuments.File
+    // Generate documentUrl for each UnApprovedFirSupportingDocuments.File
     const unApprovedSupportingDocuments = (task.UnApprovedFirSupportingDocuments || []).map(
       (supportingDocument) => ({
         ...supportingDocument,
@@ -447,6 +427,28 @@ const initiateAutoLienFormCreation = async (firNumber) => {
   }
 };
 
+const updateNCRPToFIR = async (taskData) => {
+  try {
+      const response = await fetch(`${API_URL}/fileOps/updateNCRPToFIR`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      },
+      body: JSON.stringify(taskData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response;
+  } catch (error) {
+    console.error('Error creating task:', error);
+    throw error;
+  }
+};
+
 export default {
   login,
   getAllTasks,
@@ -463,5 +465,6 @@ export default {
   deleteNotification,
   getAllHeaders,
   createTaskItemData,
-  initiateAutoLienFormCreation
+  initiateAutoLienFormCreation,
+  updateNCRPToFIR
 };
