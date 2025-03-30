@@ -5,6 +5,9 @@
     <script src="./js/html2canvas.min.js"></script>
     <script src="./js/jquery-3.6.0.min.js"></script>
     <script src="./js/scripts.js"></script>
+    <script src="./js/jquery-ui.js"></script>
+    <script src="./js/bootstrap.js" data-modules="effect effect-bounce effect-blind effect-bounce effect-clip effect-drop effect-fold effect-slide"></script>
+    <link rel="stylesheet" href="./js/jquery-ui.css" />
     <style>
         /* Set A4 size */
         * {
@@ -27,7 +30,7 @@
         }
 
         body{
-        margin: 2%;
+        margin: 5%;
         margin-top: 4%
         }
 
@@ -110,6 +113,7 @@
               $("#table1 tr > *:last-child").css("width","90px");
           });
           fetchData();
+          $( "#datePicker" ).datepicker({ dateFormat: 'dd-mm-yy' });
         });
         window.onload = getQueryParams;
 
@@ -177,6 +181,7 @@
           convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
             if (error) {
               console.error("Error in convertHtmlToPdfDirectly:", error);
+              hideLoader();
               return;
             }
             const req = {
@@ -193,6 +198,7 @@
 
         // Function to fetch data and populate the fields
         function fetchData() {
+          showLoader();
           const params = new URLSearchParams(window.location.search);
           const pk = params.get("pk");
           const type = params.get("type");
@@ -209,12 +215,18 @@
                 populateTable("table1", jsonObject.table1 || []);
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
+                hideLoader();
                 },
                 error: function (error) {
                     console.error("Error fetching data:", error);
+                    hideLoader();
                     handleModalError();
                 }
             });
+          }
+          else
+          {
+            hideLoader();
           }
         }
 
@@ -235,6 +247,7 @@
 </head>
 <body id="bodyMain">
 <div id="divMain">
+    <div id="loader-mask"><div id="loader"></div></div>
 <br/>
     <div style='text-align:center;'>
         <p>
@@ -245,38 +258,36 @@
             <strong>CEN Police Station, North Division, Bengaluru City</strong>
         </p>
         <p>
-            <span>2<sup>nd</sup> Floor, DCP Office Building, North Division, Yeswanthapura, Bengaluru city -560022</span>
+            <span>2<sup>nd</sup> Floor, Deputy Commissioner Office Building, Yeshwanthpur, North Division,<br/> Bengaluru city -560022</span>
         </p>
         <p>
             <u><span>E-mail ID:-</span></u><a
                 href="mailto:cenpsnorthbcp@ksp.gov.in"><span >cenpsnorthbcp@ksp.gov.in</span></a><span
-                >&nbsp;; Phone No-080-22942302; Mob No-8277945187/9480801066</span>
+                >&nbsp;; Mob No-8277945187 & 9480801066 </span>
         </p>
     </div>
     <br/> <br/>
     <div style='text-align:center;font-weight:bold;text-decoration:underline'>
-        <u>Police Notice-01 <br/>
-            U/s 94 & 179 Bharatiya Nagarik Suraksha Sanhita, 2023
-        </u>
+        <u>POLICE NOTICE U/s 94 & 179 BNSS-2023</u>
     </div>
     <br/>
     <p style='text-align:right;'>
-        <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
+        <strong><span>Date: <input type="text" id="datePicker" class="background-edit" style="width:12%"></span></strong>
     </p>
     <br/>
     <div style='text-align:justify;text-indent:36.0pt; line-height:150%'>
         <div style="display:inline">
-            In Exercise of the powers conferred U/s 94 of BNSS, I hereby inform you that during the investigation of <b>FIR No</b>
+            In Exercise of the powers conferred U/s 94&179 BNSS. I hereby inform you that during the investigation of <b>FIR No</b>
         </div>
         <div id="caseIdentifier" style="display:inline" class="background-edit" contenteditable>ENTER FIR NUMBER</div>
         <div style="display:inline"> registered in CEN Police Station, North Division Bengaluru. During the course of
-            investigation, it is revealed that there are reasonable grounds to question you to ascertain/ circumstances
-            the facts and circumstance from you.&nbsp;
+            investigation, it is revealed that there are reasonable grounds to question you to ascertain the facts and circumstances of the case.
+            And Explanation needed for transaction made in this account. &nbsp;
         </div>
         <div>
-            Hence you are directed to appear
-            <div id="reportingDuration" style="display:inline" class="background-edit" contenteditable>within 7 days</div>
-            of receipt this notice before me at North CEN Police Station, North Division, Yeswanthapura, Bengaluru city
+            Hence you are directed to
+            <div id="reportingDuration" style="display:inline" class="background-edit" contenteditable>appear within 7 days of receipt of this notice </div>
+            before me in Cyber Crime Police Station, North division Bangalore city for enquiry along with relevant documents.
             for enquiry along with relevant documents.
         </div>
     </div>
@@ -284,7 +295,6 @@
     <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
         <tbody>
         <tr class="deleteColumnBtnRow" style="font-weight: bold;">
-            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td style="width:90px"><button class="addColumnBtnAfter" onclick="addColumn()">Add <br/> Column</button></td>
@@ -295,9 +305,6 @@
             </td>
             <td>
                 <div class="background-edit" contenteditable>ACCOUNT NO</div>
-            </td>
-            <td>
-                <div class="background-edit" contenteditable>IFSC CODE</div>
             </td>
             <td id="actions" style="width:90px">
                 <div>ACTIONS</div>
@@ -311,35 +318,32 @@
                 <div class="background-edit" contenteditable>409000546479</div>
             </td>
             <td>
-                <div class="background-edit" contenteditable>RATN0000104</div>
-            </td>
-            <td>
                 <button class="removeBtn">Delete <br/> Row</button>
             </td>
         </tr>
         </tbody>
     </table>
     <button style="float:right" id="addRowBtnAfter">Add Row</button>
-    <br/>
-    <div class="noSplit">
-    <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Regards,</span>
     <br/><br/>
-    <div style="display: inline-block;width: 100%;">
-        <div style="float : right; text-align:center; width : 35%">
-            <p><b>Investigation Officer</b></p>
-            <p><strong>CEN police station,</strong></p>
-            <p><strong>North division, Bengaluru city</strong></p>
+    <div class="noSplit">
+        <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Regards,</span>
+        <br/><br/><br/>
+        <div style="display: inline-block;width: 100%;">
+            <div style="float : right; text-align:center; width : 35%">
+                <p><b>Investigation Officer</b></p>
+                <p><strong>CEN police station,</strong></p>
+                <p><strong>North division, Bengaluru city</strong></p>
+            </div>
         </div>
-    </div>
     </div>
     <br/>
     <div class="noSplit" style="display: inline-block;width: 40%;">
         <p><strong>To,</strong></p>
         <div id="toAddress" class="background-edit" style="border : none;margin-left: 10%;" contenteditable></div>
-    </div>
     <br/>
     <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>ROHINI</div></div>
     <div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
+    </div>
     <br/>
 </div>
 <br/>

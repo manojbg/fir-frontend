@@ -5,6 +5,9 @@
     <script src="./js/html2canvas.min.js"></script>
     <script src="./js/jquery-3.6.0.min.js"></script>
     <script src="./js/scripts.js"></script>
+    <script src="./js/jquery-ui.js"></script>
+    <script src="./js/bootstrap.js" data-modules="effect effect-bounce effect-blind effect-bounce effect-clip effect-drop effect-fold effect-slide"></script>
+    <link rel="stylesheet" href="./js/jquery-ui.css" />
     <style>
         /* Set A4 size */
         * {
@@ -111,6 +114,7 @@
               $('#table1 tr > *:nth-child('+columnIndex+')').remove();
           });
           fetchData();
+          $( "#datePicker" ).datepicker({ dateFormat: 'dd-mm-yy' });
         });
         window.onload = getQueryParams;
 
@@ -154,6 +158,7 @@
           }
 
           const obj = {
+            formTitle: $("#formTitle").text(),
             date: $("#datePicker").val(),
             toAddress: $("#toAddress").html(),
             caseIdentifier: $("#caseIdentifier").text(),
@@ -178,6 +183,7 @@
           convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
             if (error) {
               console.error("Error in convertHtmlToPdfDirectly:", error);
+              hideLoader();
               return;
             }
             const req = {
@@ -194,6 +200,7 @@
 
         // Function to fetch data and populate the fields
         function fetchData() {
+          showLoader();
           const params = new URLSearchParams(window.location.search);
           const pk = params.get("pk");
           const type = params.get("type");
@@ -203,6 +210,7 @@
               type: "GET",
               success: function (response) {
                 const jsonObject = JSON.parse(response.FileContent);
+                $("#formTitle").text(jsonObject.formTitle || "Police Notice U/s 94 & 106 Bharatiya Nagarik Suraksha Sanhita, 2023");
                 $("#datePicker").val(jsonObject.date || "");
                 $("#toAddress").html(jsonObject.toAddress || "");
                 $("#caseIdentifier").text(jsonObject.caseIdentifier || "ENTER CR NUMBER");
@@ -210,12 +218,18 @@
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
                 populateTable("table1", jsonObject.table1 || []);
+                hideLoader();
                 },
                 error: function (error) {
                     console.error("Error fetching data:", error);
+                    hideLoader();
                     handleModalError();
                 }
             });
+          }
+          else
+          {
+            hideLoader();
           }
         }
 
@@ -236,6 +250,7 @@
 </head>
 <body id="bodyMain">
 <div id="divMain">
+    <div id="loader-mask"><div id="loader"></div></div>
     <br/>
     <div style='text-align:center;'>
         <p>
@@ -256,11 +271,11 @@
     </div>
     <br/> <br/>
     <div style='text-align:center;text-decoration: underline;font-weight:bold'>
-        <u>Police Notice U/s 94 & 106 Bharatiya Nagarik Suraksha Sanhita, 2023</u>
+        <u><div id="formTitle" style="display:inline" class="background-edit" contenteditable>Police Notice U/s 94 & 106 Bharatiya Nagarik Suraksha Sanhita, 2023</div></u>
     </div>
     <br/>
     <p style='text-align:right;'>
-        <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
+        <strong><span>Date: <input type="text" id="datePicker" class="background-edit" style="width:12%"></span></strong>
     </p>
     <div style="display: inline-block;width: 40%;">
         <p><strong>To,</strong></p>
@@ -296,6 +311,7 @@
         <tbody>
         <tr class="deleteColumnBtnRow" style="font-weight: bold;">
             <td style="width:50px"><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
@@ -366,10 +382,9 @@
             <p><strong>North division, Bengaluru city</strong></p>
         </div>
     </div>
-</div>
     <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>RAJU</div></div>
     <div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
-    <br/>
+</div><br/>
 </div>
 <button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
 <button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>

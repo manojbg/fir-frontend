@@ -10,11 +10,16 @@ import "react-resizable/css/styles.css"; // Include the required CSS
 import '../styles/UserDashboard.css';
 
 const UserDashboard = () => {
+  const role = localStorage.getItem('role');
+  if(role !== "USER")
+  {
+    handleLogout();
+  }
   const [tasks, setTasks] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [createFormPopup, setCreateFormPopup] = useState({ visible: false, FirNumber: '', FileName: '', IO: '', PSI: ''});
+  const [createFormPopup, setCreateFormPopup] = useState({ visible: false, FirNumber: '', FileName: '', PSI: ''});
   const [uploadPopup, setUploadPopup] = useState({ visible: false, FirNumber: '', FileName:'', UnApprovedFirSupportingDocuments: '', file: null});
   const [uploadNCRPPopup, setUploadNCRPPopup] = useState({ visible: false, FirNumber: '',CreatedDateTime:'', file: null});
   const searchBox = React.createRef(null);
@@ -125,12 +130,14 @@ const UserDashboard = () => {
 
   const handleSearchByIdTask = async () => {
     const firNumber = searchBox.current.value;
+    searchDate.current.value = '';
     if(firNumber !== "")
     {
       setShowLoader(true);
       try{
-       const response = await apiService.searchByIdTask(firNumber);
+       const response = await apiService.searchByIdTask(firNumber, currentPage - 1, pageSize);
        setTasks(response.content);
+       setTotalPages(response.totalPages || 1);
        if(response.content.length === 0)
        {
          handleAlertDisplay("No FIR/s found.","danger");
@@ -143,18 +150,20 @@ const UserDashboard = () => {
       setShowLoader(false);
     }
     else{
-     handleAlertDisplay("Please Enter a FIR Number","danger");
+      handleAlertDisplay("Please Enter a FIR Number","danger");
     }
   };
 
   const handleSearchByDateTask = async () => {
     const date = searchDate.current.value;
+    searchBox.current.value = '';
     if(date !== "")
     {
       setShowLoader(true);
       try{
         const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
         setTasks(response.content);
+        setTotalPages(response.totalPages || 1);
         if(response.content.length === 0)
         {
           handleAlertDisplay("No FIR/s found.","danger");
@@ -188,8 +197,8 @@ const UserDashboard = () => {
     setUploadNCRPPopup({ ...uploadNCRPPopup, file: e.target.files[0] });
   };
 
-  const handleFormCreationPopup = (firNumber, fileName, io, psi) => {
-    setCreateFormPopup({ visible: true, FirNumber: firNumber, FileName : fileName, IO : io, PSI: psi});
+  const handleFormCreationPopup = (firNumber, fileName, psi) => {
+    setCreateFormPopup({ visible: true, FirNumber: firNumber, FileName : fileName, PSI: psi});
   };
 
   const handleApprovedDocumentsUploadPopup = (firNumber, unApprovedFirSupportingDocuments) => {
@@ -333,8 +342,9 @@ const UserDashboard = () => {
     }
     else
     {
+      const encodedFIR = encodeURIComponent(firNumber);
       setShowLoader(true);
-      const response = await apiService.initiateAutoLienFormCreation(firNumber);
+      const response = await apiService.initiateAutoLienFormCreation(encodedFIR);
       fetchTasks(); // Refresh the task list
       handleAlertDisplay("Lien forms creation is Initiated","success");
       setShowLoader(false);
@@ -396,7 +406,7 @@ const UserDashboard = () => {
                   <td>{task.FirDTO.FirDate}</td>
                   <td>{task.FirDTO.Status}</td>
                   <td>
-                    <button className="action-buttons-mainlist-user add-button" title="Add Document" onClick={() => handleFormCreationPopup(task.FirDTO.FirNumber, '', task.FirDTO.InvestigationOfficer, task.FirDTO.PsiName)}></button>
+                    <button className="action-buttons-mainlist-user add-button" title="Add Document" onClick={() => handleFormCreationPopup(task.FirDTO.FirNumber, '', task.FirDTO.PsiName)}></button>
                     <button style={{ display: task.FirDTO.AttachmentFileBytes !== null ? "inline" : "none" }} className="action-buttons-mainlist-user view-button" title="View FIR" onClick={() => handleViewDocument(task.documentUrl)}></button>
                     <button className="action-buttons-mainlist-user upload-form-button" title="Upload NCRP Document" onClick={() => handleNCRPUploadPopup(task.FirDTO.FirNumber, task.FirDTO.CreatedDateTime)}></button>
                   </td>
@@ -559,9 +569,9 @@ const UserDashboard = () => {
             </div>
             <div className="popup-buttons">
               <button title="Create Form" onClick={() => {
-                        handleShow(createFormPopup.FirNumber,createFormPopup.FileName,"create", "", createFormPopup.IO, createFormPopup.PSI,"");
+                        handleShow(createFormPopup.FirNumber,createFormPopup.FileName,"create", "", createFormPopup.PSI,"");
                     }}>Create</button>
-              <button title="Close" onClick={() => setCreateFormPopup({ visible: false, FirNumber: '', FileName: '', IO: '', PSI: '' })}>Cancel</button>
+              <button title="Close" onClick={() => setCreateFormPopup({ visible: false, FirNumber: '', FileName: '', PSI: '' })}>Cancel</button>
             </div>
           </div>
         </div>
