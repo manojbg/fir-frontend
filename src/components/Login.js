@@ -13,6 +13,10 @@ const Login = () => {
   useEffect(() => {
     // Add class to the body tag for this page
     document.body.classList.add('login-container-body');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('role');
+    localStorage.removeItem('designation');
     // Cleanup by removing the class when the component unmounts
     return () => {
       document.body.classList.remove('login-container-body');

@@ -5,14 +5,17 @@
     <script src="./js/html2canvas.min.js"></script>
     <script src="./js/jquery-3.6.0.min.js"></script>
     <script src="./js/scripts.js"></script>
+    <script src="./js/jquery-ui.js"></script>
+    <script src="./js/bootstrap.js" data-modules="effect effect-bounce effect-blind effect-bounce effect-clip effect-drop effect-fold effect-slide"></script>
+    <link rel="stylesheet" href="./js/jquery-ui.css" />
     <style>
         /* Set A4 size */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family:Tahoma;
-            font-size:17px;
+            font-family:"Times New Roman",sans-serif;
+            font-size: 16px;
         }
 
         @page {
@@ -27,7 +30,7 @@
         }
 
         body{
-        margin: 2%;
+        margin: 5%;
         margin-top: 4%
         }
 
@@ -109,6 +112,7 @@
               $('#table1 tr > *:nth-child('+columnIndex+')').remove();
           });
           fetchData();
+          $( "#datePicker" ).datepicker({ dateFormat: 'dd-mm-yy' });
         });
         window.onload = getQueryParams;
 
@@ -153,6 +157,8 @@
 
           const obj = {
             date: $("#datePicker").val(),
+            crNumber: $("#crNumber").text(),
+            io: $("#io").text(),
             table1: tableContent,
             psi: $('#psi').text(),
             ioa: $('#ioa').text(),
@@ -173,6 +179,7 @@
           convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
             if (error) {
               console.error("Error in convertHtmlToPdfDirectly:", error);
+              hideLoader();
               return;
             }
             const req = {
@@ -189,6 +196,7 @@
 
         // Function to fetch data and populate the fields
         function fetchData() {
+          showLoader();
           const params = new URLSearchParams(window.location.search);
           const pk = params.get("pk");
           const type = params.get("type");
@@ -199,15 +207,23 @@
               success: function (response) {
                 const jsonObject = JSON.parse(response.FileContent);
                 $("#datePicker").val(jsonObject.date || "");
+                $("#crNumber").text(jsonObject.crNumber || "ENTER CR NUMBER");
+                $("#io").text(jsonObject.io || "PAVAN N/ Manju.S S");
                 populateTable("table1", jsonObject.table1 || []);
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
+                hideLoader();
                 },
                 error: function (error) {
                     console.error("Error fetching data:", error);
+                    hideLoader();
                     handleModalError();
                 }
             });
+          }
+          else
+          {
+            hideLoader();
           }
         }
 
@@ -230,6 +246,7 @@
 </head>
 <body id="bodyMain">
 <div id="divMain">
+    <div id="loader-mask"><div id="loader"></div></div>
     <br/>
     <div style='text-align:center;'>
         <p>
@@ -245,36 +262,33 @@
         <p>
             <u><span>E-mail ID:-</span></u><a
                 href="mailto:cenpsnorthbcp@ksp.gov.in"><span >cenpsnorthbcp@ksp.gov.in</span></a><span
-                >&nbsp;; Phone No-080-22942302; Mob No-8277945187/9480801066</span>
+                >&nbsp;; Phone No-080-22942302; Mob No-8277945187</span>
         </p>
     </div>
     <br/> <br/>
     <div style='text-align:center;font-weight:bold;text-decoration:underline'>
-        <u>To the Honorable 45TH  ACMM Court, Bengaluru City.</u>
+        <u>To the Honorable 45TH  ACJM Court, Bengaluru City.</u>
     </div>
     <br/>
-    <p style='text-align:right;'>
-        <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
-    </p>
-    <br/>
-    <h4 style="text-align: center;">Intimation regarding Lien Mark bank accounts.</h4><br/>
 
+    <h4 style="text-align: center;"><u>Intimation regarding Lien Mark bank accounts.</u></h4><br/>
+    <div id="caseIdentifier" style="display:none" contenteditable></div>
     <table style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
         <tbody>
         <tr>
-            <td style="width : 5%">1.</td>
             <td style="width : 45%">Name of the Police station</td>
-            <td style="width : 45%">C.E.N Police station, North Division, Bengaluru city.</td>
+            <td style="width : 45%">C.E.N Police station,<br/>
+                North Division, Bengaluru city.
+            </td>
         </tr>
         <tr>
-            <td>2.</td>
             <td>Cr. No & Section of law</td>
-            <td>590/2022 U/s 66(D) IT Act</td>
+            <td>
+                <p id="crNumber" style="display:inline; font-weight: bold;" class="background-edit" contenteditable>1241-2024 U/S  66(C), 66(D) IT ACT & 318(4) IPC</p></td>
         </tr>
         <tr>
-            <td>3.</td>
-            <td>Name of the officer, Designation on whose requisition account/s Lien marked.</td>
-            <td>PAVAN N/ Shivarathna S<br/>
+            <td>Name of the officer<br/> Designation on whose requisition<br/> account/s Lien marked.</td>
+            <td><p id="io" style="display:inline; font-weight: bold;" class="background-edit" contenteditable>PAVAN N/ Manju.S S</p><br/>
                 ACP/ Police Inspector<br/>
                 C.E.N Police Station,<br/>
                 North Division, Bengaluru City
@@ -283,7 +297,7 @@
         </tbody>
     </table>
 <br/>
-    <h4 style="text-align: center;">Lien marked account/s & amount details</h4><br/>
+    <h4 style="text-align: center;"><u>Lien Marked Account/s & Amount Details</u></h4><br/>
     <table id="table1" style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
         <tbody>
         <tr class="deleteColumnBtnRow" style="font-weight: bold;">
@@ -292,29 +306,36 @@
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
+            <td><button class='removeColumnBtn'>Delete <br/> Column</button></td>
             <td style="width:90px"><button class="addColumnBtnAfter" onclick="addColumn()">Add <br/> Column</button></td>
         </tr>
         <tr class="headers" style="font-weight: bold;">
+            <td style="width:50px">
+                <div class="background-edit" contenteditable>Sl No.</div>
+            </td>
           <td>
-              <div class="background-edit" contenteditable>Name of the BANK/s</div>
+              <div class="background-edit" contenteditable>Name of the Bank/s</div>
           </td>
           <td>
-              <div class="background-edit" contenteditable>ACCOUNT No/s</div>
+              <div class="background-edit" contenteditable>ACCOUNT Number/s</div>
           </td>
           <td>
-              <div class="background-edit" contenteditable>IFSC CODE</div>
+              <div class="background-edit" contenteditable>IFSC Code</div>
           </td>
           <td>
-              <div class="background-edit" contenteditable>LIEN MARKED AMOUNT</div>
+              <div class="background-edit" contenteditable>Lien Marked Amount</div>
           </td>
           <td>
-              <div class="background-edit" contenteditable>NCRP LAYER</div>
+              <div class="background-edit" contenteditable>NCRP Layer</div>
           </td>
           <td id="actions" style="width:90px">
               <div>ACTIONS</div>
           </td>
         </tr>
         <tr>
+            <td>
+                <div class="background-edit" contenteditable>1.</div>
+            </td>
             <td>
                 <div class="background-edit" contenteditable>YES Bank</div>
             </td>
@@ -338,18 +359,23 @@
     </table>
     <button style="float:right" id="addRowBtnAfter">Add Row</button>
 
-    <br/><br/>
+    <p style='text-align:left;'>
+        <strong><span>Date: <input type="text" id="datePicker" class="background-edit" style="width:12%"></span></strong>
+    </p>
+    <br/>
     <div class="noSplit">
-    <div style="display: inline-block;width: 100%;">
-        <div style="float : right; text-align:center; width : 35%">
-            <p><b>Investigation Officer</b></p>
-             <p><strong>CEN police station,</strong></p>
-            <p><strong>North division, Bengaluru city</strong></p>
+        <span>Thanking you, &nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Regards,</span>
+        <br/><br/><br/>
+        <div style="display: inline-block;width: 100%;">
+            <div style="float : right; text-align:center; width : 35%">
+                <p><b>Investigation Officer</b></p>
+                <p><strong>CEN police station,</strong></p>
+                <p><strong>North division, Bengaluru city</strong></p>
+            </div>
         </div>
-    </div>
-    </div>
     <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>ROHINI</div></div>
     <div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
+    </div>
     <br/>
     <br/>
 </div>
