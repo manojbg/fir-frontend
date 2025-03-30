@@ -5,6 +5,9 @@
     <script src="./js/html2canvas.min.js"></script>
     <script src="./js/jquery-3.6.0.min.js"></script>
     <script src="./js/scripts.js"></script>
+    <script src="./js/jquery-ui.js"></script>
+    <script src="./js/bootstrap.js" data-modules="effect effect-bounce effect-blind effect-bounce effect-clip effect-drop effect-fold effect-slide"></script>
+    <link rel="stylesheet" href="./js/jquery-ui.css" />
     <style>
         /* Set A4 size */
         * {
@@ -71,6 +74,7 @@
     <script>
         $(document).ready(function () {
           fetchData();
+          $( "#datePicker" ).datepicker({ dateFormat: 'dd-mm-yy' });
         });
         window.onload = getQueryParams;
 
@@ -113,6 +117,7 @@
           convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
             if (error) {
               console.error("Error in convertHtmlToPdfDirectly:", error);
+              hideLoader();
               return;
             }
             const req = {
@@ -129,6 +134,7 @@
 
         // Function to fetch data and populate the fields
         function fetchData() {
+          showLoader();
           const params = new URLSearchParams(window.location.search);
           const pk = params.get("pk");
           const type = params.get("type");
@@ -147,12 +153,18 @@
                 $('#igURL').text(jsonObject.igURL || "");
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
+                hideLoader();
                 },
                 error: function (error) {
                     console.error("Error fetching data:", error);
+                    hideLoader();
                     handleModalError();
                 }
             });
+          }
+          else
+          {
+            hideLoader();
           }
         }
 
@@ -167,6 +179,7 @@
 </head>
 <body id="bodyMain">
 <div id="divMain">
+    <div id="loader-mask"><div id="loader"></div></div>
     <br/>
     <div style='text-align:center;'>
         <p>
@@ -191,7 +204,7 @@
     </div>
     <br/>
     <p style='text-align:right;'>
-        <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
+        <strong><span>Date: <input type="text" id="datePicker" class="background-edit" style="width:12%"></span></strong>
     </p>
     <div style="display: inline-block;width: 40%;">
         <p><strong>To,</strong></p>
@@ -253,10 +266,9 @@
             <p><strong>North division, Bengaluru city</strong></p>
         </div>
     </div>
-    </div>
     <div><b>PSI : </b> <div id="psi" style="display:inline; font-weight:bold" class="background-edit" contenteditable>ROHINI</div></div>
     <div><b>IOA : </b> <div id="ioa" style="display:inline; font-weight:bold" class="background-edit" contenteditable>MAHENDRA S</div></div>
-    <br/>
+    </div><br/>
 </div><br/>
 <button class="save-button" id="saveForm" title="Save Document" onclick="save(false)">Save</button>
 <button class="save-button" id="printForm" style="float:right" title="Save Document And Print" onclick="save(true)">Save & Print</button>

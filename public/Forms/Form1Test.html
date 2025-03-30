@@ -5,6 +5,9 @@
     <script src="./js/html2canvas.min.js"></script>
     <script src="./js/jquery-3.6.0.min.js"></script>
     <script src="./js/scripts.js"></script>
+    <script src="./js/jquery-ui.js"></script>
+    <script src="./js/bootstrap.js" data-modules="effect effect-bounce effect-blind effect-bounce effect-clip effect-drop effect-fold effect-slide"></script>
+    <link rel="stylesheet" href="./js/jquery-ui.css" />
     <style>
         /* Set A4 size */
         * {
@@ -183,6 +186,7 @@ function save(print) {
         convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
             if (error) {
                 console.error("Error in convertHtmlToPdfDirectly:", error);
+                hideLoader();
                 return;
             }
                 const req = {
