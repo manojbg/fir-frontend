@@ -34,6 +34,11 @@ const AdminDashboard = () => {
   const [variant, setVariant] = useState();
 
   useEffect(() => {
+    const role = localStorage.getItem('role');
+    if(role !== "ADMIN")
+    {
+      handleLogout();
+    }
     setShowLoader(true);
     handlePageView();
     fetchTasks();
@@ -126,12 +131,14 @@ const AdminDashboard = () => {
 
   const handleSearchByIdTask = async () => {
     const firNumber = searchBox.current.value;
+    searchDate.current.value = '';
     if(firNumber !== "")
     {
       setShowLoader(true);
       try{
-       const response = await apiService.searchByIdTask(firNumber);
+       const response = await apiService.searchByIdTask(firNumber, currentPage - 1, pageSize);
        setTasks(response.content);
+       setTotalPages(response.totalPages || 1);
        if(response.content.length === 0)
        {
          handleAlertDisplay("No FIR/s found.","danger");
@@ -150,12 +157,14 @@ const AdminDashboard = () => {
 
   const handleSearchByDateTask = async () => {
     const date = searchDate.current.value;
+    searchBox.current.value = '';
     if(date !== "")
     {
       setShowLoader(true);
       try{
         const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
         setTasks(response.content);
+        setTotalPages(response.totalPages || 1);
         if(response.content.length === 0)
         {
           handleAlertDisplay("No FIR/s found.","danger");
@@ -175,6 +184,7 @@ const AdminDashboard = () => {
 
   const handleSearchByAssignedOrUnAssignedTask = async () => {
     setShowLoader(true);
+    setCurrentPage(1);
     searchBox.current.value = '';
     searchDate.current.value = '';
     const input = searchToggle.current;
@@ -182,6 +192,7 @@ const AdminDashboard = () => {
     try{
       const response =await apiService.getAllTasksByAssignedOrUnAssigned(assigned,currentPage - 1, pageSize);
       setTasks(response.content);
+      setTotalPages(response.totalPages || 1);
       if(response.content.length === 0)
       {
         handleAlertDisplay("No FIR/s found.","danger");
@@ -220,7 +231,7 @@ const AdminDashboard = () => {
                 ComplainantName : complainantName,
                 MajorHeader : majorHeader,
                 InvestigationOfficer : newTask.InvestigationOfficer,
-                PsiName : psiName,
+                PsiId : psiName,
                 NcrpFileBytes : null
               };
         if(firFileInput !== "")   {
@@ -240,7 +251,7 @@ const AdminDashboard = () => {
             fileReader.onload = async () => {
               const base64FirFile = fileReader.result.split(',')[1];
               taskData.AttachmentFileBytes = base64FirFile;
-              if(ncrpFileInput === null)
+              if(ncrpFileInput === null ||  ncrpFileInput === "")
               {
                 persistTaskToDB(taskData);
               }
@@ -476,7 +487,7 @@ const AdminDashboard = () => {
                     <select
                              value={newTask.InvestigationOfficer}
                              onChange={(e) => setNewTask({ ...newTask, InvestigationOfficer: e.target.value })}>
-                     <option value="">Select Investigation Officer</option>
+                     <option value="">Select Officer</option>
                      <option value="ACP">Assistant Commissioner Of Police</option>
                      <option value="PI">Police Inspector</option></select>
                    </td></tr><tr><td>
@@ -573,7 +584,7 @@ const AdminDashboard = () => {
                   <td>{task.FirDTO.MajorHeader}</td>
                   <td>{task.FirDTO.ComplainantName}</td>
                   <td>{task.FirDTO.PsiName}</td>
-                  <td>{task.FirDTO.AssigneeUserId || 'Unassigned'}</td>
+                  <td>{task.FirDTO.AssigneeUserName || 'Unassigned'}</td>
                   <td>{task.FirDTO.FirDate}</td>
                   <td>{task.FirDTO.Status}</td>
                   <td>

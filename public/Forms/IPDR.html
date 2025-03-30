@@ -5,6 +5,9 @@
     <script src="./js/html2canvas.min.js"></script>
     <script src="./js/jquery-3.6.0.min.js"></script>
     <script src="./js/scripts.js"></script>
+    <script src="./js/jquery-ui.js"></script>
+    <script src="./js/bootstrap.js" data-modules="effect effect-bounce effect-blind effect-bounce effect-clip effect-drop effect-fold effect-slide"></script>
+    <link rel="stylesheet" href="./js/jquery-ui.css" />
     <style>
         /* Set A4 size */
         * {
@@ -111,6 +114,7 @@
               $("#table1 tr > *:last-child").css("width","90px");
           });
           fetchData();
+          $( "#datePicker" ).datepicker({ dateFormat: 'dd-mm-yy' });
         });
         window.onload = getQueryParams;
 
@@ -175,6 +179,7 @@
           convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
             if (error) {
               console.error("Error in convertHtmlToPdfDirectly:", error);
+              hideLoader();
               return;
             }
             const req = {
@@ -191,6 +196,7 @@
 
         // Function to fetch data and populate the fields
         function fetchData() {
+          showLoader();
           const params = new URLSearchParams(window.location.search);
           const pk = params.get("pk");
           const type = params.get("type");
@@ -204,13 +210,19 @@
                 $('#networkProvider option:selected').text(jsonObject.networkProvider || "");
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
-                populateIPDRTable("table1", jsonObject.table1 || []);
+                populateTable("table1", jsonObject.table1 || []);
+                hideLoader();
                 },
                 error: function (error) {
                     console.error("Error fetching data:", error);
+                    hideLoader();
                     handleModalError();
                 }
             });
+          }
+          else
+          {
+            hideLoader();
           }
         }
 
@@ -231,6 +243,7 @@
     </script>
 </head>
 <body id="bodyMain">
+<div id="loader-mask"><div id="loader"></div></div>
 <div id="divMain">
     <br/>
     <div style='text-align:center;'>
@@ -256,6 +269,7 @@
     </div>
     <br/>
     <div style='text-align:center'>Performa to seek Call Data/Detail Record</div>
+    <div id="caseIdentifier" style="display:none" contenteditable></div>
 <div style="display: inline-block;width: 40%;">
     <p><strong>To,</strong></p>
     <div style="text-indent:18.0pt">The Nodal Officer</div>
@@ -338,7 +352,7 @@
 </ol>
 <br/><br/>
 <p>Place: Bengaluru</p>
-<p><span>Date: <input type="date" id="datePicker" class="background-edit"></span></p>
+<p><span>Date: <input type="text" id="datePicker" class="background-edit" style="width:12%"></span></p>
 <p>Telephone (O): 080-22942302</p>
 <br/><br/>
     <div class="noSplit">

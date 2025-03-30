@@ -264,17 +264,15 @@ const deleteTaskDocument = async (pk) =>{
 };
 
 
-const searchByIdTask = async (firNumber) => {
+const searchByIdTask = async (firNumber, pageNumber = 0, size = 10) => {
   var data = null;
   const userId = localStorage.getItem('userId');
   const role = localStorage.getItem('role');
+  const designation = localStorage.getItem('designation');
+
   let response = "";
     try {
-      if(role  === "ADMIN"){
-        response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}&userId=`);
-      }else{
-        response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}&userId=${userId}`);
-      }
+        response = await fetch(`${API_URL}/dashboard/listSpecificFIRsWithDocumentData?firNumbers=${firNumber}&userId=${userId}&role=${role}&designation=${designation}&pageNumber=${pageNumber}&size=${size}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -292,14 +290,11 @@ const getAllTasksByDate = async (date, pageNumber = 0, size = 10) => {
   var data = null;
   const userId = localStorage.getItem('userId');
   const role = localStorage.getItem('role');
+  const designation = localStorage.getItem('designation');
   let response = "";
 
   try {
-    if(role  === "ADMIN"){
-      response = await fetch(`${API_URL}/dashboard/listFIRsByDate?date=${date}&userId=&pageNumber=${pageNumber}&size=${size}`);
-    }else{
-      response = await fetch(`${API_URL}/dashboard/listFIRsByDate?date=${date}&pageNumber=${pageNumber}&size=${size}&userId=${userId}`);
-    }
+      response = await fetch(`${API_URL}/dashboard/listFIRsByDate?date=${date}&userId=${userId}&role=${role}&designation=${designation}&pageNumber=${pageNumber}&size=${size}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -315,8 +310,11 @@ const getAllTasksByDate = async (date, pageNumber = 0, size = 10) => {
 
 const getAllTasksByAssignedOrUnAssigned = async (assigned, pageNumber = 0, size = 10) => {
   var data = null;
+  const userId = localStorage.getItem('userId');
+  const role = localStorage.getItem('role');
+  const designation = localStorage.getItem('designation');
   try {
-    const response = await fetch(`${API_URL}/dashboard/listEitherAssignedOrUnAssignedFIRsWithPaging?assigned=${assigned}&pageNumber=${pageNumber}&size=${size}`);
+    const response = await fetch(`${API_URL}/dashboard/listEitherAssignedOrUnAssignedFIRsWithPaging?assigned=${assigned}&userId=${userId}&role=${role}&designation=${designation}&pageNumber=${pageNumber}&size=${size}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

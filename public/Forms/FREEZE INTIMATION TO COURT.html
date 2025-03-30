@@ -5,6 +5,9 @@
     <script src="./js/html2canvas.min.js"></script>
     <script src="./js/jquery-3.6.0.min.js"></script>
     <script src="./js/scripts.js"></script>
+    <script src="./js/jquery-ui.js"></script>
+    <script src="./js/bootstrap.js" data-modules="effect effect-bounce effect-blind effect-bounce effect-clip effect-drop effect-fold effect-slide"></script>
+    <link rel="stylesheet" href="./js/jquery-ui.css" />
     <style>
         /* Set A4 size */
         * {
@@ -109,6 +112,7 @@
               $('#table1 tr > *:nth-child('+columnIndex+')').remove();
           });
           fetchData();
+          $( "#datePicker" ).datepicker({ dateFormat: 'dd-mm-yy' });
         });
         window.onload = getQueryParams;
 
@@ -173,6 +177,7 @@
           convertHtmlToPdfDirectly(elementToConvert, (error, byteArray) => {
             if (error) {
               console.error("Error in convertHtmlToPdfDirectly:", error);
+              hideLoader();
               return;
             }
             const req = {
@@ -189,6 +194,7 @@
 
         // Function to fetch data and populate the fields
         function fetchData() {
+          showLoader();
           const params = new URLSearchParams(window.location.search);
           const pk = params.get("pk");
           const type = params.get("type");
@@ -202,12 +208,18 @@
                 populateTable("table1", jsonObject.table1 || []);
                 $('#psi').text(jsonObject.psi || "");
                 $('#ioa').text(jsonObject.ioa || "");
+                hideLoader();
                 },
                 error: function (error) {
                     console.error("Error fetching data:", error);
+                    hideLoader();
                     handleModalError();
                 }
             });
+          }
+          else
+          {
+            hideLoader();
           }
         }
 
@@ -229,6 +241,7 @@
     </script>
 </head>
 <body id="bodyMain">
+<div id="loader-mask"><div id="loader"></div></div>
 <div id="divMain">
     <br/>
     <div style='text-align:center;'>
@@ -254,11 +267,11 @@
     </div>
     <br/>
     <p style='text-align:right;'>
-        <strong><span>Date: <input type="date" id="datePicker" class="background-edit"></span></strong>
+        <strong><span>Date: <input type="text" id="datePicker" class="background-edit" style="width:12%"></span></strong>
     </p>
     <br/>
     <h4 style="text-align: center;">Intimation regarding Lien Mark bank accounts.</h4><br/>
-
+    <div id="caseIdentifier" style="display:none" contenteditable></div>
     <table style="border-collapse: collapse;border: none; width:100%;  text-align:center; table-layout : fixed">
         <tbody>
         <tr>

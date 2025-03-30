@@ -1,5 +1,6 @@
 var globalOptions = {
-	uri: 'http://localhost:8080/firFileArchival/api/dashboard/getSupportingDocumentData'
+	uri: 'http://localhost:8080/firFileArchival/api/dashboard/getSupportingDocumentData',
+	host: 'http://localhost:8080/firFileArchival/api'
 }
 
 function getQueryParams() {
@@ -24,6 +25,7 @@ function handleModalError() {
 }
 
 function convertHtmlToPdfDirectlySinglePage(element, callback) {
+  showLoader();
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
 
@@ -172,29 +174,26 @@ function convertHtmlToPdfDirectly(element, callback) {
 function saveAPICall(requestPayload) {
   // Send the data via AJAX
   $.ajax({
-     url: "http://localhost:8080/firFileArchival/api/fileOps/saveFIRSupportingDocument",
+     url: globalOptions.host+"/fileOps/saveFIRSupportingDocument",
      type: "POST",
      contentType: "application/json",
      data: JSON.stringify(requestPayload),
      success: (response) => {
          //console.log("Response:", response);
+         hideLoader();
          handleCloseModal();
      },
      error: (error) => {
          console.error("Error saving data:", error);
+         hideLoader();
          handleModalError();
      },
- });
-
+  });
 }
 
 
 function splitIntoPages(element)
 {
-    //let fullTemplate = mainDivElement.cloneNode(true);
-  //let fullTemplate = clone(mainDivElement);
-  //let fullTemplate = JSON.parse(JSON.stringify(mainDivElement));
-  //var fullTemplate = jQuery.extend(true, {}, mainDivElement)
   const totalHeight = element.clientHeight;
   let childrenArray = element.children;
   //a4 size page in points(po) 595 x 842
@@ -401,6 +400,19 @@ function getTableData(tableId) {
     });
   }
   return data;
+}
+
+function showLoader()
+{
+  $('#loader-mask').css('display','block');
+  $('#loader').css('display','block');
+
+}
+
+function hideLoader()
+{
+  $('#loader-mask').css('display','none');
+  $('#loader').css('display','none');
 }
 
 
