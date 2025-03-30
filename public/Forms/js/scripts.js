@@ -423,6 +423,21 @@ function hideLoader()
   $('#loader').css('display','none');
 }
 
+function  setPageHeaders()
+{
+    $(".cenId").html("Cyber Crime Police Station, ");
+    $(".cenLocation").html("North Division, Bengaluru");
+    $(".cenRefBody").html("North Division");
+    $(".cenCity").html("Bengaluru");
+    $("#cenCDRLocation").html("No: NORTH CEN PS/CDR");
+    $("#cenAddress").html("2<sup>nd</sup> Floor, Deputy Commissioner Office Building, North Division,<br/>\n" +
+        "                Yeswanthapura, Bengaluru city -560022");
+    a = document.getElementById("cenEmailId");
+    a.setAttribute("href", "cenpsnorthbcp@ksp.gov.in");
+    $("#cenEmailId").html("cenpsnorthbcp@ksp.gov.in ; ");
+    $("#cenContact").html("Mob No-9480801066, 8277945187");
+}
+
 
 
 
