@@ -457,6 +457,20 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleGenerateNCRPReport = async (firNumber, status) => {
+
+      const encodedFIR = encodeURIComponent(firNumber);
+      setShowLoader(true);
+      const response = await apiService.createAndDownloadNCRPReport(encodedFIR);
+      const blob = new Blob([response.FileBytes], { type: "application/vnd.ms-excel;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      window.open(url);
+      fetchTasks(); // Refresh the task list
+      handleAlertDisplay("NCRP Report is generated","success");
+      setShowLoader(false);
+
+  };
+
   return (
     <div bsClass='AdminDashboard'>
         <header className="dashboard-header">
@@ -633,7 +647,8 @@ const AdminDashboard = () => {
                   <thead>
                     <tr>
                       <th>Approved Document ({task.ApprovedFirSupportingDocumentsCount})</th>
-                      <th><button className="upload-button approved-document-upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
+                      //<th><button className="upload-button approved-document-upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
+                      <th><button className="create-ncrp-report-button" title="Generate NCRP Report" onClick={() => handleGenerateNCRPReport(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
                     </tr>
                   </thead>
                   <tbody>{task.ApprovedFirSupportingDocuments && task.ApprovedFirSupportingDocuments.length > 0 ? (

@@ -51,6 +51,32 @@
   .create-lien-letter-button:hover{
     transform: scale(1.3);
   }
+
+  .create-court-order-letters-button {
+    background : url("./assets/images/courtdocument.png");
+    background-size : contain;
+    background-repeat : no-repeat;
+    padding: 14%;
+    margin-left: 60%;
+    border: none;
+  }
+
+  .create-court-order-letters-button:hover{
+    transform: scale(1.3);
+  }
+
+  .create-ncrp-report-button {
+    background : url("./assets/images/report.png");
+    background-size : contain;
+    background-repeat : no-repeat;
+    padding: 14%;
+    margin-left: 60%;
+    border: none;
+  }
+
+  .create-ncrp-report-button:hover{
+    transform: scale(1.3);
+  }
   
   .section-title {
     border-bottom: 4px solid black;

@@ -178,6 +178,7 @@ function convertHtmlToPdfDirectly(element, callback) {
 
 function saveAPICall(requestPayload) {
   // Send the data via AJAX
+  Object.defineProperty(requestPayload, "Reviewed", {value : "true"});
   $.ajax({
      url: globalOptions.host+"/fileOps/saveFIRSupportingDocument",
      type: "POST",

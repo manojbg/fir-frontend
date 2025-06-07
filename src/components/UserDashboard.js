@@ -351,6 +351,36 @@ const UserDashboard = () => {
     }
   };
 
+  const handleCourtOrderFormsAutoCreation = async (firNumber, status) => {
+    if(status !== "UI")
+    {
+      handleAlertDisplay("FIR is in an invalid status. Please refresh/retry after sometime","danger");
+    }
+    else
+    {
+      const encodedFIR = encodeURIComponent(firNumber);
+      setShowLoader(true);
+      const response = await apiService.initiateAutoCourtOrderFormCreation(encodedFIR);
+      fetchTasks(); // Refresh the task list
+      handleAlertDisplay("Court Orders creation is Initiated","success");
+      setShowLoader(false);
+    }
+  };
+
+  const handleGenerateNCRPReport = async (firNumber, status) => {
+
+      const encodedFIR = encodeURIComponent(firNumber);
+      setShowLoader(true);
+      const response = await apiService.createAndDownloadNCRPReport(encodedFIR);
+      const blob = new Blob([response.FileBytes], { type: "application/vnd.ms-excel;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      window.open(url);
+      fetchTasks(); // Refresh the task list
+      handleAlertDisplay("NCRP Report is generated","success");
+      setShowLoader(false);
+
+  };
+
   return (
     <div bsClassName='UserDashboard'>
         <header className="user-dashboard-header">
@@ -456,7 +486,9 @@ const UserDashboard = () => {
                   <thead>
                     <tr>
                       <th>Approved Document ({task.ApprovedFirSupportingDocumentsCount})</th>
-                      <th><button className="upload-button approved-document-upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
+                      //<th><button className="upload-button approved-document-upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
+                      <th><button className="create-ncrp-report-button" title="Generate NCRP Report" onClick={() => handleGenerateNCRPReport(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
+                      <th><button className="create-court-order-letters-button" title="Create court order letters Automatically" onClick={() => handleCourtOrderFormsAutoCreation(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
                     </tr>
                   </thead>
                   <tbody>{task.ApprovedFirSupportingDocuments && task.ApprovedFirSupportingDocuments.length > 0 ? (
@@ -470,6 +502,10 @@ const UserDashboard = () => {
     <tr key={index}>
       <td>{(document.FileName) || 'Unnamed Document'}</td>
       <td>
+        <button
+          className="action-buttons-sublist edit-button" title="Edit Document"
+          onClick={() => handleShow(task.FirDTO.FirNumber, document.FileName ,"edit", document.Pk, task.FirDTO.PsiName, document.CreatedDateTime)}
+        ></button>
         <button
           className="action-buttons-sublist view-button" title="View Document"
           onClick={() => handleViewDocument(document.documentUrl)}

@@ -452,6 +452,67 @@ const updateNCRPToFIR = async (taskData) => {
   }
 };
 
+const createAndDownloadNCRPReport = async (firNumber) => {
+  try {
+      const response = await fetch(`${API_URL}/fileOps/createExcelReport?firNumber=${firNumber}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response;
+  } catch (error) {
+    console.error('Error creating report:', error);
+    throw error;
+  }
+};
+
+const downloadNCRPReport = async (firNumber) => {
+  try {
+      const response = await fetch(`${API_URL}/fileOps/downloadNCRPExcelReport?firNumber=${firNumber}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: '*/*',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response;
+  } catch (error) {
+    console.error('Error downloading report:', error);
+    throw error;
+  }
+};
+
+const initiateAutoCourtOrderFormCreation = async (firNumber) => {
+    try {
+      const response = await fetch(`${API_URL}/fileOps/createCourtOrderForms?firNumber=${firNumber}`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response;
+    } catch (error) {
+      alert('Failed to initiate form creation');
+      console.error('Court order form creation failed:', error);
+      throw error;
+  }
+};
+
 export default {
   login,
   getAllTasks,
@@ -469,5 +530,8 @@ export default {
   getAllHeaders,
   createTaskItemData,
   initiateAutoLienFormCreation,
-  updateNCRPToFIR
+  updateNCRPToFIR,
+  createAndDownloadNCRPReport,
+  initiateAutoCourtOrderFormCreation,
+  downloadNCRPReport
 };
