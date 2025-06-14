@@ -35,7 +35,12 @@ select{
 }
 
 .dashboard-header div:nth-child(3) {
-  margin-left : 35%;
+    margin-left : 30%;
+    color: white;
+    font-size: 18px;
+}
+
+.dashboard-header div:nth-child(4) {
   justify-content : end;
   display: flex;
   width: 10%;
@@ -322,6 +327,12 @@ select{
 
 .edit-button {
   background : url("./assets/images/writing.png");
+  background-size : contain;
+  background-repeat : no-repeat;
+}
+
+.download-button {
+  background : url("./assets/images/download.png");
   background-size : contain;
   background-repeat : no-repeat;
 }
@@ -633,8 +644,19 @@ input:checked + .slider:before {
   border : 2px solid;
 }
 
-.task-table td:nth-child(1) {
+.task-table th:nth-child(1) {
   width : 80%;
+  text-align : left;
+}
+
+.task-table th:nth-child(2) {
+  width : 20%;
+  text-align : center;
+}
+
+
+.task-table td:nth-child(1) {
+  width : 60%;
   text-align : left;
 }
 
@@ -643,10 +665,6 @@ input:checked + .slider:before {
   text-align : center;
 }
 
-.task-table th:nth-child(2) {
-  width : 20%;
-  text-align : center;
-}
 
 .documents-panel {
   max-height: 50vh;

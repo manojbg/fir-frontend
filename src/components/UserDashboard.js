@@ -21,7 +21,7 @@ const UserDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [createFormPopup, setCreateFormPopup] = useState({ visible: false, FirNumber: '', FileName: '', PSI: ''});
   const [uploadPopup, setUploadPopup] = useState({ visible: false, FirNumber: '', FileName:'', UnApprovedFirSupportingDocuments: '', file: null});
-  const [uploadNCRPPopup, setUploadNCRPPopup] = useState({ visible: false, FirNumber: '',CreatedDateTime:'', file: null});
+  const [uploadNCRPPopup, setUploadNCRPPopup] = useState({ visible: false, FirNumber: '',CreatedDateTime:'', Ncrps: '' ,file: null});
   const searchBox = React.createRef(null);
   const searchDate = React.createRef(null);
   const firFile = React.createRef(null);
@@ -36,18 +36,19 @@ const UserDashboard = () => {
   const [alertMessage, setAlertMessage] = useState();
   const [variant, setVariant] = useState();
   const [showLoader, setShowLoader] = useState(false);
+  const loggedInUserName = localStorage.getItem('userName');
 
   useEffect(() => {
     setShowLoader(true);
-    fetchTasks();
     setTimeout(() => {
       handleNotification(false);
-    }, 1000);
+    }, 100);
     document.querySelector("#root").classList.add('user-dashboard-root');
     const intervalId = setInterval(handleNotification, 60000);
-    setTimeout(() => {
-      setShowLoader(false);
-    }, 3000);
+    fetchTasks();
+    //setTimeout(() => {
+     // setShowLoader(false);
+   // }, 3000);
            // Cleanup by removing the class when the component unmounts
     return () => {
       document.querySelector("#root").classList.remove('user-dashboard-root');
@@ -76,6 +77,10 @@ const UserDashboard = () => {
       {
         fileName = "LIEN LETTER"
       }
+      if(fileName.includes("FREEZE INTIMATION TO COURT"))
+      {
+        fileName = "FREEZE INTIMATION TO COURT"
+      }
       form = fileName;
     }else{
       form = document.querySelector('.form-select').value;
@@ -103,10 +108,12 @@ const UserDashboard = () => {
           const response = await apiService.getAllTasks(currentPage - 1, pageSize);
           setTasks(response.content);
           setTotalPages(response.totalPages || 1);
+          setShowLoader(false);
         } catch (error) {
           console.error('Error fetching tasks:', error);
           handleAlertDisplay("No FIRs found/assigned.","danger");
           setTasks([]);
+          setShowLoader(false);
         }
       }
   };
@@ -125,7 +132,7 @@ const UserDashboard = () => {
     setShowLoader(true);
     await apiService.deleteTaskDocument(pk);
     fetchTasks(); // Refresh the task list
-    setShowLoader(false);
+    //setShowLoader(false);
   };
 
   const handleSearchByIdTask = async () => {
@@ -135,7 +142,9 @@ const UserDashboard = () => {
     {
       setShowLoader(true);
       try{
-       const response = await apiService.searchByIdTask(firNumber, currentPage - 1, pageSize);
+       const encodedFIR = encodeURIComponent(firNumber);
+       const response = await apiService.searchByIdTask(encodedFIR, 0, pageSize);
+       setCurrentPage(1);
        setTasks(response.content);
        setTotalPages(response.totalPages || 1);
        if(response.content.length === 0)
@@ -161,7 +170,8 @@ const UserDashboard = () => {
     {
       setShowLoader(true);
       try{
-        const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
+        const response = await apiService.getAllTasksByDate(date, 0, pageSize);
+        setCurrentPage(1);
         setTasks(response.content);
         setTotalPages(response.totalPages || 1);
         if(response.content.length === 0)
@@ -205,8 +215,8 @@ const UserDashboard = () => {
     setUploadPopup({ visible: true, FirNumber: firNumber, FileName:'', UnApprovedFirSupportingDocuments: unApprovedFirSupportingDocuments, file: null});
   };
 
-  const handleNCRPUploadPopup = (firNumber, createdDateTime) => {
-    setUploadNCRPPopup({ visible: true, FirNumber: firNumber, CreatedDateTime: createdDateTime, file: null});
+  const handleNCRPUploadPopup = (firNumber, createdDateTime, ncrps) => {
+    setUploadNCRPPopup({ visible: true, FirNumber: firNumber, CreatedDateTime: createdDateTime, Ncrps : ncrps, file: null});
   };
 
   const handleApprovedDocumentsUpload = async () => {
@@ -254,7 +264,7 @@ const UserDashboard = () => {
     {
        handleAlertDisplay("Mandatory Fields Are Not Populated","danger");
     }
-    else if((uploadNCRPPopup.file.size / Math.pow(10,6)) > 15)
+    else if((uploadNCRPPopup.file.size / Math.pow(10,6)) > 50)
     {
        handleAlertDisplay("File is over the allowed size","danger");
     }
@@ -293,7 +303,7 @@ const UserDashboard = () => {
   }
 
   const handleUploadNCRPPopupClose = () => {
-    setUploadNCRPPopup({ visible: false, FirNumber: '', CreatedDateTime: '', file: null});
+    setUploadNCRPPopup({ visible: false, FirNumber: '', CreatedDateTime: '', Ncrps : '', file: null});
   }
 
   const handleLogout = () => {
@@ -332,7 +342,7 @@ const UserDashboard = () => {
   const tableReload = () => {
     setShowLoader(true);
     fetchTasks();
-    setShowLoader(false);
+    //setShowLoader(false);
   }
 
   const handleLienFormAutoCreation = async (firNumber, status) => {
@@ -347,11 +357,11 @@ const UserDashboard = () => {
       const response = await apiService.initiateAutoLienFormCreation(encodedFIR);
       fetchTasks(); // Refresh the task list
       handleAlertDisplay("Lien forms creation is Initiated","success");
-      setShowLoader(false);
+      //setShowLoader(false);
     }
   };
 
-  const handleCourtOrderFormsAutoCreation = async (firNumber, status) => {
+  const handleFreezeOrderToCourtFormsAutoCreation = async (firNumber, status) => {
     if(status !== "UI")
     {
       handleAlertDisplay("FIR is in an invalid status. Please refresh/retry after sometime","danger");
@@ -362,23 +372,44 @@ const UserDashboard = () => {
       setShowLoader(true);
       const response = await apiService.initiateAutoCourtOrderFormCreation(encodedFIR);
       fetchTasks(); // Refresh the task list
-      handleAlertDisplay("Court Orders creation is Initiated","success");
-      setShowLoader(false);
+      handleAlertDisplay("Freeze Intimation To Court letter creation is initiated","success");
+      //setShowLoader(false);
     }
   };
 
   const handleGenerateNCRPReport = async (firNumber, status) => {
+    const encodedFIR = encodeURIComponent(firNumber);
+    setShowLoader(true);
+    const response = await apiService.createAndDownloadNCRPReport(encodedFIR);
+    var bytes = Uint8Array.from(atob(response.FileBytes),(c) => c.charCodeAt(0) );
+    var blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    var a = window.document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      a.download = response.FirNumber+"-"+response.FileName;
+      // Append anchor to body.
+      document.body.appendChild(a)
+      a.click();
+      // Remove anchor from body
+      document.body.removeChild(a)
+    setShowLoader(false);
+  };
 
-      const encodedFIR = encodeURIComponent(firNumber);
-      setShowLoader(true);
-      const response = await apiService.createAndDownloadNCRPReport(encodedFIR);
-      const blob = new Blob([response.FileBytes], { type: "application/vnd.ms-excel;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      window.open(url);
-      fetchTasks(); // Refresh the task list
-      handleAlertDisplay("NCRP Report is generated","success");
-      setShowLoader(false);
+  const handleDownload = async (firNumber) => {
+    const encodedFIR = encodeURIComponent(firNumber);
+    setShowLoader(true);
+    const response =  await apiService.downloadNCRPReport(encodedFIR);
+     var bytes = Uint8Array.from(atob(response.FileBytes),(c) => c.charCodeAt(0) );
+     var blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+     var a = window.document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      a.download = response.FirNumber+"-"+response.FileName;
+      // Append anchor to body.
+      document.body.appendChild(a)
+      a.click();
+      // Remove anchor from body
+      document.body.removeChild(a)
 
+    setShowLoader(false);
   };
 
   return (
@@ -387,7 +418,8 @@ const UserDashboard = () => {
             <div><img className="navbar-brand" src={logo}></img></div>
             <div>
             <h1 className="navbar-brand-text"><u>Notices And Record Management System</u></h1>
-            <p><strong>CEN, North Division, Bangalore</strong></p></div>
+            <p><strong>Cyber Crime, North Division, Bangalore</strong></p></div>
+            <div>{loggedInUserName}</div>
             <div>
             <button className="notification-button" title="Notifications" onClick={() => handleNotification(true)}></button>
             <button className="logout-button" title="Log Out" onClick={() => handleLogout()}></button>
@@ -429,7 +461,7 @@ const UserDashboard = () => {
               <summary className="task-summary">
                 <div className="task-row-user">
                 <table><tbody><tr>
-                  <td><strong>No:</strong> {task.FirDTO.FirNumber.length > 25 ? task.FirDTO.FirNumber.substring(0,25)+"..." : task.FirDTO.FirNumber}</td>
+                  <td><strong>No:</strong> {task.FirDTO.FirNumber.length > 30 ? task.FirDTO.FirNumber.substring(0,30)+"..." : task.FirDTO.FirNumber}</td>
                   <td>{task.FirDTO.MajorHeader}</td>
                   <td>{task.FirDTO.ComplainantName}</td>
                   <td>{task.FirDTO.PsiName}</td>
@@ -438,7 +470,7 @@ const UserDashboard = () => {
                   <td>
                     <button className="action-buttons-mainlist-user add-button" title="Add Document" onClick={() => handleFormCreationPopup(task.FirDTO.FirNumber, '', task.FirDTO.PsiName)}></button>
                     <button style={{ display: task.FirDTO.AttachmentFileBytes !== null ? "inline" : "none" }} className="action-buttons-mainlist-user view-button" title="View FIR" onClick={() => handleViewDocument(task.documentUrl)}></button>
-                    <button className="action-buttons-mainlist-user upload-form-button" title="Upload NCRP Document" onClick={() => handleNCRPUploadPopup(task.FirDTO.FirNumber, task.FirDTO.CreatedDateTime)}></button>
+                    <button className="action-buttons-mainlist-user upload-form-button" title="Upload NCRP Document" onClick={() => handleNCRPUploadPopup(task.FirDTO.FirNumber, task.FirDTO.CreatedDateTime, task.NcrpsInFIR)}></button>
                   </td>
                   </tr></tbody></table>
                 </div>
@@ -447,7 +479,7 @@ const UserDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Document ({task.UnApprovedFirSupportingDocumentsCount})</th>
+                      <th>Documents ({task.UnApprovedFirSupportingDocumentsCount})</th>
                       <th><button style={{ display: task.FirDTO.NcrpFileBytes !== null ? "block" : "none" }} className="create-lien-letter-button" title="Create Lien Letters Automatically" onClick={() => handleLienFormAutoCreation(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
                      </tr>
                   </thead>
@@ -460,7 +492,7 @@ const UserDashboard = () => {
     </tr>
      ) : (
      <tr key={index}>
-      <td style={{color : document.FileBytes !== null ? "green" : "red"}}>{(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))) || 'Unnamed Document'}</td>
+      <td style={{color : document.FileBytes !== null ? "green" : "red"}}>{(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))+' Ack No :'+document.NcrpNumber) || 'Unnamed Document'}</td>
       <td>
         <button
           className="action-buttons-sublist edit-button" title="Edit Document"
@@ -485,10 +517,9 @@ const UserDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Approved Document ({task.ApprovedFirSupportingDocumentsCount})</th>
-                      //<th><button className="upload-button approved-document-upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
-                      <th><button className="create-ncrp-report-button" title="Generate NCRP Report" onClick={() => handleGenerateNCRPReport(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
-                      <th><button className="create-court-order-letters-button" title="Create court order letters Automatically" onClick={() => handleCourtOrderFormsAutoCreation(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
+                      <th>Generated Documents ({task.ApprovedFirSupportingDocumentsCount})</th>
+                      <th><button className="create-ncrp-report-button" title="Generate NCRP Report" onClick={() => handleGenerateNCRPReport(task.FirDTO.FirNumber, task.FirDTO.Status)}></button>
+                     <button className="create-court-order-letters-button" title="Create Court Order Letters Automatically" onClick={() => handleFreezeOrderToCourtFormsAutoCreation(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
                     </tr>
                   </thead>
                   <tbody>{task.ApprovedFirSupportingDocuments && task.ApprovedFirSupportingDocuments.length > 0 ? (
@@ -500,13 +531,17 @@ const UserDashboard = () => {
         </tr>
          ) : (
     <tr key={index}>
-      <td>{(document.FileName) || 'Unnamed Document'}</td>
+      <td style={{color : document.FileBytes !== null ? "green" : "red"}}>{(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))+' Ack No: '+document.NcrpNumber) || 'Unnamed Document'}</td>
       <td>
-        <button
+        <button style={{ display: document.FileName === "NCRP REPORT.xlsx" ? "inline" : "none"}}
+          className="action-buttons-sublist download-button" title="Download Document"
+          onClick={() => handleDownload(task.FirDTO.FirNumber)}
+        ></button>
+        <button style={{ display: document.FileName !== "NCRP REPORT.xlsx" ? "inline" : "none"}}
           className="action-buttons-sublist edit-button" title="Edit Document"
           onClick={() => handleShow(task.FirDTO.FirNumber, document.FileName ,"edit", document.Pk, task.FirDTO.PsiName, document.CreatedDateTime)}
         ></button>
-        <button
+        <button style={{ display: document.FileBytes !== null && document.FileName !== "NCRP REPORT.xlsx" ? "inline" : "none"}}
           className="action-buttons-sublist view-button" title="View Document"
           onClick={() => handleViewDocument(document.documentUrl)}
         ></button>
@@ -631,7 +666,7 @@ const UserDashboard = () => {
                 </option>
               ))}
             </select><br/><br/>
-                <label className="required-field"><b>Select File To Upload (pdf only: 15MB)</b></label><br/>
+                <label className="required-field"><b>Select File To Upload (pdf only: 50MB)</b></label><br/>
                  <input ref={firFile} type="file" accept="application/pdf" onChange={handleApprovedFileUpload} />
             </div><br/>
             <div className="popup-buttons">
@@ -647,7 +682,10 @@ const UserDashboard = () => {
                   <h2 className="popup-header"><u>Upload NCRP Document</u></h2><br/>
                   <div>
                   <label><b>FIR Number</b> <br/>{uploadNCRPPopup.FirNumber}</label><br/><br/>
-                  <label className="required-field"><b>Select File To Upload (pdf only: 15MB)</b></label><br/>
+                  <label><b>NCRP Numbers Uploaded</b> <br/><ul>{uploadNCRPPopup.Ncrps !== null ? uploadNCRPPopup.Ncrps.map((str, index) => (
+                   <li key={index}>{str}</li>)) : ""}
+                   </ul></label><br/><br/>
+                  <label className="required-field"><b>Select File To Upload (pdf only: 50MB)</b></label><br/>
                   <input ref={firFile} type="file" accept="application/pdf" onChange={handleNCRPFileUpload} />
                   </div><br/>
                   <div className="popup-buttons">

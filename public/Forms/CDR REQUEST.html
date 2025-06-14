@@ -91,6 +91,7 @@
     </style>
     <script>
         $(document).ready(function () {
+          setPageHeaders();
           $("#addRowBtnAfter").click(function () {
             const numberOfCells = document.getElementById('table1').rows[0].cells.length;
             var newRow =$('<tr></tr>');
@@ -153,6 +154,8 @@
           const elementToConvert = document.getElementById("bodyMain");
           if (!elementToConvert) {
             console.error("Element to convert not found");
+            hideLoader();
+            handleModalError();
             return;
           }
 
@@ -182,6 +185,7 @@
             if (error) {
               console.error("Error in convertHtmlToPdfDirectly:", error);
               hideLoader();
+              handleModalError();
               return;
             }
             const req = {
@@ -250,7 +254,7 @@
     <div id="loader-mask"><div id="loader"></div></div>
     <br/>
     <div>
-        No: NORTH CEN PS/CDR<div id="stationIdentifier" style="display:inline" class="background-edit" contenteditable>/    /2025</div>
+        <span id="cenCDRLocation"></span><div id="stationIdentifier" style="display:inline" class="background-edit" contenteditable>/    /2025</div>
         <div id="caseIdentifier" style="display:none" contenteditable></div>
     </div>
     <div style='text-align:center;font-weight:bold;text-decoration:underline'>
@@ -344,7 +348,7 @@
     <li>The number is not subscribed in the name of a sitting MP/MLA/MLC & Governor.</li>
 </ol>
 <br/><br/>
-<p>Place: Bengaluru</p>
+<p>Place: <span class="cenCity"></span></p>
 <p><span>Date: <input type="text" id="datePicker" class="background-edit" style="width:12%"></span></p>
 <br/><br/>
     <div class="noSplit">
@@ -353,8 +357,8 @@
         <div style="display: inline-block;width: 100%;">
     <div style="float : right; text-align:center; width : 35%">
         <p><b>Investigation Officer</b></p>
-        <p><strong>CEN police station,</strong></p>
-        <p><strong>North division, Bengaluru city</strong></p>
+        <p><strong class="cenId">CEN police station,</strong></p>
+        <p><strong class="cenLocation">North division, Bengaluru city</strong></p>
     </div>
 </div>
     </div>

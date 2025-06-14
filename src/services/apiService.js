@@ -457,8 +457,8 @@ const createAndDownloadNCRPReport = async (firNumber) => {
       const response = await fetch(`${API_URL}/fileOps/createExcelReport?firNumber=${firNumber}`, {
       method: 'GET',
       headers: {
+        Accept: '*',
         'Content-Type': 'application/json',
-        Accept: '*/*',
       },
     });
 
@@ -466,7 +466,7 @@ const createAndDownloadNCRPReport = async (firNumber) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response;
+    return await response.json();
   } catch (error) {
     console.error('Error creating report:', error);
     throw error;
@@ -478,8 +478,8 @@ const downloadNCRPReport = async (firNumber) => {
       const response = await fetch(`${API_URL}/fileOps/downloadNCRPExcelReport?firNumber=${firNumber}`, {
       method: 'GET',
       headers: {
+        Accept: '*',
         'Content-Type': 'application/json',
-        Accept: '*/*',
       },
     });
 
@@ -487,7 +487,7 @@ const downloadNCRPReport = async (firNumber) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response;
+    return await response.json();
   } catch (error) {
     console.error('Error downloading report:', error);
     throw error;

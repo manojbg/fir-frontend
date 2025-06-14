@@ -25,9 +25,14 @@
     line-height : 1px;
     width : 50%;
   }
-  
+
   .user-dashboard-header div:nth-child(3) {
-    margin-left : 35%;
+    margin-left : 30%;
+    color: white;
+    font-size: 18px;
+  }
+  
+  .user-dashboard-header div:nth-child(4) {
     justify-content : end;
     display: flex;
     width: 10%;
@@ -57,7 +62,7 @@
     background-size : contain;
     background-repeat : no-repeat;
     padding: 14%;
-    margin-left: 60%;
+    margin-left: 10%;
     border: none;
   }
 
@@ -70,7 +75,6 @@
     background-size : contain;
     background-repeat : no-repeat;
     padding: 14%;
-    margin-left: 60%;
     border: none;
   }
 

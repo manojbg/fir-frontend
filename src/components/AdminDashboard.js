@@ -32,6 +32,7 @@ const AdminDashboard = () => {
   const [show, setShow] = useState(false);
   const [alertMessage, setAlertMessage] = useState();
   const [variant, setVariant] = useState();
+  const loggedInUserName = localStorage.getItem('userName');
 
   useEffect(() => {
     const role = localStorage.getItem('role');
@@ -41,13 +42,13 @@ const AdminDashboard = () => {
     }
     setShowLoader(true);
     handlePageView();
-    fetchTasks();
     fetchAssigneesAndPsiNames();
     fetchMajorHeaders();
     document.querySelector("#root").classList.add('admin-dashboard-root');
-    setTimeout(() => {
-      setShowLoader(false);
-    }, 3000);
+    fetchTasks();
+    //setTimeout(() => {
+      //setShowLoader(false);
+   // }, 3000);
             // Cleanup by removing the class when the component unmounts
     return () => {
       document.querySelector("#root").classList.remove('admin-dashboard-root');
@@ -71,10 +72,12 @@ const AdminDashboard = () => {
           const response = await apiService.getAllTasks(currentPage - 1, pageSize);
           setTasks(response.content);
           setTotalPages(response.totalPages || 1);
+          setShowLoader(false);
         } catch (error) {
           console.error('Error fetching tasks:', error);
           handleAlertDisplay("No FIRs found/assigned.","danger");
           setTasks([]);
+          setShowLoader(false);
         }
       }
   };
@@ -116,8 +119,8 @@ const AdminDashboard = () => {
     if (!confirmDelete) return;
     setShowLoader(true);
     await apiService.deleteTask(firNumber, assignee);
-    fetchTasks();
-    setShowLoader(false);// Refresh the task list
+    fetchTasks();// Refresh the task list
+    //setShowLoader(false);
   };
 
   const handleDeleteDocument = async (firNumber, fileName, pk) => {
@@ -126,7 +129,7 @@ const AdminDashboard = () => {
     setShowLoader(true);
     await apiService.deleteTaskDocument(pk);
     fetchTasks();
-    setShowLoader(false);// Refresh the task list
+    //setShowLoader(false);// Refresh the task list
   };
 
   const handleSearchByIdTask = async () => {
@@ -136,7 +139,9 @@ const AdminDashboard = () => {
     {
       setShowLoader(true);
       try{
-       const response = await apiService.searchByIdTask(firNumber, currentPage - 1, pageSize);
+       const encodedFIR = encodeURIComponent(firNumber);
+       const response = await apiService.searchByIdTask(encodedFIR, 0, pageSize);
+       setCurrentPage(1);
        setTasks(response.content);
        setTotalPages(response.totalPages || 1);
        if(response.content.length === 0)
@@ -162,7 +167,8 @@ const AdminDashboard = () => {
     {
       setShowLoader(true);
       try{
-        const response = await apiService.getAllTasksByDate(date, currentPage - 1, pageSize);
+        const response = await apiService.getAllTasksByDate(date, 0, pageSize);
+        setCurrentPage(1);
         setTasks(response.content);
         setTotalPages(response.totalPages || 1);
         if(response.content.length === 0)
@@ -206,7 +212,6 @@ const AdminDashboard = () => {
   };
 
   const handleCreateTask = async () => {
-    setShowLoader(true);
     const firNumberInput = newTask.FirNumber;
     const firDateInput = firDate.current.value;
     const firFileInput = firFile.current.value;
@@ -220,7 +225,12 @@ const AdminDashboard = () => {
     {
        handleAlertDisplay("Mandatory Fields Are Not Populated","danger");
     }
+    else if(firNumberInput.includes(','))
+    {
+       handleAlertDisplay("Comma not allowed in FIR Number","danger");
+    }
     else{
+      setShowLoader(true);
       try {
         const taskData = {
                 FirNumber: firNumberInput,
@@ -238,7 +248,7 @@ const AdminDashboard = () => {
           let file_size = newTask.file.size / Math.pow(10,6);
           taskData.FileName = newTask.file.name;
           var fileFormat = newTask.file.name.substring(newTask.file.name.lastIndexOf("."));
-          if(file_size > 15)
+          if(file_size > 50)
           {
             handleAlertDisplay("File is over the allowed size","danger");
           }
@@ -259,12 +269,14 @@ const AdminDashboard = () => {
               {
                 let ncrp_file_size = newTask.NcrpFile.size / Math.pow(10,6);
                 var fileFormat = newTask.NcrpFile.name.substring(newTask.NcrpFile.name.lastIndexOf("."));
-                if(ncrp_file_size > 15)
+                if(ncrp_file_size > 50)
                 {
+                  setShowLoader(false);
                   handleAlertDisplay("File is over the allowed size","danger");
                 }
                 else if(fileFormat !== ".pdf")
                 {
+                   setShowLoader(false);
                    handleAlertDisplay("File format is not PDF","danger");
                 }
                 else {
@@ -285,12 +297,14 @@ const AdminDashboard = () => {
         {
           let ncrp_file_size = newTask.NcrpFile.size / Math.pow(10,6);
           var fileFormat = newTask.NcrpFile.name.substring(newTask.NcrpFile.name.lastIndexOf("."));
-          if(ncrp_file_size > 15)
+          if(ncrp_file_size > 50)
           {
+            setShowLoader(false);
             handleAlertDisplay("File is over the allowed size","danger");
           }
           else if(fileFormat !== ".pdf")
           {
+             setShowLoader(false);
              handleAlertDisplay("File format is not PDF","danger");
           }
           else {
@@ -309,9 +323,10 @@ const AdminDashboard = () => {
       } catch (error) {
         console.error('Error creating FIR:', error);
         handleAlertDisplay("Error creating FIR. Please try again.","danger");
+        setShowLoader(false);
       }
     }
-    setShowLoader(false);
+
   };
 
   const persistTaskToDB = async(taskData) => {
@@ -355,8 +370,8 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error assigning FIR:', error);
       handleAlertDisplay("Error assigning FIR. Please try again.","danger");
+      setShowLoader(false);
     }
-    setShowLoader(false);
   };
 
   const handlePreviousPage = () => {
@@ -442,7 +457,7 @@ const AdminDashboard = () => {
   const tableReload = () => {
     setShowLoader(true);
     fetchTasks();
-    setShowLoader(false);
+    //setShowLoader(false);
   }
 
   const handlePageView = () => {
@@ -458,17 +473,38 @@ const AdminDashboard = () => {
   };
 
   const handleGenerateNCRPReport = async (firNumber, status) => {
+    const encodedFIR = encodeURIComponent(firNumber);
+    setShowLoader(true);
+    const response = await apiService.createAndDownloadNCRPReport(encodedFIR);
+    var bytes = Uint8Array.from(atob(response.FileBytes),(c) => c.charCodeAt(0) );
+    var blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    var a = window.document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      a.download = response.FirNumber+"-"+response.FileName;
+      // Append anchor to body.
+      document.body.appendChild(a)
+      a.click();
+      // Remove anchor from body
+      document.body.removeChild(a)
+    setShowLoader(false);
+  };
 
-      const encodedFIR = encodeURIComponent(firNumber);
-      setShowLoader(true);
-      const response = await apiService.createAndDownloadNCRPReport(encodedFIR);
-      const blob = new Blob([response.FileBytes], { type: "application/vnd.ms-excel;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      window.open(url);
-      fetchTasks(); // Refresh the task list
-      handleAlertDisplay("NCRP Report is generated","success");
-      setShowLoader(false);
+  const handleDownload = async (firNumber) => {
+    const encodedFIR = encodeURIComponent(firNumber);
+    setShowLoader(true);
+    const response =  await apiService.downloadNCRPReport(encodedFIR);
+     var bytes = Uint8Array.from(atob(response.FileBytes),(c) => c.charCodeAt(0) );
+     var blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+     var a = window.document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      a.download = response.FirNumber+"-"+response.FileName;
+      // Append anchor to body.
+      document.body.appendChild(a)
+      a.click();
+      // Remove anchor from body
+      document.body.removeChild(a)
 
+    setShowLoader(false);
   };
 
   return (
@@ -477,7 +513,8 @@ const AdminDashboard = () => {
             <div><img className="navbar-brand" src={logo}></img></div>
             <div>
             <h1 className="navbar-brand-text"><u>Notices And Record Management System</u></h1>
-            <p><strong>CEN, North Division, Bangalore</strong></p></div>
+            <p><strong>Cyber Crime, North Division, Bangalore</strong></p></div>
+            <div>{loggedInUserName}</div>
             <div>
             <button className="logout-button" title="Log Out" onClick={() => handleLogout()}></button>
             </div>
@@ -505,7 +542,7 @@ const AdminDashboard = () => {
                      <option value="ACP">Assistant Commissioner Of Police</option>
                      <option value="PI">Police Inspector</option></select>
                    </td></tr><tr><td>
-                <label>FIR File Upload (pdf only: 15MB)</label><br/>
+                <label>FIR File Upload (pdf only: 50MB)</label><br/>
                  <input ref={firFile} type="file" accept="application/pdf" onChange={handleFileUpload} />
                 </td><td>
                     <label className="required-field">FIR / NCRP Date </label><br/>
@@ -538,7 +575,7 @@ const AdminDashboard = () => {
                       ))}
                       </select>
                 </td><td>
-                <label>NCRP File Upload (pdf only: 10MB)</label><br/>
+                <label>NCRP File Upload (pdf only: 50MB)</label><br/>
                  <input ref={ncrpFile} type="file" accept="application/pdf" onChange={handleNCRPFileUpload} />
                 </td>
                 <td>
@@ -594,7 +631,7 @@ const AdminDashboard = () => {
               <summary className="task-summary">
                 <div className="task-row">
                 <table><tbody><tr>
-                  <td><strong>No:</strong> {task.FirDTO.FirNumber.length > 25 ? task.FirDTO.FirNumber.substring(0,25)+"..." : task.FirDTO.FirNumber}</td>
+                  <td><strong>No:</strong> {task.FirDTO.FirNumber.length > 30 ? task.FirDTO.FirNumber.substring(0,30)+"..." : task.FirDTO.FirNumber}</td>
                   <td>{task.FirDTO.MajorHeader}</td>
                   <td>{task.FirDTO.ComplainantName}</td>
                   <td>{task.FirDTO.PsiName}</td>
@@ -613,7 +650,7 @@ const AdminDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Document ({task.UnApprovedFirSupportingDocumentsCount})</th>
+                      <th>Documents ({task.UnApprovedFirSupportingDocumentsCount})</th>
                      </tr>
                   </thead>
                   <tbody>{task.UnApprovedFirSupportingDocuments && task.UnApprovedFirSupportingDocuments.length > 0 ? (
@@ -625,7 +662,7 @@ const AdminDashboard = () => {
       </tr>
        ) : (
     <tr key={index}>
-      <td>{(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))) || 'Unnamed Document'}</td>
+      <td>{(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))+' Ack No :'+document.NcrpNumber) || 'Unnamed Document'}</td>
       <td>
         <button style={{ display: document.FileBytes !== null ? "inline" : "none" }}
           className="action-buttons-sublist view-button" title="View Document"
@@ -646,8 +683,7 @@ const AdminDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Approved Document ({task.ApprovedFirSupportingDocumentsCount})</th>
-                      //<th><button className="upload-button approved-document-upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
+                      <th>Generated Documents ({task.ApprovedFirSupportingDocumentsCount})</th>
                       <th><button className="create-ncrp-report-button" title="Generate NCRP Report" onClick={() => handleGenerateNCRPReport(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
                     </tr>
                   </thead>
@@ -660,9 +696,13 @@ const AdminDashboard = () => {
         </tr>
          ) : (
     <tr key={index}>
-      <td>{(document.FileName) || 'Unnamed Document'}</td>
+      <td>{(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))+' Ack No :'+document.NcrpNumber) || 'Unnamed Document'}</td>
       <td>
-        <button
+        <button style={{ display: document.FileName === "NCRP REPORT.xlsx" ? "inline" : "none"}}
+          className="action-buttons-sublist download-button" title="Download Document"
+          onClick={() => handleDownload(task.FirDTO.FirNumber)}
+        ></button>
+        <button style={{ display: document.FileBytes !== null && document.FileName !== "NCRP REPORT.xlsx" ? "inline" : "none"}}
           className="action-buttons-sublist view-button" title="View Document"
           onClick={() => handleViewDocument(document.documentUrl)}
         ></button>
@@ -750,7 +790,7 @@ const AdminDashboard = () => {
                 </option>
               ))}
             </select><br/><br/>
-                <label className="required-field"><b>File Upload (pdf only: 15MB)</b></label><br/>
+                <label className="required-field"><b>File Upload (pdf only: 50MB)</b></label><br/>
                  <input ref={firFile} type="file" accept="application/pdf" onChange={handleApprovedFileUpload} />
             </div><br/>
             <div className="popup-buttons">

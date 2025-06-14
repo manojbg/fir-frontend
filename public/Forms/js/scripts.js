@@ -64,7 +64,7 @@ function convertHtmlToPdfDirectlySinglePage(element, callback) {
        reader.readAsDataURL(pdfBlob); // Read the Blob as a Base64 string
     })
     .catch((error) => {
-        console.error('Error in convertHtmlToPdfDirectly:', error);
+        console.error('Error in convertHtmlToPdfDirectlySinglePage:', error);
         callback(error, null); // Pass the error to the callback
     });
 }
@@ -122,7 +122,7 @@ var pdf = new jsPDF('p', 'mm', 'a4');
        reader.readAsDataURL(pdfBlob); // Read the Blob as a Base64 string
     })
     .catch((error) => {
-        console.error('Error in convertHtmlToPdfDirectly:', error);
+        console.error('Error in convertHtmlToPdfDirectlyMultiPageImageSplit:', error);
         callback(error, null); // Pass the error to the callback
     });
 }
@@ -177,12 +177,13 @@ function convertHtmlToPdfDirectly(element, callback) {
 }
 
 function saveAPICall(requestPayload) {
+showLoader();
   // Send the data via AJAX
-  Object.defineProperty(requestPayload, "Reviewed", {value : "true"});
   $.ajax({
      url: globalOptions.host+"/fileOps/saveFIRSupportingDocument",
      type: "POST",
      contentType: "application/json",
+     async: false,
      data: JSON.stringify(requestPayload),
      success: (response) => {
          //console.log("Response:", response);
@@ -422,6 +423,21 @@ function hideLoader()
 {
   $('#loader-mask').css('display','none');
   $('#loader').css('display','none');
+}
+
+function  setPageHeaders()
+{
+    $(".cenId").html("Cyber Crime Police Station, ");
+    $(".cenLocation").html("North Division, Bengaluru");
+    $(".cenRefBody").html("North Division");
+    $(".cenCity").html("Bengaluru");
+    $("#cenCDRLocation").html("No: NORTH CEN PS/CDR");
+    $("#cenAddress").html("2<sup>nd</sup> Floor, Deputy Commissioner Office Building, North Division,<br/>\n" +
+        "                Yeswanthapura, Bengaluru city -560022");
+    a = document.getElementById("cenEmailId");
+    a.setAttribute("href", "cenpsnorthbcp@ksp.gov.in");
+    $("#cenEmailId").html("cenpsnorthbcp@ksp.gov.in ; ");
+    $("#cenContact").html("Mob No-9480801066, 8277945187");
 }
 
 
