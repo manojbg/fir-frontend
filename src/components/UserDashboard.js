@@ -76,6 +76,10 @@ const UserDashboard = () => {
       {
         fileName = "LIEN LETTER"
       }
+      if(fileName.includes("COURT ORDER"))
+      {
+        fileName = "COURT ORDER"
+      }
       form = fileName;
     }else{
       form = document.querySelector('.form-select').value;
@@ -352,11 +356,11 @@ const UserDashboard = () => {
   };
 
   const handleCourtOrderFormsAutoCreation = async (firNumber, status) => {
-    if(status !== "UI")
-    {
-      handleAlertDisplay("FIR is in an invalid status. Please refresh/retry after sometime","danger");
-    }
-    else
+    //if(status !== "UI")
+   // {
+    //  handleAlertDisplay("FIR is in an invalid status. Please refresh/retry after sometime","danger");
+    //}
+    //else
     {
       const encodedFIR = encodeURIComponent(firNumber);
       setShowLoader(true);
@@ -368,17 +372,38 @@ const UserDashboard = () => {
   };
 
   const handleGenerateNCRPReport = async (firNumber, status) => {
+    const encodedFIR = encodeURIComponent(firNumber);
+    setShowLoader(true);
+    const response = await apiService.createAndDownloadNCRPReport(encodedFIR);
+    var bytes = Uint8Array.from(atob(response.FileBytes),(c) => c.charCodeAt(0) );
+    var blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    var a = window.document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      a.download = response.FirNumber+"-"+response.FileName;
+      // Append anchor to body.
+      document.body.appendChild(a)
+      a.click();
+      // Remove anchor from body
+      document.body.removeChild(a)
+    setShowLoader(false);
+  };
 
-      const encodedFIR = encodeURIComponent(firNumber);
-      setShowLoader(true);
-      const response = await apiService.createAndDownloadNCRPReport(encodedFIR);
-      const blob = new Blob([response.FileBytes], { type: "application/vnd.ms-excel;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      window.open(url);
-      fetchTasks(); // Refresh the task list
-      handleAlertDisplay("NCRP Report is generated","success");
-      setShowLoader(false);
+  const handleDownload = async (firNumber) => {
+    const encodedFIR = encodeURIComponent(firNumber);
+    setShowLoader(true);
+    const response =  await apiService.downloadNCRPReport(encodedFIR);
+     var bytes = Uint8Array.from(atob(response.FileBytes),(c) => c.charCodeAt(0) );
+     var blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+     var a = window.document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      a.download = response.FirNumber+"-"+response.FileName;
+      // Append anchor to body.
+      document.body.appendChild(a)
+      a.click();
+      // Remove anchor from body
+      document.body.removeChild(a)
 
+    setShowLoader(false);
   };
 
   return (
@@ -447,7 +472,7 @@ const UserDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Document ({task.UnApprovedFirSupportingDocumentsCount})</th>
+                      <th>Documents ({task.UnApprovedFirSupportingDocumentsCount})</th>
                       <th><button style={{ display: task.FirDTO.NcrpFileBytes !== null ? "block" : "none" }} className="create-lien-letter-button" title="Create Lien Letters Automatically" onClick={() => handleLienFormAutoCreation(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
                      </tr>
                   </thead>
@@ -485,10 +510,9 @@ const UserDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Approved Document ({task.ApprovedFirSupportingDocumentsCount})</th>
-                      //<th><button className="upload-button approved-document-upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
-                      <th><button className="create-ncrp-report-button" title="Generate NCRP Report" onClick={() => handleGenerateNCRPReport(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
-                      <th><button className="create-court-order-letters-button" title="Create court order letters Automatically" onClick={() => handleCourtOrderFormsAutoCreation(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
+                      <th>Generated Documents ({task.ApprovedFirSupportingDocumentsCount})</th>
+                      <th><button className="create-ncrp-report-button" title="Generate NCRP Report" onClick={() => handleGenerateNCRPReport(task.FirDTO.FirNumber, task.FirDTO.Status)}></button>
+                     <button className="create-court-order-letters-button" title="Create Court Order Letters Automatically" onClick={() => handleCourtOrderFormsAutoCreation(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
                     </tr>
                   </thead>
                   <tbody>{task.ApprovedFirSupportingDocuments && task.ApprovedFirSupportingDocuments.length > 0 ? (
@@ -500,13 +524,17 @@ const UserDashboard = () => {
         </tr>
          ) : (
     <tr key={index}>
-      <td>{(document.FileName) || 'Unnamed Document'}</td>
+      <td style={{color : document.FileBytes !== null ? "green" : "red"}}>{(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))) || 'Unnamed Document'}</td>
       <td>
-        <button
+        <button style={{ display: document.FileName === "NCRP REPORT.xlsx" ? "inline" : "none"}}
+          className="action-buttons-sublist download-button" title="Download Document"
+          onClick={() => handleDownload(task.FirDTO.FirNumber)}
+        ></button>
+        <button style={{ display: document.FileName !== "NCRP REPORT.xlsx" ? "inline" : "none"}}
           className="action-buttons-sublist edit-button" title="Edit Document"
           onClick={() => handleShow(task.FirDTO.FirNumber, document.FileName ,"edit", document.Pk, task.FirDTO.PsiName, document.CreatedDateTime)}
         ></button>
-        <button
+        <button style={{ display: document.FileBytes !== null && document.FileName !== "NCRP REPORT.xlsx" ? "inline" : "none"}}
           className="action-buttons-sublist view-button" title="View Document"
           onClick={() => handleViewDocument(document.documentUrl)}
         ></button>

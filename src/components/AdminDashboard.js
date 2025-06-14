@@ -238,7 +238,7 @@ const AdminDashboard = () => {
           let file_size = newTask.file.size / Math.pow(10,6);
           taskData.FileName = newTask.file.name;
           var fileFormat = newTask.file.name.substring(newTask.file.name.lastIndexOf("."));
-          if(file_size > 15)
+          if(file_size > 25)
           {
             handleAlertDisplay("File is over the allowed size","danger");
           }
@@ -259,7 +259,7 @@ const AdminDashboard = () => {
               {
                 let ncrp_file_size = newTask.NcrpFile.size / Math.pow(10,6);
                 var fileFormat = newTask.NcrpFile.name.substring(newTask.NcrpFile.name.lastIndexOf("."));
-                if(ncrp_file_size > 15)
+                if(ncrp_file_size > 25)
                 {
                   handleAlertDisplay("File is over the allowed size","danger");
                 }
@@ -285,7 +285,7 @@ const AdminDashboard = () => {
         {
           let ncrp_file_size = newTask.NcrpFile.size / Math.pow(10,6);
           var fileFormat = newTask.NcrpFile.name.substring(newTask.NcrpFile.name.lastIndexOf("."));
-          if(ncrp_file_size > 15)
+          if(ncrp_file_size > 25)
           {
             handleAlertDisplay("File is over the allowed size","danger");
           }
@@ -458,17 +458,38 @@ const AdminDashboard = () => {
   };
 
   const handleGenerateNCRPReport = async (firNumber, status) => {
+    const encodedFIR = encodeURIComponent(firNumber);
+    setShowLoader(true);
+    const response = await apiService.createAndDownloadNCRPReport(encodedFIR);
+    var bytes = Uint8Array.from(atob(response.FileBytes),(c) => c.charCodeAt(0) );
+    var blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    var a = window.document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      a.download = response.FirNumber+"-"+response.FileName;
+      // Append anchor to body.
+      document.body.appendChild(a)
+      a.click();
+      // Remove anchor from body
+      document.body.removeChild(a)
+    setShowLoader(false);
+  };
 
-      const encodedFIR = encodeURIComponent(firNumber);
-      setShowLoader(true);
-      const response = await apiService.createAndDownloadNCRPReport(encodedFIR);
-      const blob = new Blob([response.FileBytes], { type: "application/vnd.ms-excel;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      window.open(url);
-      fetchTasks(); // Refresh the task list
-      handleAlertDisplay("NCRP Report is generated","success");
-      setShowLoader(false);
+  const handleDownload = async (firNumber) => {
+    const encodedFIR = encodeURIComponent(firNumber);
+    setShowLoader(true);
+    const response =  await apiService.downloadNCRPReport(encodedFIR);
+     var bytes = Uint8Array.from(atob(response.FileBytes),(c) => c.charCodeAt(0) );
+     var blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+     var a = window.document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      a.download = response.FirNumber+"-"+response.FileName;
+      // Append anchor to body.
+      document.body.appendChild(a)
+      a.click();
+      // Remove anchor from body
+      document.body.removeChild(a)
 
+    setShowLoader(false);
   };
 
   return (
@@ -505,7 +526,7 @@ const AdminDashboard = () => {
                      <option value="ACP">Assistant Commissioner Of Police</option>
                      <option value="PI">Police Inspector</option></select>
                    </td></tr><tr><td>
-                <label>FIR File Upload (pdf only: 15MB)</label><br/>
+                <label>FIR File Upload (pdf only: 25MB)</label><br/>
                  <input ref={firFile} type="file" accept="application/pdf" onChange={handleFileUpload} />
                 </td><td>
                     <label className="required-field">FIR / NCRP Date </label><br/>
@@ -538,7 +559,7 @@ const AdminDashboard = () => {
                       ))}
                       </select>
                 </td><td>
-                <label>NCRP File Upload (pdf only: 10MB)</label><br/>
+                <label>NCRP File Upload (pdf only: 25MB)</label><br/>
                  <input ref={ncrpFile} type="file" accept="application/pdf" onChange={handleNCRPFileUpload} />
                 </td>
                 <td>
@@ -613,7 +634,7 @@ const AdminDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Document ({task.UnApprovedFirSupportingDocumentsCount})</th>
+                      <th>Documents ({task.UnApprovedFirSupportingDocumentsCount})</th>
                      </tr>
                   </thead>
                   <tbody>{task.UnApprovedFirSupportingDocuments && task.UnApprovedFirSupportingDocuments.length > 0 ? (
@@ -646,8 +667,7 @@ const AdminDashboard = () => {
                 <table className="task-table">
                   <thead>
                     <tr>
-                      <th>Approved Document ({task.ApprovedFirSupportingDocumentsCount})</th>
-                      //<th><button className="upload-button approved-document-upload-button" title="Upload Document" onClick={() => handleApprovedDocumentsUploadPopup(task.FirDTO.FirNumber, task.UnApprovedFirSupportingDocuments)}></button></th>
+                      <th>Generated Documents ({task.ApprovedFirSupportingDocumentsCount})</th>
                       <th><button className="create-ncrp-report-button" title="Generate NCRP Report" onClick={() => handleGenerateNCRPReport(task.FirDTO.FirNumber, task.FirDTO.Status)}></button></th>
                     </tr>
                   </thead>
@@ -660,9 +680,13 @@ const AdminDashboard = () => {
         </tr>
          ) : (
     <tr key={index}>
-      <td>{(document.FileName) || 'Unnamed Document'}</td>
+      <td>{(document.FileName && document.CreatedDateTime && document.FileName+' '+(document.CreatedDateTime.substring(0, document.CreatedDateTime.lastIndexOf('.')))) || 'Unnamed Document'}</td>
       <td>
-        <button
+        <button style={{ display: document.FileName === "NCRP REPORT.xlsx" ? "inline" : "none"}}
+          className="action-buttons-sublist download-button" title="Download Document"
+          onClick={() => handleDownload(task.FirDTO.FirNumber)}
+        ></button>
+        <button style={{ display: document.FileBytes !== null && document.FileName !== "NCRP REPORT.xlsx" ? "inline" : "none"}}
           className="action-buttons-sublist view-button" title="View Document"
           onClick={() => handleViewDocument(document.documentUrl)}
         ></button>
